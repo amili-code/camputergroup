@@ -4,7 +4,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "nodemon --ignore ./public/ server.js"
+    "test": "nodemon --ignore ./public/ server.js",
+    "sync-db": "node scripts/sync-db.js"
   },
   "author": "",
   "license": "ISC",
@@ -26,6 +27,8 @@
     "socket.io-client": "^4.7.5"
   },
   "dependencies": {
-    "jalaali-js": "^1.2.7"
+    "bcrypt": "^5.1.1",
+    "jalaali-js": "^1.2.7",
+    "sequelize": "^6.37.7"
   }
 }

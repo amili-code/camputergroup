@@ -4,6 +4,7 @@ const http = require('http');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const { syncDatabase } = require('./config/syncDatabase');
 require('dotenv').config();
 const server = http.createServer(app);
 
