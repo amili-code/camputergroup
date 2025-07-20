@@ -83,9 +83,9 @@
 
 
 <script>
-let table;
+let studentTable;
 let editingStudentId = null;
-let isLoading = false;
+let isStudentLoading = false;
 
 // Load all students data from API
 async function loadAllStudents() {
@@ -104,8 +104,8 @@ async function loadAllStudents() {
 }
 
 // Initialize Tabulator
-function initializeTable() {
-    table = new Tabulator("#studentsTable", {
+function initializeStudentTable() {
+    studentTable = new Tabulator("#studentsTable", {
         data: [], // ابتدا خالی
         layout: "fitDataFill",
         pagination: "local",
@@ -242,7 +242,7 @@ function initializeTable() {
     });
     
     // بارگذاری اولیه داده‌ها
-    refreshTable();
+    refreshStudentTable();
     
     // اضافه کردن event listener برای کپی کردن
     document.addEventListener('click', function(e) {
@@ -254,13 +254,13 @@ function initializeTable() {
 }
 
 // Refresh table data
-async function refreshTable() {
+async function refreshStudentTable() {
     try {
         const students = await loadAllStudents();
         if (students && students.length > 0) {
-            table.setData(students);
+            studentTable.setData(students);
         } else {
-            table.setData([]);
+            studentTable.setData([]);
         }
     } catch (error) {
         console.error('خطا در بروزرسانی جدول:', error);
@@ -307,7 +307,7 @@ async function editStudent(studentId) {
 
 // Save student
 async function saveStudent() {
-    if (isLoading) return;
+    if (isStudentLoading) return;
     
     // اعتبارسنجی فرم
     const firstName = document.getElementById('firstName').value.trim();
@@ -344,7 +344,7 @@ async function saveStudent() {
     }
 
     // نمایش loading
-    isLoading = true;
+    isStudentLoading = true;
     const saveBtn = document.getElementById('saveBtn');
     const spinner = saveBtn.querySelector('.spinner-border');
     saveBtn.disabled = true;
@@ -375,7 +375,7 @@ async function saveStudent() {
         if (response && response.success) {
             showSuccessAlert(editingStudentId ? 'دانشجو با موفقیت ویرایش شد' : 'دانشجو با موفقیت اضافه شد');
             bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide();
-            refreshTable(); // بروزرسانی جدول
+            refreshStudentTable(); // بروزرسانی جدول
         } else {
             showErrorAlert(response?.message || 'خطا در ذخیره اطلاعات');
         }
@@ -383,7 +383,7 @@ async function saveStudent() {
         showErrorAlert('خطا در ذخیره اطلاعات');
     } finally {
         // حذف loading
-        isLoading = false;
+        isStudentLoading = false;
         saveBtn.disabled = false;
         spinner.classList.add('d-none');
     }
@@ -407,7 +407,7 @@ async function deleteStudent(studentId) {
             const response = await apiRequest(`/student/${studentId}`, "DELETE");
                     if (response && response.success) {
             showSuccessAlert('دانشجو با موفقیت حذف شد');
-            refreshTable(); // بروزرسانی جدول
+            refreshStudentTable(); // بروزرسانی جدول
         } else {
                 showErrorAlert(response?.message || 'خطا در حذف دانشجو');
             }
@@ -423,7 +423,7 @@ async function toggleGraduation(studentId) {
         const response = await apiRequest(`/student/${studentId}/toggle-graduation`, "PATCH");
         if (response && response.success) {
             showSuccessAlert(response.message);
-            refreshTable(); // بروزرسانی جدول
+            refreshStudentTable(); // بروزرسانی جدول
         } else {
             showErrorAlert(response?.message || 'خطا در تغییر وضعیت');
         }
@@ -496,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.showContent = function(contentType) {
         originalShowContent(contentType);
         if (contentType === 'student') {
-            setTimeout(initializeTable, 100);
+            setTimeout(initializeStudentTable, 100);
         }
     };
 });

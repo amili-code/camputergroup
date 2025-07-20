@@ -2,23 +2,25 @@ const express = require("express");
 const router = express.Router();
 const multer = require('multer');
 
-// تنظیمات آپلود تصاویر
-const picStorage = multer.diskStorage({
+
+
+// تنظیمات آپلود تصویر پرسنلی استاد
+const teacherImageStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, "public/pic");
+        cb(null, "public/pic/teachers");
     },
     filename: function (req, file, cb) {
         // ایجاد نام منحصر به فرد برای فایل
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'blog-' + uniqueSuffix + '-' + file.originalname);
+        cb(null, 'teacher-' + uniqueSuffix + '-' + file.originalname);
     }
 });
 
-const picUpload = multer({ 
-    storage: picStorage,
+const teacherImageUpload = multer({ 
+    storage: teacherImageStorage,
     limits: {
-        fileSize: 5 * 1024 * 1024, // حداکثر 5 مگابایت
-        files: 10 // حداکثر 10 فایل
+        fileSize: 2 * 1024 * 1024, // حداکثر 2 مگابایت
+        files: 1 // حداکثر 1 فایل
     },
     fileFilter: (req, file, cb) => {
         // بررسی نوع فایل
@@ -29,31 +31,6 @@ const picUpload = multer({
         }
     }
 });
-
-
-// ==================== BLOG ROUTES ====================
-// const blogController = require("../api/blog");
-
-// CREATE - ایجاد وبلاگ جدید
-// router.post('/blog', picUpload.array('images', 10), blogController.createBlog.bind(blogController));
-
-// // READ - دریافت وبلاگ‌ها
-// router.get('/blogs', blogController.getAllBlogs.bind(blogController));
-// router.get('/blog/:id', blogController.getBlogById.bind(blogController));
-// router.get('/blogs/active', blogController.getActiveBlogs.bind(blogController));
-// router.get('/blogs/featured', blogController.getFeaturedBlogs.bind(blogController));
-
-// // UPDATE - بروزرسانی وبلاگ
-// router.put('/blog/:id', picUpload.array('images', 10), blogController.updateBlog.bind(blogController));
-// router.patch('/blog/:id/toggle-status', blogController.toggleBlogStatus.bind(blogController));
-// router.patch('/blog/:id/toggle-featured', blogController.toggleFeaturedStatus.bind(blogController));
-
-// // DELETE - حذف وبلاگ
-// router.delete('/blog/:id', blogController.deleteBlog.bind(blogController));
-// router.delete('/blog/:id/image/:imageIndex', blogController.deleteBlogImage.bind(blogController));
-
-// // SEARCH - جستجو در وبلاگ‌ها
-// router.get('/blogs/search', blogController.searchBlogs.bind(blogController));
 
 // ==================== STUDENT ROUTES ====================
 const studentController = require("../api/student");
@@ -81,7 +58,24 @@ router.get('/students/search', studentController.searchStudents.bind(studentCont
 
 
 
+// ==================== TEACHER ROUTES ====================
+const teacherController = require("../api/teacher");
 
+// CREATE - ایجاد استاد جدید
+router.post('/teacher', teacherImageUpload.single('personalImage'), teacherController.createTeacher.bind(teacherController));
 
+// READ - دریافت اساتید
+router.get('/teachers', teacherController.getAllTeachers.bind(teacherController));
+router.get('/teacher/:id', teacherController.getTeacherById.bind(teacherController));
+router.get('/teachers/schedule', teacherController.getTeachersBySchedule.bind(teacherController));
+
+// UPDATE - بروزرسانی استاد
+router.put('/teacher/:id', teacherImageUpload.single('personalImage'), teacherController.updateTeacher.bind(teacherController));
+
+// DELETE - حذف استاد
+router.delete('/teacher/:id', teacherController.deleteTeacher.bind(teacherController));
+
+// SEARCH - جستجو در اساتید
+router.get('/teachers/search', teacherController.searchTeachers.bind(teacherController));
 
 module.exports = router;

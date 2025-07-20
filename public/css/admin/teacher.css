@@ -1,0 +1,551 @@
+/* ===================================== Teacher Management Styles ========================================= */
+
+/* Content Panel */
+#teacher-content {
+    padding: 20px;
+}
+
+/* Card Styles */
+.card {
+    border: none;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 20px;
+}
+
+.card-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Button Styles */
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 25px;
+    padding: 10px 25px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 12px rgba(224, 225, 226, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 5px rgba(224, 225, 226, 0.3);
+
+}
+
+.btn-outline-primary {
+    border-color: #667eea;
+    color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background-color: #667eea;
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-outline-danger {
+    border-color: #dc3545;
+    color: #dc3545;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Table Styles */
+#teachersTable {
+    font-family: 'PeydaWeb', sans-serif;
+}
+
+/* Button Group in Table */
+.btn-group .btn {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    margin: 0 2px;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.tabulator {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.tabulator-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+}
+
+.tabulator-col {
+    background: transparent;
+    border: none;
+    font-weight: 600;
+    color: #495057;
+    padding: 15px 10px;
+}
+
+.tabulator-row {
+    border-bottom: 1px solid #f1f3f4;
+    transition: all 0.3s ease;
+}
+
+.tabulator-row:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+}
+
+.tabulator-cell {
+    padding: 12px 10px;
+    border: none;
+    vertical-align: middle;
+}
+
+/* Clickable Cell */
+.clickable-cell {
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.clickable-cell:hover {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    transform: scale(1.05);
+}
+
+/* Schedule Display */
+.schedule-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.schedule-display .badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 12px;
+}
+
+/* Modal Styles */
+.modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 15px 15px 0 0;
+    padding: 20px;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.modal-footer {
+    border: none;
+    padding: 20px 30px 30px;
+    background-color: #f8f9fa;
+    border-radius: 0 0 15px 15px;
+}
+
+/* Form Styles */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+    font-family: 'PeydaWeb', sans-serif;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-control:focus::placeholder {
+    color: #667eea;
+}
+
+/* Weekly Schedule */
+.weekly-schedule {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+}
+
+.form-check-inline {
+    margin: 0;
+}
+
+.form-check-input {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    border: 2px solid #667eea;
+    border-radius: 4px;
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.form-check-label {
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+}
+
+/* Image Preview */
+#currentImage {
+    text-align: center;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    border: 2px dashed #dee2e6;
+}
+
+#previewImage {
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading Spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Pagination */
+.tabulator-paginator {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 15px;
+}
+
+.tabulator-paginator button {
+    background-color: #667eea;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin: 0 2px;
+    transition: all 0.3s ease;
+}
+
+.tabulator-paginator button:hover {
+    background-color: #5a6fd8;
+    transform: translateY(-1px);
+}
+
+.tabulator-paginator button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .weekly-schedule {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .form-check-inline {
+        display: block;
+        margin-bottom: 8px;
+    }
+    
+    .schedule-display {
+        flex-direction: column;
+        gap: 3px;
+    }
+    
+    .schedule-display .badge {
+        text-align: center;
+        width: 100%;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#teacher-content {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Custom Scrollbar */
+.tabulator-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.tabulator-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.tabulator-body::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+.tabulator-body::-webkit-scrollbar-thumb:hover {
+    background: #5a6fd8;
+} 
+
+/* Weekly Schedule Table Styles */
+.weekly-schedule-table {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.weekly-schedule-table table {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+.weekly-schedule-table th {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    font-weight: 600;
+    padding: 8px 4px;
+    white-space: nowrap;
+}
+
+.weekly-schedule-table td {
+    padding: 4px;
+    vertical-align: middle;
+}
+
+.weekly-schedule-table .schedule-checkbox {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.weekly-schedule-table .schedule-checkbox:checked {
+    accent-color: #28a745;
+}
+
+/* Schedule View Modal Styles */
+.schedule-view-table {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.schedule-view-table table {
+    font-size: 0.9rem;
+}
+
+.schedule-view-table th {
+    background-color: #343a40 !important;
+    color: white !important;
+    border-color: #495057;
+    font-weight: 600;
+    padding: 10px 6px;
+    white-space: nowrap;
+}
+
+.schedule-view-table td {
+    padding: 8px 6px;
+    vertical-align: middle;
+    border-color: #dee2e6;
+}
+
+.schedule-view-table .table-success {
+    background-color: #d4edda !important;
+    color: #155724;
+    font-weight: 500;
+}
+
+.schedule-view-table .table-secondary {
+    background-color: #e2e3e5 !important;
+    color: #6c757d;
+}
+
+/* Teacher Table Styles */
+#teachersTable {
+    font-size: 0.9rem;
+}
+
+#teachersTable .tabulator-cell {
+    padding: 8px 6px;
+    vertical-align: middle;
+}
+
+#teachersTable .clickable-cell {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+#teachersTable .clickable-cell:hover {
+    background-color: #e9ecef;
+}
+
+/* Button Styles */
+.btn-outline-info {
+    border-color: #17a2b8;
+    color: #17a2b8;
+}
+
+.btn-outline-info:hover {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+/* Modal Styles */
+.modal-xl {
+    max-width: 90%;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .weekly-schedule-table {
+        font-size: 0.75rem;
+    }
+    
+    .weekly-schedule-table th,
+    .weekly-schedule-table td {
+        padding: 4px 2px;
+    }
+    
+    .schedule-view-table {
+        font-size: 0.8rem;
+    }
+    
+    .modal-xl {
+        max-width: 95%;
+    }
+}
+
+/* Loading States */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Success/Error States */
+.table-success {
+    background-color: #d4edda !important;
+}
+
+.table-secondary {
+    background-color: #e2e3e5 !important;
+}
+
+/* Teacher Image Styles */
+.teacher-image {
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.teacher-image:hover {
+    transform: scale(1.1);
+    border-color: #17a2b8;
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+/* Image Modal Styles */
+#imageModal .modal-dialog {
+    max-width: 600px;
+}
+
+#imageModal .modal-body {
+    padding: 20px;
+}
+
+#modalImage {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Preview Image Styles */
+#currentImage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#previewImage {
+    border: 2px solid #dee2e6;
+    transition: all 0.3s ease;
+}
+
+#previewImage:hover {
+    border-color: #17a2b8;
+    transform: scale(1.05);
+}
+
+/* Hover Effects */
+.weekly-schedule-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.schedule-view-table tr:hover {
+    background-color: rgba(0,0,0,0.02);
+} 

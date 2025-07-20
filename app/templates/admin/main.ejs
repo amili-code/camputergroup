@@ -43,9 +43,9 @@
                         <i class="bi bi-people"></i>
                         مدیریت دانشجویان
                     </a>
-                    <a class="nav-link" href="#" onclick="showContent('products')">
-                        <i class="bi bi-box"></i>
-                        مدیریت محصولات
+                    <a class="nav-link" href="#" onclick="showContent('teacher')">
+                        <i class="bi bi-person-workspace"></i>
+                        مدیریت اساتید
                     </a>
                     <a class="nav-link" href="#" onclick="showContent('orders')">
                         <i class="bi bi-cart"></i>
@@ -166,20 +166,12 @@
                             </div>
                         </div>
 
-                        <!-- Users Content -->
+                        <!-- student Content -->
                         <%- include('./selection/student.ejs')%>
-
-                        <!-- Products Content -->
-                        <div id="products-content" class="content-panel" style="display: none;">
-                            <h3 class="mb-4"><i class="bi bi-box"></i> مدیریت محصولات</h3>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5>لیست محصولات</h5>
-                                    <p>در اینجا می‌توانید محصولات را مدیریت کنید.</p>
-                                    <button class="btn btn-success">افزودن محصول جدید</button>
-                                </div>
-                            </div>
-                        </div>
+                        
+                        <!-- teacher Content -->
+                        <%- include('./selection/teacher.ejs')%>
+                        
 
                         <!-- Orders Content -->
                         <div id="orders-content" class="content-panel" style="display: none;">
