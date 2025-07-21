@@ -3,11 +3,15 @@ const { sequelize } = require('./database');
 // Import مدل‌ها
 const Student = require('../model/student')(sequelize);
 const Teacher = require('../model/teacher')(sequelize);
+const Course = require('../model/course')(sequelize);
+const Training = require('../model/training')(sequelize);
 
 // ثبت مدل‌ها در Sequelize
 const models = {
     Student,
-    Teacher
+    Teacher,
+    Course,
+    Training
 };
 
 // تعریف روابط بین مدل‌ها (در صورت نیاز)

@@ -40,13 +40,17 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="phone" class="form-label">شماره تلفن *</label>
                             <input type="tel" class="form-control" id="phone" placeholder="09123456789" required>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="nationalCode" class="form-label">کد ملی *</label>
                             <input type="text" class="form-control" id="nationalCode" placeholder="1234567890" maxlength="10" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="studentId" class="form-label">شماره دانشجویی (۱۰ رقمی) *</label>
+                            <input type="text" class="form-control" id="studentId" placeholder="مثلاً 1400123456" maxlength="10" minlength="10" required>
                         </div>
                     </div>
                     <div class="row">
@@ -184,16 +188,17 @@ function initializeStudentTable() {
             {
                 title: "عملیات",
                 formatter: function(cell) {
-                    const studentId = cell.getRow().getData().studentId;
+                    const rowData = cell.getRow().getData();
+                    const id = rowData.id;
                     return `
                         <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-outline-primary" onclick="editStudent(${studentId})" title="ویرایش">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editStudent(${id})" title="ویرایش">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-info" onclick="toggleGraduation(${studentId})" title="تغییر وضعیت فارغ التحصیلی">
+                            <button class="btn btn-sm btn-outline-info" onclick="toggleGraduation(${id})" title="تغییر وضعیت فارغ التحصیلی">
                                 <i class="bi bi-mortarboard"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteStudent(${studentId})" title="حذف">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteStudent(${id})" title="حذف">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -274,16 +279,17 @@ function addNewStudent() {
     document.getElementById('studentForm').reset();
     document.getElementById('password').required = true;
     document.getElementById('confirmPassword').required = true;
+    document.getElementById('studentId').value = '';
     new bootstrap.Modal(document.getElementById('studentModal')).show();
 }
 
 // Edit student
-async function editStudent(studentId) {
+async function editStudent(id) {
     try {
-        const response = await apiRequest(`/student/${studentId}`, "GET");
+        const response = await apiRequest(`/student/${id}`, "GET");
         if (response && response.success) {
             const student = response.data;
-            editingStudentId = studentId;
+            editingStudentId = id;
             
             document.getElementById('studentModalLabel').textContent = 'ویرایش دانشجو';
             document.getElementById('firstName').value = student.firstName;
@@ -291,6 +297,7 @@ async function editStudent(studentId) {
             document.getElementById('phone').value = student.phone;
             document.getElementById('nationalCode').value = student.nationalCode;
             document.getElementById('isGraduated').checked = student.isGraduated;
+            document.getElementById('studentId').value = student.studentId || '';
             
             // رمز عبور اختیاری در ویرایش
             document.getElementById('password').required = false;
@@ -317,8 +324,9 @@ async function saveStudent() {
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     const isGraduated = document.getElementById('isGraduated').checked;
+    const studentId = document.getElementById('studentId').value.trim();
 
-    if (!firstName || !lastName || !phone || !nationalCode) {
+    if (!firstName || !lastName || !phone || !nationalCode || !studentId) {
         showErrorAlert('لطفاً تمام فیلدهای اجباری را پر کنید');
         return;
     }
@@ -343,6 +351,11 @@ async function saveStudent() {
         return;
     }
 
+    if (!/^[0-9]{10}$/.test(studentId)) {
+        showErrorAlert('شماره دانشجویی باید ۱۰ رقم باشد');
+        return;
+    }
+
     // نمایش loading
     isStudentLoading = true;
     const saveBtn = document.getElementById('saveBtn');
@@ -356,7 +369,8 @@ async function saveStudent() {
             lastName,
             phone,
             nationalCode,
-            isGraduated
+            isGraduated,
+            studentId
         };
 
         if (password) {
@@ -390,7 +404,7 @@ async function saveStudent() {
 }
 
 // Delete student
-async function deleteStudent(studentId) {
+async function deleteStudent(id) {
     const result = await Swal.fire({
         title: 'آیا مطمئن هستید؟',
         text: "این عملیات قابل بازگشت نیست!",
@@ -404,7 +418,7 @@ async function deleteStudent(studentId) {
 
     if (result.isConfirmed) {
         try {
-            const response = await apiRequest(`/student/${studentId}`, "DELETE");
+            const response = await apiRequest(`/student/${id}`, "DELETE");
                     if (response && response.success) {
             showSuccessAlert('دانشجو با موفقیت حذف شد');
             refreshStudentTable(); // بروزرسانی جدول
@@ -418,10 +432,11 @@ async function deleteStudent(studentId) {
 }
 
 // Toggle graduation status
-async function toggleGraduation(studentId) {
+async function toggleGraduation(id) {
     try {
-        const response = await apiRequest(`/student/${studentId}/toggle-graduation`, "PATCH");
+        const response = await apiRequest(`/student/${id}/toggle-graduation`, "PATCH");
         if (response && response.success) {
+            
             showSuccessAlert(response.message);
             refreshStudentTable(); // بروزرسانی جدول
         } else {
@@ -429,6 +444,34 @@ async function toggleGraduation(studentId) {
         }
     } catch (error) {
         showErrorAlert('خطا در تغییر وضعیت');
+    }
+}
+
+// Add JS function for incrementTerm
+async function incrementTerm(studentId) {
+    try {
+        // دریافت اطلاعات دانشجو
+        const response = await apiRequest(`/student/${studentId}`, "GET");
+        if (response && response.success) {
+            const student = response.data;
+            let newTerm = (parseInt(student.term, 10) || 1) + 1;
+            if (newTerm > 20) {
+                showErrorAlert('حداکثر ترم 20 است');
+                return;
+            }
+            // ارسال درخواست بروزرسانی ترم
+            const updateRes = await apiRequest(`/student/${studentId}`, "PUT", { term: newTerm });
+            if (updateRes && updateRes.success) {
+                showSuccessAlert('ترم دانشجو با موفقیت افزایش یافت');
+                refreshStudentTable();
+            } else {
+                showErrorAlert(updateRes?.message || 'خطا در افزایش ترم');
+            }
+        } else {
+            showErrorAlert('دانشجو یافت نشد');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در افزایش ترم');
     }
 }
 

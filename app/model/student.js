@@ -2,17 +2,26 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
     const Student = sequelize.define('Student', {
-        // شماره دانشجویی - شروع از 5000 و افزایش خودکار
-        studentId: {
+        // آیدی داخلی اتو اینکریمنت
+        id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
             allowNull: false,
+            comment: 'آیدی داخلی اتو اینکریمنت که از 1 شروع می‌شود'
+        },
+        // شماره دانشجویی - عدد 10 رقمی که کاربر وارد می‌کند
+        studentId: {
+            type: DataTypes.STRING(10),
+            allowNull: false,
             unique: true,
             field: 'student_id',
-            comment: 'شماره دانشجویی - شروع از 5000'
+            comment: 'شماره دانشجویی 10 رقمی که کاربر وارد می‌کند',
+            validate: {
+                len: [10, 10],
+                isNumeric: true
+            }
         },
-        
         // نام
         firstName: {
             type: DataTypes.STRING(50),
@@ -20,7 +29,6 @@ module.exports = (sequelize) => {
             field: 'first_name',
             comment: 'نام دانشجو'
         },
-        
         // نام خانوادگی
         lastName: {
             type: DataTypes.STRING(50),
@@ -28,7 +36,6 @@ module.exports = (sequelize) => {
             field: 'last_name',
             comment: 'نام خانوادگی دانشجو'
         },
-        
         // رمز عبور
         password: {
             type: DataTypes.STRING(255),
@@ -36,7 +43,6 @@ module.exports = (sequelize) => {
             field: 'password',
             comment: 'رمز عبور دانشجو'
         },
-        
         // شماره تلفن
         phone: {
             type: DataTypes.STRING(15),
@@ -45,10 +51,9 @@ module.exports = (sequelize) => {
             field: 'phone',
             comment: 'شماره تلفن دانشجو',
             validate: {
-                is: /^(\+98|0)?9\d{9}$/ // فرمت شماره تلفن ایرانی
+                is: /^( 2B98|0)?9\d{9}$/ // فرمت شماره تلفن ایرانی
             }
         },
-        
         // کد ملی
         nationalCode: {
             type: DataTypes.STRING(10),
@@ -57,11 +62,10 @@ module.exports = (sequelize) => {
             field: 'national_code',
             comment: 'کد ملی دانشجو',
             validate: {
-                len: [10, 10], // دقیقاً 10 رقم
+                len: [10, 10],
                 isNumeric: true
             }
         },
-        
         // وضعیت فارغ التحصیلی
         isGraduated: {
             type: DataTypes.BOOLEAN,
@@ -72,34 +76,13 @@ module.exports = (sequelize) => {
         }
     }, {
         tableName: 'students',
-        timestamps: true, // createdAt و updatedAt
+        timestamps: true,
         indexes: [
-            {
-                unique: true,
-                fields: ['student_id']
-            },
-            {
-                unique: true,
-                fields: ['phone']
-            },
-            {
-                unique: true,
-                fields: ['national_code']
-            }
+            { unique: true, fields: ['student_id'] },
+            { unique: true, fields: ['phone'] },
+            { unique: true, fields: ['national_code'] }
         ],
         hooks: {
-            // تنظیم شماره دانشجویی شروع از 5000
-            beforeCreate: async (student) => {
-                const lastStudent = await sequelize.models.Student.findOne({
-                    order: [['studentId', 'DESC']]
-                });
-                
-                if (!lastStudent) {
-                    student.studentId = 5000;
-                } else {
-                    student.studentId = lastStudent.studentId + 1;
-                }
-            }
         }
     });
 

@@ -51,13 +51,22 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
+                            <label for="teacherId" class="form-label">کد پرسنلی (۱۰ رقمی) *</label>
+                            <input type="text" class="form-control" id="teacherId" placeholder="مثلاً 1400123456" maxlength="10" minlength="10" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label for="teacherPersonalImage" class="form-label">عکس پرسنلی</label>
                             <input type="file" class="form-control" id="teacherPersonalImage" accept="image/*">
                             <div id="currentImage" class="mt-2 text-center" style="display: none;">
                                 <img id="previewImage" src="" alt="تصویر فعلی" style="max-width: 100px; max-height: 100px;" class="img-thumbnail">
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="removeTeacherImage">
+                                    <label class="form-check-label" for="removeTeacherImage">حذف تصویر فعلی</label>
+                                </div>
                             </div>
                         </div>
-                        <div class="row mt-3">
+                    </div>
+                    <div class="row mt-3">
                             <label class="form-label">برنامه هفتگی *</label>
                             <div class="weekly-schedule-table">
                                 <table class="table table-bordered table-sm">
@@ -137,7 +146,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                        </div>
+                        
                     </div>
                 </form>
             </div>
@@ -322,13 +331,14 @@ function initializeTeacherTable() {
             {
                 title: "عملیات",
                 formatter: function(cell) {
-                    const teacherId = cell.getRow().getData().teacherId;
+                    const rowData = cell.getRow().getData();
+                    const id = rowData.id;
                     return `
                         <div class="btn-group" role="group">
-                            <button class="btn btn-sm btn-outline-primary" onclick="editTeacher(${teacherId})" title="ویرایش">
+                            <button class="btn btn-sm btn-outline-primary" onclick="editTeacher(${id})" title="ویرایش">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTeacher(${teacherId})" title="حذف">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTeacher(${id})" title="حذف">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -409,6 +419,7 @@ function addNewTeacher() {
     document.getElementById('teacherForm').reset();
     document.getElementById('currentImage').style.display = 'none';
     document.getElementById('teacherPersonalImage').required = false;
+    document.getElementById('teacherId').value = '';
     
     // ریست کردن برنامه هفتگی
     const checkboxes = document.querySelectorAll('.schedule-checkbox');
@@ -418,25 +429,28 @@ function addNewTeacher() {
 }
 
 // Edit teacher
-async function editTeacher(teacherId) {
+async function editTeacher(id) {
     try {
-        const response = await apiRequest(`/teacher/${teacherId}`, "GET");
+        const response = await apiRequest(`/teacher/${id}`, "GET");
         if (response && response.success) {
             const teacher = response.data;
-            editingTeacherId = teacherId;
+            editingTeacherId = id;
             
             document.getElementById('teacherModalLabel').textContent = 'ویرایش استاد';
             document.getElementById('teacherFirstName').value = teacher.firstName;
             document.getElementById('teacherLastName').value = teacher.lastName;
             document.getElementById('teacherPhone').value = teacher.phone;
             document.getElementById('teacherNationalCode').value = teacher.nationalCode;
+            document.getElementById('teacherId').value = teacher.teacherId || '';
             
             // نمایش تصویر فعلی
-            if (teacher.personalImage) {
+            if (teacher.personalImage && teacher.personalImage !== '-' && teacher.personalImage !== 'null') {
                 document.getElementById('previewImage').src = teacher.personalImage;
                 document.getElementById('currentImage').style.display = 'block';
+                document.getElementById('removeTeacherImage').checked = false;
             } else {
                 document.getElementById('currentImage').style.display = 'none';
+                document.getElementById('removeTeacherImage').checked = false;
             }
             
             // تنظیم برنامه هفتگی
@@ -468,14 +482,18 @@ async function saveTeacher() {
     const phoneElement = document.getElementById('teacherPhone');
     const nationalCodeElement = document.getElementById('teacherNationalCode');
     const personalImageElement = document.getElementById('teacherPersonalImage');
+    const teacherIdElement = document.getElementById('teacherId');
+    const removeImageCheckbox = document.getElementById('removeTeacherImage');
 
     // Debug: بررسی وجود المان‌ها
     console.log('Debug - firstNameElement:', firstNameElement);
     console.log('Debug - lastNameElement:', lastNameElement);
     console.log('Debug - phoneElement:', phoneElement);
     console.log('Debug - nationalCodeElement:', nationalCodeElement);
+    console.log('Debug - teacherIdElement:', teacherIdElement);
+    console.log('Debug - removeImageCheckbox:', removeImageCheckbox);
 
-    if (!firstNameElement || !lastNameElement || !phoneElement || !nationalCodeElement) {
+    if (!firstNameElement || !lastNameElement || !phoneElement || !nationalCodeElement || !teacherIdElement) {
         console.log('Debug - Elements not found!');
         showErrorAlert('خطا در پیدا کردن فیلدهای فرم');
         return;
@@ -486,25 +504,30 @@ async function saveTeacher() {
     const phone = phoneElement.value.trim();
     const nationalCode = nationalCodeElement.value.trim();
     const personalImage = personalImageElement ? personalImageElement.files[0] : null;
+    const teacherId = teacherIdElement.value.trim();
 
     // Debug: نمایش مقادیر
     console.log('Debug - firstName:', firstName, 'length:', firstName.length);
     console.log('Debug - lastName:', lastName, 'length:', lastName.length);
     console.log('Debug - phone:', phone, 'length:', phone.length);
     console.log('Debug - nationalCode:', nationalCode, 'length:', nationalCode.length);
+    console.log('Debug - teacherId:', teacherId, 'length:', teacherId.length);
+    console.log('Debug - personalImage:', personalImage);
+    console.log('Debug - removeImageCheckbox:', removeImageCheckbox.checked);
 
-    if (!firstName || !lastName || !phone || !nationalCode) {
+    if (!firstName || !lastName || !phone || !nationalCode || !teacherId) {
         console.log('Debug - Validation failed');
         console.log('firstName empty:', !firstName);
         console.log('lastName empty:', !lastName);
         console.log('phone empty:', !phone);
         console.log('nationalCode empty:', !nationalCode);
+        console.log('teacherId empty:', !teacherId);
         showErrorAlert('لطفاً تمام فیلدهای اجباری را پر کنید');
         return;
     }
 
-    if (nationalCode.length !== 10) {
-        showErrorAlert('کد ملی باید 10 رقم باشد');
+    if (!/^[0-9]{10}$/.test(teacherId)) {
+        showErrorAlert('کد پرسنلی باید ۱۰ رقم باشد');
         return;
     }
 
@@ -543,9 +566,14 @@ async function saveTeacher() {
         formData.append('phone', phone);
         formData.append('nationalCode', nationalCode);
         formData.append('weeklySchedule', weeklySchedule);
+        formData.append('teacherId', teacherId);
         
         if (personalImage) {
             formData.append('personalImage', personalImage);
+        }
+
+        if (removeImageCheckbox.checked) {
+            formData.append('personalImage', '');
         }
 
         let response;
@@ -575,7 +603,7 @@ async function saveTeacher() {
 }
 
 // Delete teacher
-async function deleteTeacher(teacherId) {
+async function deleteTeacher(id) {
     const result = await Swal.fire({
         title: 'آیا مطمئن هستید؟',
         text: "این عملیات قابل بازگشت نیست!",
@@ -589,7 +617,7 @@ async function deleteTeacher(teacherId) {
 
     if (result.isConfirmed) {
         try {
-            const response = await apiRequest(`/teacher/${teacherId}`, "DELETE");
+            const response = await apiRequest(`/teacher/${id}`, "DELETE");
             if (response && response.success) {
                             showSuccessAlert('استاد با موفقیت حذف شد');
             refreshTeacherTable(); // بروزرسانی جدول

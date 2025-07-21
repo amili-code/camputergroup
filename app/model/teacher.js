@@ -2,15 +2,25 @@ const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
     const Teacher = sequelize.define('Teacher', {
-        // کد پرسنلی - شروع از 100 و افزایش خودکار
-        teacherId: {
+        // آیدی داخلی اتو اینکریمنت
+        id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
             allowNull: false,
+            comment: 'آیدی داخلی اتو اینکریمنت که از 1 شروع می‌شود'
+        },
+        // کد پرسنلی - عدد 10 رقمی که ادمین وارد می‌کند
+        teacherId: {
+            type: DataTypes.STRING(10),
+            allowNull: false,
             unique: true,
             field: 'teacher_id',
-            comment: 'کد پرسنلی استاد - شروع از 100'
+            comment: 'کد پرسنلی 10 رقمی که ادمین وارد می‌کند',
+            validate: {
+                len: [10, 10],
+                isNumeric: true
+            }
         },
         
         // نام
@@ -78,32 +88,12 @@ module.exports = (sequelize) => {
         tableName: 'teachers',
         timestamps: true, // createdAt و updatedAt
         indexes: [
-            {
-                unique: true,
-                fields: ['teacher_id']
-            },
-            {
-                unique: true,
-                fields: ['phone']
-            },
-            {
-                unique: true,
-                fields: ['national_code']
-            }
+            { unique: true, fields: ['teacher_id'] },
+            { unique: true, fields: ['phone'] },
+            { unique: true, fields: ['national_code'] }
         ],
         hooks: {
-            // تنظیم کد پرسنلی شروع از 100
-            beforeCreate: async (teacher) => {
-                const lastTeacher = await sequelize.models.Teacher.findOne({
-                    order: [['teacherId', 'DESC']]
-                });
-                
-                if (!lastTeacher) {
-                    teacher.teacherId = 100;
-                } else {
-                    teacher.teacherId = lastTeacher.teacherId + 1;
-                }
-            }
+            // حذف منطق beforeCreate
         }
     });
 

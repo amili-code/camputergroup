@@ -47,13 +47,13 @@
                         <i class="bi bi-person-workspace"></i>
                         مدیریت اساتید
                     </a>
-                    <a class="nav-link" href="#" onclick="showContent('orders')">
-                        <i class="bi bi-cart"></i>
-                        سفارشات
+                    <a class="nav-link" href="#" onclick="showContent('course')">
+                        <i class="bi bi-book"></i>
+                        دوره و رویداد ها
                     </a>
-                    <a class="nav-link" href="#" onclick="showContent('reports')">
-                        <i class="bi bi-graph-up"></i>
-                        گزارشات
+                    <a class="nav-link" href="#" onclick="showContent('training')">
+                        <i class="bi bi-book"></i>
+                        اموزشی
                     </a>
                     <a class="nav-link" href="#" onclick="showContent('settings')">
                         <i class="bi bi-gear"></i>
@@ -172,30 +172,13 @@
                         <!-- teacher Content -->
                         <%- include('./selection/teacher.ejs')%>
                         
+                        
+                        <!-- course Content -->
+                        <%- include('./selection/course.ejs')%>
+                        
 
-                        <!-- Orders Content -->
-                        <div id="orders-content" class="content-panel" style="display: none;">
-                            <h3 class="mb-4"><i class="bi bi-cart"></i> سفارشات</h3>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5>لیست سفارشات</h5>
-                                    <p>در اینجا می‌توانید سفارشات را مشاهده و مدیریت کنید.</p>
-                                    <button class="btn btn-warning">مشاهده سفارشات جدید</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Reports Content -->
-                        <div id="reports-content" class="content-panel" style="display: none;">
-                            <h3 class="mb-4"><i class="bi bi-graph-up"></i> گزارشات</h3>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5>گزارشات سیستم</h5>
-                                    <p>در اینجا می‌توانید گزارشات مختلف را مشاهده کنید.</p>
-                                    <button class="btn btn-info">دانلود گزارش</button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- training Content -->
+                        <%- include('./selection/training.ejs')%>
 
                         <!-- Settings Content -->
                         <div id="settings-content" class="content-panel" style="display: none;">

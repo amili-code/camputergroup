@@ -6,13 +6,30 @@ class StudentController {
     // CREATE - ایجاد دانشجوی جدید
     async createStudent(req, res) {
         try {
-            const { firstName, lastName, password, phone, nationalCode, isGraduated } = req.body;
+            const { firstName, lastName, password, phone, nationalCode, isGraduated, studentId } = req.body;
 
             // اعتبارسنجی داده‌های ورودی
-            if (!firstName || !lastName || !password || !phone || !nationalCode) {
+            if (!firstName || !lastName || !password || !phone || !nationalCode || !studentId) {
                 return res.status(400).json({
                     success: false,
-                    message: 'تمام فیلدهای اجباری باید پر شوند'
+                    message: 'تمام فیلدهای اجباری باید پر شوند (شامل شماره دانشجویی)'
+                });
+            }
+
+            // اعتبارسنجی شماره دانشجویی (باید عدد 10 رقمی باشد)
+            if (!/^[0-9]{10}$/.test(studentId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'شماره دانشجویی باید یک عدد 10 رقمی باشد'
+                });
+            }
+
+            // بررسی تکراری نبودن شماره دانشجویی
+            const existingStudentId = await models.Student.findOne({ where: { studentId } });
+            if (existingStudentId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'این شماره دانشجویی قبلاً ثبت شده است'
                 });
             }
 
@@ -39,6 +56,7 @@ class StudentController {
 
             // ایجاد دانشجوی جدید
             const student = await models.Student.create({
+                studentId,
                 firstName,
                 lastName,
                 password: hashedPassword,
@@ -97,7 +115,7 @@ class StudentController {
         }
     }
 
-    // READ - دریافت دانشجو بر اساس ID
+    // READ - دریافت دانشجو بر اساس ID (کلید اصلی auto-increment)
     async getStudentById(req, res) {
         try {
             const { id } = req.params;
@@ -179,11 +197,11 @@ class StudentController {
         }
     }
 
-    // UPDATE - بروزرسانی دانشجو
+    // UPDATE - بروزرسانی دانشجو (بر اساس id)
     async updateStudent(req, res) {
         try {
             const { id } = req.params;
-            const { firstName, lastName, password, phone, nationalCode, isGraduated } = req.body;
+            const { firstName, lastName, password, phone, nationalCode, isGraduated, studentId } = req.body;
 
             // بررسی وجود دانشجو
             const student = await models.Student.findByPk(id);
@@ -192,6 +210,23 @@ class StudentController {
                     success: false,
                     message: 'دانشجو یافت نشد'
                 });
+            }
+
+            // بررسی تکراری نبودن شماره دانشجویی (اگر تغییر کرده باشد)
+            if (studentId && studentId !== student.studentId) {
+                if (!/^[0-9]{10}$/.test(studentId)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'شماره دانشجویی باید یک عدد 10 رقمی باشد'
+                    });
+                }
+                const existingStudentId = await models.Student.findOne({ where: { studentId } });
+                if (existingStudentId) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'این شماره دانشجویی قبلاً ثبت شده است'
+                    });
+                }
             }
 
             // بررسی تکراری نبودن شماره تلفن (اگر تغییر کرده باشد)
@@ -223,6 +258,7 @@ class StudentController {
             if (phone) updateData.phone = phone;
             if (nationalCode) updateData.nationalCode = nationalCode;
             if (typeof isGraduated === 'boolean') updateData.isGraduated = isGraduated;
+            if (studentId && studentId !== student.studentId) updateData.studentId = studentId;
 
             // بروزرسانی رمز عبور (اگر ارائه شده باشد)
             if (password) {
@@ -337,7 +373,7 @@ class StudentController {
                     { lastName: { [Op.like]: `%${q}%` } },
                     { phone: { [Op.like]: `%${q}%` } },
                     { nationalCode: { [Op.like]: `%${q}%` } },
-                    { studentId: { [Op.like]: `%${q}%` } }
+                    { studentId: { [Op.like]: `%${q}%` } },
                 ]
             };
 

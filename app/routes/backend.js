@@ -78,4 +78,114 @@ router.delete('/teacher/:id', teacherController.deleteTeacher.bind(teacherContro
 // SEARCH - جستجو در اساتید
 router.get('/teachers/search', teacherController.searchTeachers.bind(teacherController));
 
+
+
+
+
+
+
+
+// ==================== COURSE ROUTES ====================
+const courseController = require("../api/course");
+
+// تنظیمات آپلود تصویر دوره
+const courseImageStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "public/pic/course");
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'course-' + uniqueSuffix + '-' + file.originalname);
+    }
+});
+const courseImageUpload = multer({
+    storage: courseImageStorage,
+    limits: {
+        fileSize: 2 * 1024 * 1024, // حداکثر 2 مگابایت
+        files: 1
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('فقط فایل‌های تصویری مجاز هستند'), false);
+        }
+    }
+});
+
+// CREATE - ایجاد دوره جدید
+router.post('/course', courseImageUpload.single('thumbnail'), (req, res, next) => {
+    if (req.file) {
+        req.body.thumbnail = `/pic/course/${req.file.filename}`;
+    }
+    next();
+}, courseController.createCourse.bind(courseController));
+
+// READ - دریافت دوره‌ها
+router.get('/courses', courseController.getAllCourses.bind(courseController));
+router.get('/course/:id', courseController.getCourseById.bind(courseController));
+router.get('/courses/available', courseController.getAvailableCourses.bind(courseController));
+router.get('/courses/unavailable', courseController.getUnavailableCourses.bind(courseController));
+
+// UPDATE - بروزرسانی دوره
+router.put('/course/:id', courseImageUpload.single('thumbnail'), (req, res, next) => {
+    if (req.file) {
+        req.body.thumbnail = `/pic/course/${req.file.filename}`;
+    }
+    next();
+}, courseController.updateCourse.bind(courseController));
+router.patch('/course/:id/toggle-availability', courseController.toggleAvailability.bind(courseController));
+
+// DELETE - حذف دوره
+router.delete('/course/:id', courseController.deleteCourse.bind(courseController));
+
+// SEARCH - جستجو در دوره‌ها
+router.get('/courses/search', courseController.searchCourses.bind(courseController));
+
+
+
+
+
+
+
+
+// ==================== TRAINING CATEGORY ROUTES ====================
+const trainingController = require("../api/training");
+
+// تنظیمات آپلود فایل آموزشی
+const trainingFileStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "public/files");
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'training-' + uniqueSuffix + '-' + file.originalname);
+    }
+});
+const trainingFileUpload = multer({
+    storage: trainingFileStorage,
+    limits: {
+        fileSize: 100 * 1024 * 1024, // حداکثر 100 مگابایت
+        files: 1
+    },
+    fileFilter: (req, file, cb) => {
+        // همه فرمت‌ها مجاز است
+        cb(null, true);
+    }
+});
+
+// CREATE - ایجاد شاخه/زیرشاخه
+router.post('/training', trainingFileUpload.single('file'), trainingController.createCategory.bind(trainingController));
+// READ - دریافت همه شاخه‌ها (درختی)
+router.get('/trainings', trainingController.getAllCategories.bind(trainingController));
+// READ - دریافت یک شاخه با زیرشاخه‌ها
+router.get('/training/:id', trainingController.getCategoryById.bind(trainingController));
+// UPDATE - ویرایش شاخه (با امکان تغییر فایل)
+router.put('/training/:id', trainingFileUpload.single('file'), trainingController.updateCategory.bind(trainingController));
+// DELETE - حذف شاخه
+router.delete('/training/:id', trainingController.deleteCategory.bind(trainingController));
+// SEARCH - جستجو در شاخه‌ها
+router.get('/trainings/search', trainingController.searchCategories.bind(trainingController));
+
+
 module.exports = router;

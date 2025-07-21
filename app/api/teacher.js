@@ -7,13 +7,30 @@ class TeacherController {
     // CREATE - ایجاد استاد جدید
     async createTeacher(req, res) {
         try {
-            const { firstName, lastName, phone, nationalCode, weeklySchedule } = req.body;
+            const { firstName, lastName, phone, nationalCode, weeklySchedule, teacherId } = req.body;
 
             // اعتبارسنجی داده‌های ورودی
-            if (!firstName || !lastName || !phone || !nationalCode) {
+            if (!firstName || !lastName || !phone || !nationalCode || !teacherId) {
                 return res.status(400).json({
                     success: false,
-                    message: 'تمام فیلدهای اجباری باید پر شوند'
+                    message: 'تمام فیلدهای اجباری باید پر شوند (شامل کد پرسنلی)'
+                });
+            }
+
+            // اعتبارسنجی کد پرسنلی (باید عدد 10 رقمی باشد)
+            if (!/^[0-9]{10}$/.test(teacherId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'کد پرسنلی باید یک عدد 10 رقمی باشد'
+                });
+            }
+
+            // بررسی تکراری نبودن کد پرسنلی
+            const existingTeacherId = await models.Teacher.findOne({ where: { teacherId } });
+            if (existingTeacherId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'این کد پرسنلی قبلاً ثبت شده است'
                 });
             }
 
@@ -51,6 +68,7 @@ class TeacherController {
 
             // ایجاد استاد جدید
             const teacher = await models.Teacher.create({
+                teacherId,
                 firstName,
                 lastName,
                 personalImage: personalImagePath,
@@ -138,7 +156,7 @@ class TeacherController {
     async updateTeacher(req, res) {
         try {
             const { id } = req.params;
-            const { firstName, lastName, phone, nationalCode, weeklySchedule } = req.body;
+            const { firstName, lastName, phone, nationalCode, weeklySchedule, teacherId, personalImage } = req.body;
 
             // بررسی وجود استاد
             const teacher = await models.Teacher.findByPk(id);
@@ -147,6 +165,23 @@ class TeacherController {
                     success: false,
                     message: 'استاد یافت نشد'
                 });
+            }
+
+            // بررسی تکراری نبودن کد پرسنلی (اگر تغییر کرده باشد)
+            if (teacherId && teacherId !== teacher.teacherId) {
+                if (!/^[0-9]{10}$/.test(teacherId)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'کد پرسنلی باید یک عدد 10 رقمی باشد'
+                    });
+                }
+                const existingTeacherId = await models.Teacher.findOne({ where: { teacherId } });
+                if (existingTeacherId) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'این کد پرسنلی قبلاً ثبت شده است'
+                    });
+                }
             }
 
             // بررسی تکراری نبودن شماره تلفن (اگر تغییر کرده باشد)
@@ -179,7 +214,7 @@ class TeacherController {
                 });
             }
 
-            // پردازش تصویر آپلود شده
+            // پردازش تصویر آپلود شده یا حذف تصویر
             let personalImagePath = teacher.personalImage; // نگه داشتن تصویر قبلی
             if (req.file) {
                 // حذف تصویر قدیمی اگر وجود داشته باشد
@@ -196,12 +231,27 @@ class TeacherController {
                 }
                 personalImagePath = `/pic/teachers/${req.file.filename}`;
             }
+            // اگر کاربر درخواست حذف تصویر داده بود (personalImage === '')
+            if (personalImage === '') {
+                if (teacher.personalImage) {
+                    try {
+                        const oldImagePath = path.join(__dirname, '../../public', teacher.personalImage);
+                        if (fs.existsSync(oldImagePath)) {
+                            fs.unlinkSync(oldImagePath);
+                        }
+                    } catch (imageError) {
+                        console.error('خطا در حذف تصویر استاد:', imageError);
+                    }
+                }
+                personalImagePath = null;
+            }
 
             // آماده‌سازی داده‌های بروزرسانی
             const updateData = {};
+            if (teacherId && teacherId !== teacher.teacherId) updateData.teacherId = teacherId;
             if (firstName) updateData.firstName = firstName;
             if (lastName) updateData.lastName = lastName;
-            if (req.file) updateData.personalImage = personalImagePath;
+            if (req.file || personalImage === '') updateData.personalImage = personalImagePath;
             if (phone) updateData.phone = phone;
             if (nationalCode) updateData.nationalCode = nationalCode;
             if (weeklySchedule) updateData.weeklySchedule = weeklySchedule;

@@ -1,0 +1,251 @@
+<!-- ===================================== custom css ========================================= -->
+<link rel="stylesheet" href="/css/admin/student.css">
+
+<div id="training-content" class="content-panel" style="display: none;">
+    <h3 class="mb-4"><i class="bi bi-diagram-3"></i> مدیریت آموزش (شاخه و زیرشاخه)</h3>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">ساختار آموزشی</h4>
+            <button class="btn btn-primary" onclick="showAddTrainingModal(null)">
+                <i class="bi bi-plus-circle"></i> افزودن شاخه اصلی
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="trainingTree"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Training Modal -->
+<div class="modal fade" id="trainingModal" tabindex="-1" aria-labelledby="trainingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="trainingModalLabel">افزودن شاخه/زیرشاخه</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="trainingForm">
+                    <input type="hidden" id="trainingId">
+                    <input type="hidden" id="trainingParentId">
+                    <div class="mb-3">
+                        <label for="trainingTitle" class="form-label">عنوان *</label>
+                        <input type="text" class="form-control" id="trainingTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="trainingDescription" class="form-label">توضیحات</label>
+                        <textarea class="form-control" id="trainingDescription" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="trainingFile" class="form-label">فایل آموزشی (اختیاری)</label>
+                        <input type="file" class="form-control" id="trainingFile" accept="*/*">
+                        <div id="currentTrainingFileDiv" class="mt-2" style="display:none;">
+                            <span id="currentTrainingFileName"></span>
+                            <button type="button" class="btn btn-sm btn-danger ms-2" id="removeTrainingFileBtn">حذف فایل فعلی</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="saveTraining()">
+                    ذخیره
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let trainingTreeData = [];
+let editingTrainingId = null;
+let removeFileFlag = false;
+
+// بارگذاری ساختار درختی آموزش
+async function loadTrainingTree() {
+    try {
+        const response = await apiRequest('/trainings', 'GET');
+        if (response && response.success) {
+            trainingTreeData = response.data;
+            renderTrainingTree();
+        }
+    } catch (error) {
+        showErrorAlert('خطا در دریافت ساختار آموزشی');
+    }
+}
+
+// رندر درخت آموزشی به صورت لیست تو در تو
+function renderTrainingTree() {
+    const container = document.getElementById('trainingTree');
+    container.innerHTML = '';
+    function renderNode(node, level = 0) {
+        let html = `<div class="training-node" style="margin-right:${level * 24}px; border-right:2px solid #eee; padding-right:8px; margin-bottom:8px;">
+            <span class="fw-bold">${node.title}</span>`;
+        if (node.filePath) {
+            html += ` <a href="${node.filePath}" target="_blank" class="badge bg-info ms-2">دانلود فایل</a>`;
+        }
+        html += `
+            <button class="btn btn-sm btn-outline-primary ms-1" onclick="showAddTrainingModal(${node.id})" title="افزودن زیرشاخه"><i class="bi bi-plus"></i></button>
+            <button class="btn btn-sm btn-outline-secondary ms-1" onclick="showEditTrainingModal(${node.id})" title="ویرایش"><i class="bi bi-pencil"></i></button>
+            <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteTraining(${node.id})" title="حذف"><i class="bi bi-trash"></i></button>
+        `;
+        if (node.description) {
+            html += `<div class="text-muted small mt-1">${node.description}</div>`;
+        }
+        html += '</div>';
+        if (node.children && node.children.length > 0) {
+            node.children.forEach(child => {
+                html += renderNode(child, level + 1);
+            });
+        }
+        return html;
+    }
+    let treeHtml = '';
+    trainingTreeData.forEach(node => {
+        treeHtml += renderNode(node);
+    });
+    container.innerHTML = treeHtml;
+}
+
+// نمایش مودال افزودن شاخه یا زیرشاخه
+function showAddTrainingModal(parentId) {
+    editingTrainingId = null;
+    removeFileFlag = false;
+    document.getElementById('trainingModalLabel').textContent = parentId ? 'افزودن زیرشاخه' : 'افزودن شاخه اصلی';
+    document.getElementById('trainingForm').reset();
+    document.getElementById('trainingId').value = '';
+    document.getElementById('trainingParentId').value = parentId || '';
+    document.getElementById('currentTrainingFileDiv').style.display = 'none';
+    document.getElementById('currentTrainingFileName').textContent = '';
+    const modal = new bootstrap.Modal(document.getElementById('trainingModal'));
+    modal.show();
+}
+
+// نمایش مودال ویرایش شاخه
+async function showEditTrainingModal(id) {
+    try {
+        const response = await apiRequest(`/training/${id}`, 'GET');
+        if (response && response.success) {
+            const node = response.data;
+            editingTrainingId = node.id;
+            removeFileFlag = false;
+            document.getElementById('trainingModalLabel').textContent = 'ویرایش شاخه/زیرشاخه';
+            document.getElementById('trainingForm').reset();
+            document.getElementById('trainingId').value = node.id;
+            document.getElementById('trainingParentId').value = node.parentId || '';
+            document.getElementById('trainingTitle').value = node.title;
+            document.getElementById('trainingDescription').value = node.description || '';
+            if (node.filePath) {
+                document.getElementById('currentTrainingFileDiv').style.display = 'block';
+                document.getElementById('currentTrainingFileName').textContent = node.filePath.split('/').pop();
+            } else {
+                document.getElementById('currentTrainingFileDiv').style.display = 'none';
+                document.getElementById('currentTrainingFileName').textContent = '';
+            }
+            const modal = new bootstrap.Modal(document.getElementById('trainingModal'));
+            modal.show();
+            document.getElementById('removeTrainingFileBtn').onclick = function() {
+                removeFileFlag = true;
+                document.getElementById('currentTrainingFileDiv').style.display = 'none';
+            };
+        }
+    } catch (error) {
+        showErrorAlert('خطا در دریافت اطلاعات شاخه');
+    }
+}
+
+// ذخیره شاخه یا زیرشاخه
+async function saveTraining() {
+    const form = document.getElementById('trainingForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    const id = document.getElementById('trainingId').value;
+    const parentId = document.getElementById('trainingParentId').value;
+    const title = document.getElementById('trainingTitle').value.trim();
+    const description = document.getElementById('trainingDescription').value.trim();
+    const fileInput = document.getElementById('trainingFile');
+    const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('parentId', parentId);
+    formData.append('description', description);
+    if (file) {
+        formData.append('file', file);
+    }
+    if (removeFileFlag) {
+        formData.append('filePath', '');
+    }
+    try {
+        let response;
+        if (id) {
+            response = await apiRequest(`/training/${id}`, 'PUT', formData, true);
+        } else {
+            response = await apiRequest('/training', 'POST', formData, true);
+        }
+        if (response && response.success) {
+            showSuccessAlert(id ? 'شاخه با موفقیت ویرایش شد' : 'شاخه با موفقیت اضافه شد');
+            bootstrap.Modal.getInstance(document.getElementById('trainingModal')).hide();
+            loadTrainingTree();
+        } else {
+            showErrorAlert(response?.message || 'خطا در ذخیره اطلاعات');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در ذخیره اطلاعات');
+    }
+}
+
+// حذف شاخه
+async function deleteTraining(id) {
+    const result = await Swal.fire({
+        title: 'آیا مطمئن هستید؟',
+        text: "این عملیات قابل بازگشت نیست!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'بله، حذف کن!',
+        cancelButtonText: 'انصراف'
+    });
+    if (result.isConfirmed) {
+        try {
+            const response = await apiRequest(`/training/${id}`, 'DELETE');
+            if (response && response.success) {
+                showSuccessAlert('شاخه با موفقیت حذف شد');
+                loadTrainingTree();
+            } else {
+                showErrorAlert(response?.message || 'خطا در حذف شاخه');
+            }
+        } catch (error) {
+            showErrorAlert('خطا در حذف شاخه');
+        }
+    }
+}
+
+// نمایش پیام موفقیت
+function showSuccessAlert(message) {
+    Swal.fire({
+        title: 'موفق!',
+        text: message,
+        icon: 'success',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#28a745'
+    });
+}
+// نمایش پیام خطا
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'خطا!',
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#dc3545'
+    });
+}
+
+// بارگذاری اولیه
+if (document.getElementById('training-content')) {
+    document.addEventListener('DOMContentLoaded', loadTrainingTree);
+}
+</script>
