@@ -188,4 +188,52 @@ router.delete('/training/:id', trainingController.deleteCategory.bind(trainingCo
 router.get('/trainings/search', trainingController.searchCategories.bind(trainingController));
 
 
+
+
+
+
+
+
+// ==================== NEWS ROUTES ====================
+const newsController = require("../api/news");
+
+// تنظیمات آپلود تصویر خبر/اطلاعیه
+const newsImageStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "public/pic/news");
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'news-' + uniqueSuffix + '-' + file.originalname);
+    }
+});
+const newsImageUpload = multer({
+    storage: newsImageStorage,
+    limits: {
+        fileSize: 2 * 1024 * 1024, // حداکثر 2 مگابایت
+        files: 1
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('فقط فایل‌های تصویری مجاز هستند'), false);
+        }
+    }
+});
+
+// CREATE - ایجاد خبر/اطلاعیه
+router.post('/news', newsImageUpload.single('image'), newsController.createNews.bind(newsController));
+// READ - دریافت همه اخبار/اطلاعیه‌های فعال و منقضی‌نشده
+router.get('/news', newsController.getAllNews.bind(newsController));
+// READ - دریافت یک خبر/اطلاعیه
+router.get('/news/:id', newsController.getNewsById.bind(newsController));
+// UPDATE - ویرایش خبر/اطلاعیه
+router.put('/news/:id', newsImageUpload.single('image'), newsController.updateNews.bind(newsController));
+// DELETE - حذف خبر/اطلاعیه
+router.delete('/news/:id', newsController.deleteNews.bind(newsController));
+// SEARCH - جستجو در اخبار/اطلاعیه‌ها
+router.get('/news/search', newsController.searchNews.bind(newsController));
+
+
 module.exports = router;

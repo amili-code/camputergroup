@@ -52,12 +52,12 @@
                         دوره و رویداد ها
                     </a>
                     <a class="nav-link" href="#" onclick="showContent('training')">
-                        <i class="bi bi-book"></i>
+                        <i class="bi bi-diagram-3"></i>
                         اموزشی
                     </a>
-                    <a class="nav-link" href="#" onclick="showContent('settings')">
-                        <i class="bi bi-gear"></i>
-                        تنظیمات
+                    <a class="nav-link" href="#" onclick="showContent('news')">
+                        <i class="bi bi-newspaper"></i>
+                        اخبار
                     </a>
                     <a class="nav-link" href="#" onclick="showContent('messages')">
                         <i class="bi bi-chat"></i>
@@ -180,17 +180,8 @@
                         <!-- training Content -->
                         <%- include('./selection/training.ejs')%>
 
-                        <!-- Settings Content -->
-                        <div id="settings-content" class="content-panel" style="display: none;">
-                            <h3 class="mb-4"><i class="bi bi-gear"></i> تنظیمات</h3>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5>تنظیمات سیستم</h5>
-                                    <p>در اینجا می‌توانید تنظیمات سیستم را تغییر دهید.</p>
-                                    <button class="btn btn-secondary">ذخیره تنظیمات</button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- news Content -->
+                        <%- include('./selection/news.ejs')%>
 
                         <!-- Messages Content -->
                         <div id="messages-content" class="content-panel" style="display: none;">

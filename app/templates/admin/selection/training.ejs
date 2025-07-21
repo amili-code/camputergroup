@@ -6,9 +6,11 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4 class="mb-0">ساختار آموزشی</h4>
-            <button class="btn btn-primary" onclick="showAddTrainingModal(null)">
-                <i class="bi bi-plus-circle"></i> افزودن شاخه اصلی
-            </button>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-primary ms-2" onclick="showAddTrainingModal(null)">
+                    <i class="bi bi-plus-circle"></i> افزودن شاخه اصلی
+                </button>
+            </div>
         </div>
         <div class="card-body">
             <div id="trainingTree"></div>
@@ -79,7 +81,7 @@ function renderTrainingTree() {
     const container = document.getElementById('trainingTree');
     container.innerHTML = '';
     function renderNode(node, level = 0) {
-        let html = `<div class="training-node" style="margin-right:${level * 24}px; border-right:2px solid #eee; padding-right:8px; margin-bottom:8px;">
+        let html = `<div class="training-node" style="margin-right:${level * 44}px; border-right:2px solid #eee; padding-right:8px; margin-bottom:8px;">
             <span class="fw-bold">${node.title}</span>`;
         if (node.filePath) {
             html += ` <a href="${node.filePath}" target="_blank" class="badge bg-info ms-2">دانلود فایل</a>`;
@@ -233,6 +235,8 @@ function showSuccessAlert(message) {
         confirmButtonColor: '#28a745'
     });
 }
+
+
 // نمایش پیام خطا
 function showErrorAlert(message) {
     Swal.fire({
@@ -248,4 +252,6 @@ function showErrorAlert(message) {
 if (document.getElementById('training-content')) {
     document.addEventListener('DOMContentLoaded', loadTrainingTree);
 }
+
+
 </script>
