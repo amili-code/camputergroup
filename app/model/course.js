@@ -65,6 +65,11 @@ module.exports = (sequelize) => {
         type: DataTypes.TEXT,
         allowNull: true,
         comment: 'علت در دسترس نبودن دوره'
+    },
+    tags: {
+        type: DataTypes.STRING(100), // ذخیره به صورت "tag1,tag2,tag3"
+        allowNull: true,
+        comment: 'حداکثر ۳ تگ استاتیک برای هر دوره/رویداد/مسابقه (با کاما جدا شود)'
     }
 }, {
     tableName: 'courses',

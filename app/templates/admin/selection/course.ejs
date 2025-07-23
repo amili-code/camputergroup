@@ -131,6 +131,22 @@
                         <label for="courseUnavailabilityReason" class="form-label">علت عدم دسترسی *</label>
                         <textarea class="form-control" id="courseUnavailabilityReason" rows="2"></textarea>
                     </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">تگ‌ها (حداکثر ۳ مورد)</label>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="courseTag1" maxlength="30" placeholder="تگ اول">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="courseTag2" maxlength="30" placeholder="تگ دوم" disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="courseTag3" maxlength="30" placeholder="تگ سوم" disabled>
+                            </div>
+                        </div>
+                        <div class="form-text">هر تگ را جداگانه وارد کنید. تگ دوم پس از پر شدن اول فعال می‌شود و تگ سوم پس از پر شدن دوم.</div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -232,6 +248,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // --- Tag input logic ---
+    document.getElementById('courseTag1').addEventListener('input', function() {
+        document.getElementById('courseTag2').disabled = !this.value.trim();
+        if (!this.value.trim()) {
+            document.getElementById('courseTag2').value = '';
+            document.getElementById('courseTag3').value = '';
+            document.getElementById('courseTag2').disabled = true;
+            document.getElementById('courseTag3').disabled = true;
+        }
+    });
+    document.getElementById('courseTag2').addEventListener('input', function() {
+        document.getElementById('courseTag3').disabled = !this.value.trim();
+        if (!this.value.trim()) {
+            document.getElementById('courseTag3').value = '';
+            document.getElementById('courseTag3').disabled = true;
+        }
+    });
+    document.getElementById('courseTag3').addEventListener('input', function() {
+        // فقط برای فعال/غیرفعال کردن نیازی نیست
+    });
+    // --- End Tag input logic ---
 });
 
 function initializeCourseTable() {
@@ -279,6 +317,11 @@ function initializeCourseTable() {
                 const val = cell.getValue();
                 if (!val || val === 'null' || val === '-') return 'بدون تاریخ';
                 return val;
+            }},
+            {title: "تگ‌ها", field: "tags", headerFilter: "input", formatter: function(cell) {
+                const val = cell.getValue();
+                if (!val) return '-';
+                return val.split(',').map(tag => `<span class='badge bg-info ms-1'>${tag}</span>`).join(' ');
             }},
             {title: "عملیات", width: 250, headerFilter: false, formatter: function(cell) {
                 const course = cell.getRow().getData();
@@ -372,6 +415,11 @@ function showAddCourseModal() {
     document.getElementById('courseLocation').value = '';
     document.getElementById('currentCourseImage').style.display = 'none'; // Hide remove image checkbox by default
     document.getElementById('removeCourseImage').checked = false; // Uncheck remove image checkbox by default
+    document.getElementById('courseTag1').value = '';
+    document.getElementById('courseTag2').value = '';
+    document.getElementById('courseTag2').disabled = true;
+    document.getElementById('courseTag3').value = '';
+    document.getElementById('courseTag3').disabled = true;
     const modal = new bootstrap.Modal(document.getElementById('courseModal'));
     modal.show();
 }
@@ -433,6 +481,21 @@ async function editCourse(id) {
                 document.getElementById('currentCourseImage').style.display = 'none';
                 document.getElementById('removeCourseImage').checked = false;
             }
+            
+            if (course.tags) {
+                const tagsArr = course.tags.split(',');
+                document.getElementById('courseTag1').value = tagsArr[0] || '';
+                document.getElementById('courseTag2').value = tagsArr[1] || '';
+                document.getElementById('courseTag2').disabled = !tagsArr[0];
+                document.getElementById('courseTag3').value = tagsArr[2] || '';
+                document.getElementById('courseTag3').disabled = !tagsArr[1];
+            } else {
+                document.getElementById('courseTag1').value = '';
+                document.getElementById('courseTag2').value = '';
+                document.getElementById('courseTag2').disabled = true;
+                document.getElementById('courseTag3').value = '';
+                document.getElementById('courseTag3').disabled = true;
+            }
 
             const modal = new bootstrap.Modal(document.getElementById('courseModal'));
             modal.show();
@@ -492,6 +555,15 @@ async function saveCourse() {
     if (document.getElementById('removeCourseImage').checked) {
         formData.append('thumbnail', '');
     }
+    // --- Tag fields ---
+    const tag1 = document.getElementById('courseTag1').value.trim();
+    const tag2 = document.getElementById('courseTag2').value.trim();
+    const tag3 = document.getElementById('courseTag3').value.trim();
+    let tags = '';
+    if (tag1) tags = tag1;
+    if (tag2) tags += (tags ? ',' : '') + tag2;
+    if (tag3) tags += (tags ? ',' : '') + tag3;
+    if (tags) formData.append('tags', tags);
     try {
         const url = isEdit ? `/course/${courseId}` : '/course';
         const method = isEdit ? 'PUT' : 'POST';

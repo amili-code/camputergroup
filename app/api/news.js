@@ -282,6 +282,36 @@ class NewsController {
             });
         }
     }
+
+    // POLL: حذف یک سوال نظرسنجی و تمام گزینه‌هایش
+    async deletePollQuestion(req, res) {
+        try {
+            const { pollQuestionId } = req.params;
+            // پیدا کردن سوال
+            const pollQuestion = await models.PollQuestion.findByPk(pollQuestionId);
+            if (!pollQuestion) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'سوال نظرسنجی یافت نشد'
+                });
+            }
+            // حذف همه گزینه‌های این سوال
+            await models.PollOption.destroy({ where: { pollQuestionId } });
+            // حذف خود سوال
+            await pollQuestion.destroy();
+            res.json({
+                success: true,
+                message: 'سوال نظرسنجی و گزینه‌هایش با موفقیت حذف شد'
+            });
+        } catch (error) {
+            console.error('خطا در حذف سوال نظرسنجی:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در حذف سوال نظرسنجی',
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = new NewsController();

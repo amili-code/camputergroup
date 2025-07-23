@@ -235,5 +235,57 @@ router.delete('/news/:id', newsController.deleteNews.bind(newsController));
 // SEARCH - جستجو در اخبار/اطلاعیه‌ها
 router.get('/news/search', newsController.searchNews.bind(newsController));
 
+// POLL: ثبت و دریافت و حذف نظرسنجی اطلاعیه
+router.post('/news/poll', newsController.createPoll.bind(newsController));
+router.get('/news/:newsId/poll', newsController.getPollByNewsId.bind(newsController));
+router.delete('/news/poll/:pollQuestionId', newsController.deletePollQuestion.bind(newsController));
+
+
+const communityController = require("../api/community");
+
+// COMMUNITY ROUTES
+router.post('/community', communityController.createMembership.bind(communityController));
+router.get('/community', communityController.getAllMembers.bind(communityController));
+router.get('/community/:id', communityController.getMemberById.bind(communityController));
+router.patch('/community/:id/status', communityController.updateMembershipStatus.bind(communityController));
+router.patch('/community/:id/set-manager', communityController.setManager.bind(communityController));
+router.patch('/community/:id/unset-manager', communityController.unsetManager.bind(communityController));
+router.delete('/community/:id', communityController.deleteMember.bind(communityController));
+
+const settingController = require("../api/setting");
+
+// تنظیمات آپلود عکس گالری تنظیمات
+const settingsImageStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, "public/pic/settings");
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'gallery-' + uniqueSuffix + '-' + file.originalname);
+    }
+});
+const settingsImageUpload = multer({
+    storage: settingsImageStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // حداکثر 5 مگابایت
+        files: 1
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('فقط فایل‌های تصویری مجاز هستند'), false);
+        }
+    }
+});
+
+// SETTINGS ROUTES
+router.get('/settings', settingController.getSettings.bind(settingController));
+router.put('/settings', settingController.updateSettings.bind(settingController));
+router.post('/settings/gallery', settingController.addGalleryImage.bind(settingController));
+router.post('/settings/gallery/upload', settingsImageUpload.single('image'), settingController.uploadGalleryImage.bind(settingController));
+router.put('/settings/gallery/:index', settingController.updateGalleryImage.bind(settingController));
+router.delete('/settings/gallery/:index', settingController.deleteGalleryImage.bind(settingController));
+
 
 module.exports = router;

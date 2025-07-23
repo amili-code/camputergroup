@@ -36,6 +36,18 @@ class CourseController {
                 });
             }
 
+            // اعتبارسنجی تگ‌ها (حداکثر ۳ تگ، جدا شده با کاما)
+            if (courseData.tags) {
+                const tagsArr = courseData.tags.split(',').map(t => t.trim()).filter(Boolean);
+                if (tagsArr.length > 3) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'حداکثر ۳ تگ مجاز است.'
+                    });
+                }
+                courseData.tags = tagsArr.join(',');
+            }
+
             // تاریخ اتمام: فقط به صورت رشته شمسی ذخیره شود (در فرانت باید شمسی باشد)
             if (courseData.endDate && typeof courseData.endDate !== 'string') {
                 courseData.endDate = String(courseData.endDate);
@@ -196,6 +208,17 @@ class CourseController {
             // اطمینان از اینتیجر بودن قیمت
             if (updateData.price !== undefined) {
                 updateData.price = parseInt(updateData.price, 10) || 0;
+            }
+            // اعتبارسنجی تگ‌ها (حداکثر ۳ تگ، جدا شده با کاما)
+            if (updateData.tags) {
+                const tagsArr = updateData.tags.split(',').map(t => t.trim()).filter(Boolean);
+                if (tagsArr.length > 3) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'حداکثر ۳ تگ مجاز است.'
+                    });
+                }
+                updateData.tags = tagsArr.join(',');
             }
             // تاریخ اتمام: فقط به صورت رشته شمسی ذخیره شود
             if (updateData.endDate && typeof updateData.endDate !== 'string') {

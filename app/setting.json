@@ -1,0 +1,14 @@
+{
+  "universityName": "دانشگاه نمونه ایران",
+  "about": "این دانشگاه یکی از برترین دانشگاه‌های کشور است...",
+  "establishedYear": 1370,
+  "description": "توضیحات تکمیلی درباره دانشگاه و امکانات آن.",
+  "phone": "021-12345678",
+  "gallery": [
+    {
+      "title": "دانشجو ها",
+      "description": "سلام",
+      "imagePath": "/pic/settings/gallery-1753251712735-705822250-(10).jpg"
+    }
+  ]
+}

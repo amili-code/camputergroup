@@ -1,0 +1,449 @@
+<!-- ===================================== custom css ========================================= -->
+<link rel="stylesheet" href="/css/admin/student.css">
+
+<div id="community-content" class="content-panel" style="display: none;">
+    <h3 class="mb-4"><i class="bi bi-chat"></i> مدیریت اعضای انجمن</h3>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="mb-3">
+                <button class="btn btn-warning" onclick="showTestJoinModal()">+ ثبت درخواست عضویت تستی (موقت)</button>
+            </div>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">اعضای تایید شده انجمن</h4>
+                </div>
+                <div class="card-body">
+                    <div id="acceptedCommunityTable"></div>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">درخواست‌های عضویت در انتظار تایید</h4>
+                </div>
+                <div class="card-body">
+                    <div id="pendingCommunityTable"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">مدیر انجمن</h5>
+        </div>
+        <div class="card-body">
+            <div id="currentManagerDiv" class="mb-3"></div>
+            <div class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label for="managerSelect" class="form-label">انتخاب مدیر جدید از بین اعضای تایید شده</label>
+                    <select class="form-select" id="managerSelect"></select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100" onclick="setManager()">تعیین به عنوان مدیر</button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-danger w-100" onclick="unsetManager()">حذف مدیر</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for test join request -->
+<div class="modal fade" id="testJoinModal" tabindex="-1" aria-labelledby="testJoinModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="testJoinModalLabel">ثبت درخواست عضویت تستی</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="testJoinForm">
+          <div class="mb-3">
+            <label for="testStudentId" class="form-label">کد دانشجویی</label>
+            <input type="text" class="form-control" id="testStudentId" required>
+          </div>
+          <div class="mb-3">
+            <label for="testDescription" class="form-label">علت پیوستن</label>
+            <textarea class="form-control" id="testDescription" rows="2" required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+        <button type="button" class="btn btn-primary" onclick="submitTestJoinRequest()">ثبت درخواست</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manager selection section -->
+
+<script>
+let pendingCommunityTable, acceptedCommunityTable;
+
+// بارگذاری داده‌ها
+async function loadCommunityMembers() {
+    try {
+        const response = await apiRequest('/community', 'GET');
+        if (response && response.success) {
+            const all = response.data || [];
+            const pending = all.filter(m => !m.isAccepted);
+            const accepted = all.filter(m => m.isAccepted);
+            pendingCommunityTable.setData(pending);
+            acceptedCommunityTable.setData(accepted);
+        }
+    } catch (error) {
+        showErrorAlert('خطا در دریافت اعضای انجمن');
+    }
+}
+
+// تایید عضویت
+async function acceptCommunityMember(id) {
+    try {
+        const result = await Swal.fire({
+            title: 'تایید عضویت',
+            text: 'آیا از تایید این درخواست مطمئن هستید؟',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'بله، تایید کن',
+            cancelButtonText: 'انصراف'
+        });
+        if (!result.isConfirmed) return;
+        const response = await apiRequest(`/community/${id}/status`, 'PATCH', { isAccepted: true });
+        if (response && response.success) {
+            showSuccessAlert('عضویت تایید شد');
+            loadCommunityMembers();
+        } else {
+            showErrorAlert(response?.message || 'خطا در تایید عضویت');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در تایید عضویت');
+    }
+}
+
+// حذف درخواست یا عضو
+async function deleteCommunityMember(id) {
+    try {
+        const result = await Swal.fire({
+            title: 'حذف درخواست',
+            text: 'آیا از حذف این درخواست مطمئن هستید؟',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'بله، حذف کن',
+            cancelButtonText: 'انصراف'
+        });
+        if (!result.isConfirmed) return;
+        const response = await apiRequest(`/community/${id}`, 'DELETE');
+        if (response && response.success) {
+            showSuccessAlert('درخواست حذف شد');
+            loadCommunityMembers();
+        } else {
+            showErrorAlert(response?.message || 'خطا در حذف درخواست');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در حذف درخواست');
+    }
+}
+
+// جدول درخواست‌های در انتظار
+function initializePendingCommunityTable() {
+    pendingCommunityTable = new Tabulator("#pendingCommunityTable", {
+        layout: "fitDataFill",
+        pagination: "local",
+        paginationSize: 10,
+        columns: [
+            {
+                title: "کد دانشجویی",
+                field: "Student.studentId",
+                formatter: function(cell) {
+                    const val = cell.getData().Student ? cell.getData().Student.studentId : '-';
+                    return `<span class='clickable-cell' data-value='${val}' title='کلیک برای کپی'>${val}</span>`;
+                },
+                headerFilter: "input"
+            },
+            {
+                title: "نام و نام خانوادگی",
+                field: "Student",
+                formatter: function(cell) {
+                    const s = cell.getData().Student;
+                    const val = s ? `${s.firstName} ${s.lastName}` : '-';
+                    return `<span class='clickable-cell' data-value='${val}' title='کلیک برای کپی'>${val}</span>`;
+                },
+                headerFilter: "input"
+            },
+            {
+                title: "شماره تلفن",
+                field: "Student.phone",
+                formatter: function(cell) {
+                    const val = cell.getData().Student ? cell.getData().Student.phone : '-';
+                    return `<span class='clickable-cell' data-value='${val}' title='کلیک برای کپی'>${val}</span>`;
+                },
+                headerFilter: "input"
+            },
+            {
+                title: "علت پیوستن",
+                field: "description",
+                formatter: function(cell) {
+                    const desc = cell.getValue() || '';
+                    if (desc.length > 30) {
+                        return `<span>${desc.slice(0, 30)}...</span> <button class='btn btn-link btn-sm p-0' onclick='showFullDescription(${JSON.stringify(desc)})'>مشاهده کامل</button>`;
+                    }
+                    return desc;
+                },
+                headerFilter: "input"
+            },
+            {
+                title: "عملیات",
+                formatter: function(cell) {
+                    const row = cell.getRow().getData();
+                    return `
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-success" onclick="acceptCommunityMember(${row.id})">تایید</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteCommunityMember(${row.id})">حذف</button>
+                        </div>
+                    `;
+                },
+                headerSort: false,
+                headerFilter: false
+            }
+        ]
+    });
+}
+
+// جدول اعضای تایید شده
+function initializeAcceptedCommunityTable() {
+    acceptedCommunityTable = new Tabulator("#acceptedCommunityTable", {
+        layout: "fitDataFill",
+        pagination: "local",
+        paginationSize: 10,
+        columns: [
+            {
+                title: "کد دانشجویی",
+                field: "Student.studentId",
+                formatter: function(cell) {
+                    const val = cell.getData().Student ? cell.getData().Student.studentId : '-';
+                    return `<span class='clickable-cell' data-value='${val}' title='کلیک برای کپی'>${val}</span>`;
+                },
+                headerFilter: "input"
+            },
+            {
+                title: "نام و نام خانوادگی",
+                field: "Student",
+                formatter: function(cell) {
+                    const s = cell.getData().Student;
+                    const val = s ? `${s.firstName} ${s.lastName}` : '-';
+                    return `<span class='clickable-cell' data-value='${val}' title='کلیک برای کپی'>${val}</span>`;
+                },
+                headerFilter: "input"
+            },
+            {
+                title: "شماره تلفن",
+                field: "Student.phone",
+                formatter: function(cell) {
+                    const val = cell.getData().Student ? cell.getData().Student.phone : '-';
+                    return `<span class='clickable-cell' data-value='${val}' title='کلیک برای کپی'>${val}</span>`;
+                },
+                headerFilter: "input"
+            },
+            {
+                title: "علت پیوستن",
+                field: "description",
+                formatter: function(cell) {
+                    const desc = cell.getValue() || '';
+                    if (desc.length > 30) {
+                        return `<span>${desc.slice(0, 30)}...</span> <button class='btn btn-link btn-sm p-0' onclick='showFullDescription(${JSON.stringify(desc)})'>مشاهده کامل</button>`;
+                    }
+                    return desc;
+                },
+                headerFilter: "input"
+            },
+            {
+                title: "وضعیت",
+                formatter: function() {
+                    return '<span class="badge bg-success">تایید شده</span>';
+                },
+                headerSort: false,
+                headerFilter: false
+            },
+            {
+                title: "عملیات",
+                formatter: function(cell) {
+                    const row = cell.getRow().getData();
+                    return `<button class="btn btn-sm btn-danger" onclick="deleteCommunityMember(${row.id})">حذف</button>`;
+                },
+                headerSort: false,
+                headerFilter: false
+            }
+        ]
+    });
+}
+
+// نمایش پیام موفقیت
+function showSuccessAlert(message) {
+    Swal.fire({
+        title: 'موفق!',
+        text: message,
+        icon: 'success',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#28a745'
+    });
+}
+// نمایش پیام خطا
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'خطا!',
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#dc3545'
+    });
+}
+
+// --- JS for test join modal ---
+function showTestJoinModal() {
+    document.getElementById('testJoinForm').reset();
+    new bootstrap.Modal(document.getElementById('testJoinModal')).show();
+}
+
+async function submitTestJoinRequest() {
+    const studentId = document.getElementById('testStudentId').value.trim();
+    const description = document.getElementById('testDescription').value.trim();
+    if (!studentId || !description) {
+        showErrorAlert('کد دانشجویی و علت پیوستن الزامی است');
+        return;
+    }
+    try {
+        const response = await apiRequest('/community', 'POST', { studentId, description });
+        if (response && response.success) {
+            showSuccessAlert('درخواست با موفقیت ثبت شد');
+            bootstrap.Modal.getInstance(document.getElementById('testJoinModal')).hide();
+            loadCommunityMembers();
+        } else {
+            showErrorAlert(response?.message || 'خطا در ثبت درخواست');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در ثبت درخواست');
+    }
+}
+
+// Modal for full description
+function showFullDescription(desc) {
+    Swal.fire({
+        title: 'علت پیوستن',
+        html: `<div style='text-align:right;direction:rtl'>${desc}</div>`,
+        confirmButtonText: 'بستن',
+        customClass: {popup: 'text-end'}
+    });
+}
+
+// --- JS for manager selection ---
+let acceptedMembersCache = [];
+let currentManagerCache = null;
+
+async function refreshManagerSection() {
+    // دریافت اعضای تایید شده و مدیر فعلی
+    try {
+        const response = await apiRequest('/community', 'GET');
+        if (response && response.success) {
+            const accepted = (response.data || []).filter(m => m.isAccepted);
+            acceptedMembersCache = accepted;
+            const manager = accepted.find(m => m.isManager);
+            currentManagerCache = manager || null;
+            // نمایش مدیر فعلی
+            const div = document.getElementById('currentManagerDiv');
+            if (manager) {
+                const s = manager.Student;
+                div.innerHTML = `<b>مدیر فعلی:</b> <span class='badge bg-success'>${s ? s.firstName + ' ' + s.lastName : ''} (${s ? s.studentId : ''})</span>`;
+            } else {
+                div.innerHTML = '<span class="text-danger">مدیری تعیین نشده است.</span>';
+            }
+            // پر کردن لیست اعضا
+            const select = document.getElementById('managerSelect');
+            select.innerHTML = '';
+            accepted.forEach(m => {
+                const s = m.Student;
+                const label = s ? `${s.firstName} ${s.lastName} (${s.studentId})` : m.id;
+                const option = document.createElement('option');
+                option.value = m.id;
+                option.textContent = label;
+                if (manager && manager.id === m.id) option.selected = true;
+                select.appendChild(option);
+            });
+        }
+    } catch (e) {
+        document.getElementById('currentManagerDiv').innerHTML = '<span class="text-danger">خطا در دریافت اطلاعات مدیر</span>';
+    }
+}
+
+async function setManager() {
+    const select = document.getElementById('managerSelect');
+    const memberId = select.value;
+    if (!memberId) {
+        showErrorAlert('یک عضو را انتخاب کنید');
+        return;
+    }
+    try {
+        const response = await apiRequest(`/community/${memberId}/set-manager`, 'PATCH');
+        if (response && response.success) {
+            showSuccessAlert('مدیر با موفقیت تعیین شد');
+            loadCommunityMembers();
+            refreshManagerSection();
+        } else {
+            showErrorAlert(response?.message || 'خطا در تعیین مدیر');
+        }
+    } catch (e) {
+        showErrorAlert('خطا در تعیین مدیر');
+    }
+}
+
+async function unsetManager() {
+    if (!currentManagerCache) {
+        showErrorAlert('مدیری تعیین نشده است');
+        return;
+    }
+    try {
+        const response = await apiRequest(`/community/${currentManagerCache.id}/unset-manager`, 'PATCH');
+        if (response && response.success) {
+            showSuccessAlert('مدیر حذف شد');
+            loadCommunityMembers();
+            refreshManagerSection();
+        } else {
+            showErrorAlert(response?.message || 'خطا در حذف مدیر');
+        }
+    } catch (e) {
+        showErrorAlert('خطا در حذف مدیر');
+    }
+}
+
+// مقداردهی اولیه جداول هنگام نمایش صفحه
+if (document.getElementById('community-content')) {
+    document.addEventListener('DOMContentLoaded', function() {
+        initializePendingCommunityTable();
+        initializeAcceptedCommunityTable();
+        loadCommunityMembers();
+        refreshManagerSection();
+    });
+}
+
+// Add copy to clipboard logic
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('clickable-cell')) {
+        const value = e.target.getAttribute('data-value');
+        copyToClipboard(value);
+    }
+});
+function copyToClipboard(text) {
+    if (!text || text === '-') return;
+    navigator.clipboard.writeText(text).then(() => {
+        Swal.fire({
+            title: 'کپی شد!',
+            text: 'متن با موفقیت کپی شد',
+            icon: 'success',
+            timer: 1200,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    });
+}
+</script>

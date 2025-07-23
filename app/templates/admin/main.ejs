@@ -59,13 +59,13 @@
                         <i class="bi bi-newspaper"></i>
                         اخبار
                     </a>
-                    <a class="nav-link" href="#" onclick="showContent('messages')">
+                    <a class="nav-link" href="#" onclick="showContent('community')">
                         <i class="bi bi-chat"></i>
-                        پیام‌ها
+                        انجمن
                     </a>
-                    <a class="nav-link" href="#" onclick="showContent('backup')">
-                        <i class="bi bi-cloud-arrow-up"></i>
-                        پشتیبان‌گیری
+                    <a class="nav-link" href="#" onclick="showContent('setting')">
+                        <i class="bi bi-gear"></i>
+                        تنظیمات
                     </a>
                 </nav>
             </div>
@@ -183,29 +183,12 @@
                         <!-- news Content -->
                         <%- include('./selection/news.ejs')%>
 
-                        <!-- Messages Content -->
-                        <div id="messages-content" class="content-panel" style="display: none;">
-                            <h3 class="mb-4"><i class="bi bi-chat"></i> پیام‌ها</h3>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5>پیام‌های سیستم</h5>
-                                    <p>در اینجا می‌توانید پیام‌ها را مشاهده کنید.</p>
-                                    <button class="btn btn-primary">خواندن پیام‌های جدید</button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- community Content -->
+                        <%- include('./selection/community.ejs')%>
 
-                        <!-- Backup Content -->
-                        <div id="backup-content" class="content-panel" style="display: none;">
-                            <h3 class="mb-4"><i class="bi bi-cloud-arrow-up"></i> پشتیبان‌گیری</h3>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h5>پشتیبان‌گیری از سیستم</h5>
-                                    <p>در اینجا می‌توانید از سیستم پشتیبان تهیه کنید.</p>
-                                    <button class="btn btn-success">ایجاد پشتیبان</button>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- setting Content -->
+                        <%- include('./selection/setting.ejs')%>
+                        
                     </div>
                 </div>
             </div>

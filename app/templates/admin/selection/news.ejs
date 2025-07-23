@@ -54,9 +54,19 @@
                         <textarea class="form-control" id="newsDescription" rows="3" required></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="newsTags" class="form-label">تگ‌ها (حداکثر ۳ مورد، با کاما جدا شود)</label>
-                        <input type="text" class="form-control" id="newsTags" placeholder="مثلاً: علمی,دانشجویی,فوری" maxlength="100">
-                        <div class="form-text">تگ‌ها باید از لیست استاتیک باشند: علمی، دانشجویی، فوری، فرهنگی، پژوهشی، مسابقه‌ای، اطلاعیه، رویداد</div>
+                        <label for="newsTags" class="form-label">تگ‌ها (حداکثر ۳ مورد، هر کدام جداگانه)</label>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="newsTag1" maxlength="30" placeholder="تگ اول">
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="newsTag2" maxlength="30" placeholder="تگ دوم" disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="newsTag3" maxlength="30" placeholder="تگ سوم" disabled>
+                            </div>
+                        </div>
+                        <div class="form-text">هر تگ را جداگانه وارد کنید. تگ دوم پس از پر شدن اول فعال می‌شود و تگ سوم پس از پر شدن دوم.</div>
                     </div>
                     <div class="mb-3">
                         <label for="newsImage" class="form-label">تصویر خبر/اطلاعیه</label>
@@ -68,6 +78,13 @@
                                 <label class="form-check-label" for="removeNewsImage">حذف تصویر فعلی</label>
                             </div>
                         </div>
+                    </div>
+                    <div id="pollSection" class="mb-3" style="display:none;">
+                        <label class="form-label">ثبت نظرسنجی (اختیاری)</label>
+                        <div id="pollQuestionsContainer"></div>
+                        <button type="button" class="btn btn-outline-success btn-sm mt-2" onclick="addPollQuestion()">
+                            <i class="bi bi-plus-circle"></i> افزودن سوال جدید
+                        </button>
                     </div>
                 </form>
             </div>
@@ -177,6 +194,7 @@ function showAddNewsModal() {
     document.getElementById('previewNewsImage').src = '';
     document.getElementById('removeNewsImage').checked = false;
     document.getElementById('newsIsActive').value = 'true';
+    document.getElementById('pollSection').style.display = 'none'; // Ensure it's hidden
     const modal = new bootstrap.Modal(document.getElementById('newsModal'));
     modal.show();
 }
@@ -195,7 +213,6 @@ async function editNews(id) {
             document.getElementById('newsType').value = news.type;
             document.getElementById('newsTitle').value = news.title;
             document.getElementById('newsDescription').value = news.description;
-            document.getElementById('newsTags').value = news.tags;
             document.getElementById('newsIsActive').value = news.isActive ? 'true' : 'false';
             if (news.image) {
                 document.getElementById('previewNewsImage').src = news.image;
@@ -209,6 +226,36 @@ async function editNews(id) {
             document.getElementById('removeNewsImage').onclick = function() {
                 removeNewsImageFlag = this.checked;
             };
+            document.getElementById('pollSection').style.display = news.type === 'announcement' ? 'block' : 'none';
+            if (news.type === 'announcement') {
+                // واکشی سوالات و گزینه‌های نظرسنجی
+                try {
+                    const pollRes = await apiRequest(`/news/${id}/poll`, 'GET');
+                    if (pollRes && pollRes.success && Array.isArray(pollRes.data)) {
+                        pollQuestions = pollRes.data.map(q => ({
+                            question: q.question,
+                            options: q.options.map(o => o.optionText),
+                            pollQuestionId: q.id
+                        }));
+                        renderAllPollQuestions();
+                    }
+                } catch (e) {}
+            }
+            // مقداردهی اولیه تگ‌ها
+            if (news.tags) {
+                const tagsArr = news.tags.split(',');
+                document.getElementById('newsTag1').value = tagsArr[0] || '';
+                document.getElementById('newsTag2').value = tagsArr[1] || '';
+                document.getElementById('newsTag2').disabled = !tagsArr[0];
+                document.getElementById('newsTag3').value = tagsArr[2] || '';
+                document.getElementById('newsTag3').disabled = !tagsArr[1];
+            } else {
+                document.getElementById('newsTag1').value = '';
+                document.getElementById('newsTag2').value = '';
+                document.getElementById('newsTag2').disabled = true;
+                document.getElementById('newsTag3').value = '';
+                document.getElementById('newsTag3').disabled = true;
+            }
             const modal = new bootstrap.Modal(document.getElementById('newsModal'));
             modal.show();
         } else {
@@ -230,7 +277,6 @@ async function saveNews() {
     const type = document.getElementById('newsType').value;
     const title = document.getElementById('newsTitle').value.trim();
     const description = document.getElementById('newsDescription').value.trim();
-    const tags = document.getElementById('newsTags').value.trim();
     const isActive = document.getElementById('newsIsActive').value === 'true';
     const imageInput = document.getElementById('newsImage');
     const imageFile = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
@@ -238,14 +284,60 @@ async function saveNews() {
     formData.append('type', type);
     formData.append('title', title);
     formData.append('description', description);
-    formData.append('tags', tags);
     formData.append('isActive', isActive);
+
+    // --- Tag fields ---
+    const tag1 = document.getElementById('newsTag1').value.trim();
+    const tag2 = document.getElementById('newsTag2').value.trim();
+    const tag3 = document.getElementById('newsTag3').value.trim();
+    let tags = '';
+    if (tag1) tags = tag1;
+    if (tag2) tags += (tags ? ',' : '') + tag2;
+    if (tag3) tags += (tags ? ',' : '') + tag3;
+    formData.append('tags', tags);
+    // --- End Tag fields ---
+
     if (imageFile) {
         formData.append('image', imageFile);
     }
     if (removeNewsImageFlag) {
         formData.append('image', '');
     }
+
+    // اگر نوع اطلاعیه و نظرسنجی وجود دارد، ارسال کن
+    if (type === 'announcement' && pollQuestions.length > 0) {
+        // فقط سوالات معتبر (متن سوال و حداقل یک گزینه غیرخالی)
+        for (const q of pollQuestions) {
+            if (!q.question.trim() || !q.options.length || q.options.some(opt => !opt.trim())) {
+                showErrorAlert('همه سوالات و گزینه‌های نظرسنجی باید پر شوند');
+                return;
+            }
+        }
+        // ذخیره اطلاعیه و سپس ذخیره نظرسنجی
+        let response;
+        if (id) {
+            response = await apiRequest(`/news/${id}`, 'PUT', formData, true);
+        } else {
+            response = await apiRequest('/news', 'POST', formData, true);
+        }
+        if (response && response.success) {
+            // ذخیره نظرسنجی (برای هر سوال)
+            for (const q of pollQuestions) {
+                await apiRequest('/news/poll', 'POST', {
+                    newsId: response.data.id || id,
+                    question: q.question,
+                    options: q.options
+                });
+            }
+            showSuccessAlert(id ? 'خبر/اطلاعیه با موفقیت ویرایش شد' : 'خبر/اطلاعیه با موفقیت اضافه شد');
+            bootstrap.Modal.getInstance(document.getElementById('newsModal')).hide();
+            refreshNewsTable();
+        } else {
+            showErrorAlert(response?.message || 'خطا در ذخیره اطلاعات');
+        }
+        return;
+    }
+
     try {
         let response;
         if (id) {
@@ -325,8 +417,127 @@ function showErrorAlert(message) {
     });
 }
 
+// نمایش یا مخفی کردن بخش نظرسنجی بر اساس نوع اطلاعیه
+const newsTypeSelect = document.getElementById('newsType');
+if (newsTypeSelect) {
+    newsTypeSelect.addEventListener('change', function() {
+        document.getElementById('pollSection').style.display = this.value === 'announcement' ? 'block' : 'none';
+    });
+}
+
+// مدیریت سوالات و گزینه‌های نظرسنجی
+let pollQuestions = [];
+function addPollQuestion(questionText = '', optionsArr = [], pollQuestionId = null) {
+    pollQuestions.push({ question: questionText, options: optionsArr.length ? optionsArr : [''], pollQuestionId });
+    renderAllPollQuestions();
+}
+function updatePollQuestionText(qIndex, value) {
+    pollQuestions[qIndex].question = value;
+}
+function removePollQuestion(qIndex) {
+    pollQuestions.splice(qIndex, 1);
+    renderAllPollQuestions();
+}
+async function deletePollQuestionFromServer(qIndex) {
+    const pollQ = pollQuestions[qIndex];
+    if (!pollQ.pollQuestionId) {
+        // فقط از لیست حذف کن (هنوز در دیتابیس ثبت نشده)
+        removePollQuestion(qIndex);
+        return;
+    }
+    const result = await Swal.fire({
+        title: 'حذف سوال نظرسنجی',
+        text: 'آیا مطمئن هستید که می‌خواهید این سوال و گزینه‌هایش را حذف کنید؟',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'بله، حذف کن',
+        cancelButtonText: 'انصراف'
+    });
+    if (result.isConfirmed) {
+        try {
+            const res = await apiRequest(`/news/poll/${pollQ.pollQuestionId}`, 'DELETE');
+            if (res && res.success) {
+                showSuccessAlert('سوال نظرسنجی حذف شد');
+                removePollQuestion(qIndex);
+            } else {
+                showErrorAlert(res?.message || 'خطا در حذف سوال');
+            }
+        } catch (e) {
+            showErrorAlert('خطا در حذف سوال');
+        }
+    }
+}
+function addPollOption(qIndex) {
+    pollQuestions[qIndex].options.push('');
+    renderPollOptions(qIndex);
+}
+function updatePollOptionText(qIndex, oIndex, value) {
+    pollQuestions[qIndex].options[oIndex] = value;
+}
+function removePollOption(qIndex, oIndex) {
+    pollQuestions[qIndex].options.splice(oIndex, 1);
+    renderPollOptions(qIndex);
+}
+function renderPollOptions(qIndex) {
+    const optionsDiv = document.getElementById(`poll-options-${qIndex}`);
+    optionsDiv.innerHTML = '';
+    pollQuestions[qIndex].options.forEach((opt, oIndex) => {
+        const optDiv = document.createElement('div');
+        optDiv.className = 'input-group mb-1';
+        optDiv.innerHTML = `
+            <input type="text" class="form-control form-control-sm" placeholder="گزینه ${oIndex + 1}" value="${opt}" onchange="updatePollOptionText(${qIndex}, ${oIndex}, this.value)">
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removePollOption(${qIndex}, ${oIndex})"><i class="bi bi-x"></i></button>
+        `;
+        optionsDiv.appendChild(optDiv);
+    });
+}
+function renderAllPollQuestions() {
+    document.getElementById('pollQuestionsContainer').innerHTML = '';
+    pollQuestions.forEach((q, idx) => {
+        // فقط نمایش در DOM، نه اضافه به pollQuestions
+        const container = document.getElementById('pollQuestionsContainer');
+        const qDiv = document.createElement('div');
+        qDiv.className = 'card mb-2';
+        qDiv.innerHTML = `
+            <div class="card-body">
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <input type="text" class="form-control form-control-sm" placeholder="متن سوال" value="${q.question}" onchange="updatePollQuestionText(${idx}, this.value)">
+                    <button type="button" class="btn btn-danger btn-sm ms-2" onclick="removePollQuestion(${idx})"><i class="bi bi-x"></i></button>
+                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="deletePollQuestionFromServer(${idx})"><i class="bi bi-trash"></i> حذف کامل</button>
+                </div>
+                <div id="poll-options-${idx}"></div>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-1" onclick="addPollOption(${idx})"><i class="bi bi-plus"></i> افزودن گزینه</button>
+            </div>
+        `;
+        container.appendChild(qDiv);
+        renderPollOptions(idx);
+    });
+}
+
 // بارگذاری اولیه
 if (document.getElementById('news-content')) {
     document.addEventListener('DOMContentLoaded', initializeNewsTable);
 }
+
+// --- Tag input logic ---
+document.getElementById('newsTag1').addEventListener('input', function() {
+    document.getElementById('newsTag2').disabled = !this.value.trim();
+    if (!this.value.trim()) {
+        document.getElementById('newsTag2').value = '';
+        document.getElementById('newsTag3').value = '';
+        document.getElementById('newsTag2').disabled = true;
+        document.getElementById('newsTag3').disabled = true;
+    }
+});
+document.getElementById('newsTag2').addEventListener('input', function() {
+    document.getElementById('newsTag3').disabled = !this.value.trim();
+    if (!this.value.trim()) {
+        document.getElementById('newsTag3').value = '';
+        document.getElementById('newsTag3').disabled = true;
+    }
+});
+document.getElementById('newsTag3').addEventListener('input', function() {
+    // فقط برای فعال/غیرفعال کردن نیازی نیست
+});
+// --- End Tag input logic ---
 </script>
