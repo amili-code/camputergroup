@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود به سیستم</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+i{
+    margin:.5rem
+}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 900px;
+            min-height: 600px;
+            position: relative;
+        }
+
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .login-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .login-body {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .mode-switcher {
+            display: flex;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 30px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-form {
+            display: none;
+        }
+
+        .login-form.active {
+            display: block;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .input-group .form-control {
+            padding-left: 50px;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .forgot-password a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password a:hover {
+            color: #764ba2;
+        }
+
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+            border-right: 4px solid #dc3545;
+        }
+
+        .alert-success {
+            background: #d1edff;
+            color: #0c5460;
+            border-right: 4px solid #17a2b8;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .loading.active {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .login-container {
+                margin: 10px;
+                min-height: auto;
+            }
+            
+            .login-header {
+                padding: 30px 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 2rem;
+            }
+            
+            .login-body {
+                padding: 30px 20px;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 0;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+            position: relative;
+        }
+
+        .modal-content.success {
+            border-top: 4px solid #28a745;
+        }
+
+        .modal-content.error {
+            border-top: 4px solid #dc3545;
+        }
+
+        .modal-header {
+            padding: 20px 20px 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-header i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .modal-header h5 {
+            margin: 0;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-body {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .modal-body p {
+            margin: 0;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #999;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <a href="/" class="back-btn">
+                <i class="fas fa-arrow-right me-2"></i>بازگشت به صفحه اصلی
+            </a>
+            <h1><i class="fas fa-graduation-cap me-2"></i>سیستم مدیریت آموزشی</h1>
+            <p>لطفاً برای ورود به سیستم، اطلاعات خود را وارد کنید</p>
+        </div>
+        
+        <div class="login-body">
+            <!-- Mode Switcher -->
+            <div class="mode-switcher">
+                <button class="mode-btn active" onclick="switchMode('student')">
+                    <i class="fas fa-user-graduate me-2"></i>دانشجو
+                </button>
+                <button class="mode-btn" onclick="switchMode('teacher')">
+                    <i class="fas fa-chalkboard-teacher me-2"></i>استاد
+                </button>
+            </div>
+
+            <!-- Alert Messages -->
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <%= success %>
+                </div>
+            <% } %>
+
+            <!-- Student Login Form -->
+            <form class="login-form active" id="studentForm" action="/login/student" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="studentId">
+                        <i class="fas fa-user me-2"></i>نام کاربری
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="form-control" id="studentId" name="studentId" 
+                               placeholder="نام کاربری خود را وارد کنید" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="studentPassword">
+                        <i class="fas fa-lock me-2"></i>رمز عبور
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-key input-icon"></i>
+                        <input type="password" class="form-control" id="studentPassword" name="password" 
+                               placeholder="رمز عبور خود را وارد کنید" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    <span class="btn-text">ورود دانشجو</span>
+                    <i class="fas fa-spinner loading"></i>
+                </button>
+            </form>
+
+            <!-- Teacher Login Form -->
+            <form class="login-form" id="teacherForm" action="/login/teacher" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="teacherId">
+                        <i class="fas fa-user me-2"></i>نام کاربری
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" class="form-control" id="teacherId" name="teacherId" 
+                               placeholder="نام کاربری خود را وارد کنید" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="teacherPassword">
+                        <i class="fas fa-lock me-2"></i>رمز عبور
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-key input-icon"></i>
+                        <input type="password" class="form-control" id="teacherPassword" name="password" 
+                               placeholder="رمز عبور خود را وارد کنید" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    <span class="btn-text">ورود استاد</span>
+                    <i class="fas fa-spinner loading"></i>
+                </button>
+            </form>
+
+            <div class="forgot-password">
+                <a href="#" onclick="showForgotPassword()">
+                    <i class="fas fa-question-circle me-1"></i>
+                    رمز عبور خود را فراموش کرده‌اید؟
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Switch between student and teacher login modes
+        function switchMode(mode) {
+            // Update mode buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update forms
+            document.querySelectorAll('.login-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            if (mode === 'student') {
+                document.getElementById('studentForm').classList.add('active');
+            } else {
+                document.getElementById('teacherForm').classList.add('active');
+            }
+        }
+
+        // Form submission handling
+        document.getElementById('studentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleLogin(this, 'student');
+        });
+
+        document.getElementById('teacherForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleLogin(this, 'teacher');
+        });
+
+        // Handle login function
+        async function handleLogin(form, type) {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+            
+            showLoading(form);
+            
+            try {
+                const response = await fetch(`/api/auth/${type}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccessModal(result.message);
+                    // Redirect to main page after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showErrorModal(result.message);
+                }
+            } catch (error) {
+                console.error('خطا در ورود:', error);
+                showErrorModal('خطا در اتصال به سرور');
+            } finally {
+                hideLoading(form);
+            }
+        }
+
+        function showLoading(form) {
+            const btn = form.querySelector('.btn-login');
+            const btnText = btn.querySelector('.btn-text');
+            const loading = btn.querySelector('.loading');
+            
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            loading.classList.add('active');
+        }
+
+        function hideLoading(form) {
+            const btn = form.querySelector('.btn-login');
+            const btnText = btn.querySelector('.btn-text');
+            const loading = btn.querySelector('.loading');
+            
+            btn.disabled = false;
+            btnText.style.display = 'inline';
+            loading.classList.remove('active');
+        }
+
+        // Modal functions
+        function showSuccessModal(message) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content success">
+                    <div class="modal-header">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <h5>موفقیت</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>${message}</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            setTimeout(() => {
+                modal.remove();
+            }, 3000);
+        }
+
+        function showErrorModal(message) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content error">
+                    <div class="modal-header">
+                        <i class="fas fa-exclamation-triangle text-danger"></i>
+                        <h5>خطا</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p>${message}</p>
+                    </div>
+                    <button class="modal-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Input validation - removed pattern validation since we're using username now
+
+        // Forgot password functionality
+        function showForgotPassword() {
+            const currentMode = document.querySelector('.mode-btn.active').textContent.includes('دانشجو') ? 'student' : 'teacher';
+            const userType = currentMode === 'student' ? 'دانشجو' : 'استاد';
+            
+            alert(`برای بازیابی رمز عبور، لطفاً با مدیر سیستم تماس بگیرید و نام کاربری خود را ارائه دهید.`);
+        }
+
+        // Auto-focus on first input when mode changes
+        function focusFirstInput(mode) {
+            setTimeout(() => {
+                const firstInput = document.querySelector(`#${mode}Form input`);
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }, 300);
+        }
+
+        // Enhanced mode switching with focus
+        function switchMode(mode) {
+            // Update mode buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update forms
+            document.querySelectorAll('.login-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            if (mode === 'student') {
+                document.getElementById('studentForm').classList.add('active');
+                focusFirstInput('student');
+            } else {
+                document.getElementById('teacherForm').classList.add('active');
+                focusFirstInput('teacher');
+            }
+        }
+    </script>
+</body>
+</html>

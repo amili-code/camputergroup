@@ -4,6 +4,28 @@ const multer = require('multer');
 
 
 
+// ==================== AUTH ROUTES ====================
+const authController = require("../api/auth");
+
+// Student Login
+router.post('/auth/student/login', authController.studentLogin.bind(authController));
+
+// Teacher Login
+router.post('/auth/teacher/login', authController.teacherLogin.bind(authController));
+
+// Logout
+router.post('/auth/logout', authController.logout.bind(authController));
+
+// Get Current User
+router.get('/auth/me', authController.getCurrentUser.bind(authController));
+
+// Middleware routes for checking authentication
+router.get('/auth/check', authController.isAuthenticated.bind(authController));
+router.get('/auth/check/teacher', authController.isTeacher.bind(authController));
+router.get('/auth/check/student', authController.isStudent.bind(authController));
+
+
+
 // تنظیمات آپلود تصویر پرسنلی استاد
 const teacherImageStorage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -68,6 +90,7 @@ router.post('/teacher', teacherImageUpload.single('personalImage'), teacherContr
 router.get('/teachers', teacherController.getAllTeachers.bind(teacherController));
 router.get('/teacher/:id', teacherController.getTeacherById.bind(teacherController));
 router.get('/teachers/schedule', teacherController.getTeachersBySchedule.bind(teacherController));
+router.get('/teachers/subject', teacherController.getTeachersBySubject.bind(teacherController));
 
 // UPDATE - بروزرسانی استاد
 router.put('/teacher/:id', teacherImageUpload.single('personalImage'), teacherController.updateTeacher.bind(teacherController));
@@ -141,6 +164,29 @@ router.delete('/course/:id', courseController.deleteCourse.bind(courseController
 
 // SEARCH - جستجو در دوره‌ها
 router.get('/courses/search', courseController.searchCourses.bind(courseController));
+
+// ==================== COURSE REGISTRATION ROUTES ====================
+// CREATE - درخواست ثبت نام در دوره
+router.post('/course-registration', courseController.createRegistration.bind(courseController));
+
+// READ - دریافت تمام درخواست‌های ثبت نام
+router.get('/course-registrations', courseController.getAllRegistrations.bind(courseController));
+
+// READ - دریافت درخواست‌های یک دانشجو
+router.get('/course-registrations/student/:studentId', courseController.getStudentRegistrations.bind(courseController));
+
+// READ - دریافت درخواست‌های یک دوره
+router.get('/course-registrations/course/:courseId', courseController.getCourseRegistrations.bind(courseController));
+
+// READ - دریافت درخواست بر اساس ID
+router.get('/course-registration/:id', courseController.getRegistrationById.bind(courseController));
+
+// UPDATE - تایید یا رد درخواست
+router.patch('/course-registration/:id/approve', courseController.approveRegistration.bind(courseController));
+router.patch('/course-registration/:id/reject', courseController.rejectRegistration.bind(courseController));
+
+// DELETE - حذف درخواست
+router.delete('/course-registration/:id', courseController.deleteRegistration.bind(courseController));
 
 
 
@@ -253,6 +299,7 @@ router.patch('/community/:id/unset-manager', communityController.unsetManager.bi
 router.delete('/community/:id', communityController.deleteMember.bind(communityController));
 
 const settingController = require("../api/setting");
+const reservationController = require("../api/reservation");
 
 // تنظیمات آپلود عکس گالری تنظیمات
 const settingsImageStorage = multer.diskStorage({
@@ -287,5 +334,68 @@ router.post('/settings/gallery/upload', settingsImageUpload.single('image'), set
 router.put('/settings/gallery/:index', settingController.updateGalleryImage.bind(settingController));
 router.delete('/settings/gallery/:index', settingController.deleteGalleryImage.bind(settingController));
 
+// DASHBOARD STATS ROUTE
+router.get('/dashboard-stats', settingController.getDashboardStats.bind(settingController));
+
+// ==================== RESERVATION ROUTES ====================
+// CREATE - ایجاد درخواست رزرو جدید
+router.post('/reservation', reservationController.createReservation.bind(reservationController));
+
+// READ - دریافت تمام رزروها
+router.get('/reservations', reservationController.getAllReservations.bind(reservationController));
+
+// READ - دریافت رزرو بر اساس ID
+router.get('/reservation/:id', reservationController.getReservationById.bind(reservationController));
+
+// READ - دریافت رزروهای یک دانشجو
+router.get('/reservations/student/:studentId', reservationController.getStudentReservations.bind(reservationController));
+
+// READ - دریافت رزروهای یک استاد
+router.get('/reservations/teacher/:teacherId', reservationController.getTeacherReservations.bind(reservationController));
+
+// UPDATE - تایید رزرو
+router.patch('/reservation/:id/approve', reservationController.approveReservation.bind(reservationController));
+
+// UPDATE - رد رزرو
+router.patch('/reservation/:id/reject', reservationController.rejectReservation.bind(reservationController));
+
+// UPDATE - لغو رزرو
+router.patch('/reservation/:id/cancel', reservationController.cancelReservation.bind(reservationController));
+
+// UPDATE - بروزرسانی رزرو
+router.put('/reservation/:id', reservationController.updateReservation.bind(reservationController));
+
+// DELETE - حذف رزرو
+router.delete('/reservation/:id', reservationController.deleteReservation.bind(reservationController));
+
+// READ - دریافت آمار رزروها
+router.get('/reservations/stats', reservationController.getReservationStats.bind(reservationController));
+
+// ==================== POLL VOTE ROUTES ====================
+const pollVoteController = require("../api/pollVote");
+
+// CREATE - ثبت رای جدید
+router.post('/poll-vote', pollVoteController.createVote.bind(pollVoteController));
+
+// READ - دریافت تمام رای‌ها
+router.get('/poll-votes', pollVoteController.getAllVotes.bind(pollVoteController));
+
+// READ - دریافت رای بر اساس ID
+router.get('/poll-vote/:id', pollVoteController.getVoteById.bind(pollVoteController));
+
+// READ - دریافت رای‌های یک کاربر
+router.get('/poll-votes/user/:userType/:userId', pollVoteController.getUserVotes.bind(pollVoteController));
+
+// READ - دریافت رای‌های یک سوال
+router.get('/poll-votes/question/:pollQuestionId', pollVoteController.getQuestionVotes.bind(pollVoteController));
+
+// READ - دریافت آمار رای‌ها برای یک سوال
+router.get('/poll-votes/stats/:pollQuestionId', pollVoteController.getQuestionStats.bind(pollVoteController));
+
+// READ - بررسی رای کاربر برای یک سوال
+router.get('/poll-vote/check/:userType/:userId/:pollQuestionId', pollVoteController.checkUserVote.bind(pollVoteController));
+
+// DELETE - حذف رای
+router.delete('/poll-vote/:id', pollVoteController.deleteVote.bind(pollVoteController));
 
 module.exports = router;

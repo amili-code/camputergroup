@@ -1,0 +1,212 @@
+<section class="py-5" id="edu">
+    <div class="container">
+        <h2 class="section-title text-center">بخش آموزشی</h2>
+        <div id="training-root-list" class="row g-4 justify-content-center">
+            <div class="text-center" id="training-loading">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div>در حال بارگذاری...</div>
+            </div>
+        </div>
+        <div id="training-children-list" class="row g-4 justify-content-center" style="display:none;"></div>
+        <div class="text-center mt-4">
+            <a href="/tranning" class="btn btn-outline-dark">مشاهده کامل بخش آموزشی</a>
+        </div>
+    </div>
+    <style>
+    .fade-out {
+        animation: fadeOut 0.5s forwards;
+    }
+    .fade-in {
+        animation: fadeIn 0.5s;
+    }
+    @keyframes fadeOut {
+        to { opacity: 0; transform: scale(0.95); pointer-events: none; }
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .breadcrumb-nav {
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+    }
+    .breadcrumb-item {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    .breadcrumb-item.active {
+        color: #495057;
+        font-weight: bold;
+    }
+    </style>
+    <script src="/js/fech-warper.js"></script>
+    <script>
+    let allTrainings = [];
+    let currentPath = [];
+    document.addEventListener('DOMContentLoaded', function() {
+        apiRequest('/trainings', 'GET').then(data => {
+            allTrainings = (data && data.data && Array.isArray(data.data)) ? data.data : [];
+            const rootList = document.getElementById('training-root-list');
+            document.getElementById('training-loading').style.display = 'none';
+            if (allTrainings.length === 0) {
+                rootList.innerHTML = '<div class="text-center text-muted">آموزشی ثبت نشده است.</div>';
+                return;
+            }
+            renderRootTrainings();
+        }).catch(() => {
+            document.getElementById('training-loading').style.display = 'none';
+            document.getElementById('training-root-list').innerHTML = '<div class="text-center text-danger">خطا در دریافت آموزش‌ها</div>';
+        });
+    });
+
+    function renderRootTrainings() {
+        const rootList = document.getElementById('training-root-list');
+        rootList.innerHTML = '';
+        currentPath = [];
+        const roots = allTrainings.filter(t => !t.parentId);
+        if (roots.length === 0) {
+            rootList.innerHTML = '<div class="text-center text-muted">آموزش ریشه‌ای وجود ندارد.</div>';
+            return;
+        }
+        roots.forEach(t => {
+            rootList.innerHTML += `
+                <div class="col-md-4">
+                    <div class="card edu-card h-100 p-4 training-root-card shadow-sm fade-in" style="cursor:pointer;transition:box-shadow .2s;" onclick="showTrainingChildren(${t.id})">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-journal-richtext text-info fs-2 ms-2"></i>
+                            <h5 class="mb-0">${t.title}</h5>
+                        </div>
+                        <p class="mb-0">${t.description || ''}</p>
+                        ${t.filePath ? `<div class='mt-2'><a href='${t.filePath}' class='btn btn-sm btn-outline-primary' target='_blank'>دانلود فایل</a></div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    window.showTrainingChildren = function(parentId) {
+        const rootList = document.getElementById('training-root-list');
+        const childrenList = document.getElementById('training-children-list');
+        
+        // Find the parent training
+        const parent = findTrainingById(parentId, allTrainings);
+        if (!parent) return;
+        
+        // Add to current path
+        currentPath.push(parent);
+        
+        // Animate root cards out
+        rootList.querySelectorAll('.training-root-card').forEach(card => card.classList.add('fade-out'));
+        setTimeout(() => {
+            rootList.style.display = 'none';
+            renderChildren(parentId);
+            childrenList.style.display = '';
+            childrenList.classList.add('fade-in');
+        }, 500);
+    }
+
+    function findTrainingById(id, trainings) {
+        for (let training of trainings) {
+            if (training.id === id) return training;
+            if (training.children && training.children.length > 0) {
+                const found = findTrainingById(id, training.children);
+                if (found) return found;
+            }
+        }
+        return null;
+    }
+
+    function renderChildren(parentId) {
+        const childrenList = document.getElementById('training-children-list');
+        childrenList.innerHTML = '';
+        
+        const parent = findTrainingById(parentId, allTrainings);
+        const children = parent ? parent.children || [] : [];
+        
+        // Breadcrumb navigation
+        let breadcrumbHtml = '<div class="col-12 mb-3"><div class="breadcrumb-nav">';
+        breadcrumbHtml += '<span class="breadcrumb-item" onclick="goToRoot()" style="cursor:pointer;">*</span>';
+        currentPath.forEach((item, index) => {
+            if (index < currentPath.length - 1) {
+                breadcrumbHtml += ` <i class="bi bi-chevron-left mx-2"></i> <span class="breadcrumb-item" onclick="goToPath(${index})" style="cursor:pointer;">${item.title}</span>`;
+            } else {
+                breadcrumbHtml += ` <i class="bi bi-chevron-left mx-2"></i> <span class="breadcrumb-item active">${item.title}</span>`;
+            }
+        });
+        breadcrumbHtml += '</div></div>';
+        
+        childrenList.innerHTML += breadcrumbHtml;
+        
+        // Current parent info
+        if (parent) {
+            childrenList.innerHTML += `
+                <div class="col-12 mb-3">
+                    <div class="card edu-card p-3 bg-light border">
+                        <h5 class="fw-bold mb-1">${parent.title}</h5>
+                        <p class="mb-0">${parent.description || ''}</p>
+                        ${parent.filePath ? `<div class='mt-2'><a href='${parent.filePath}' class='btn btn-sm btn-outline-primary' target='_blank'>دانلود فایل</a></div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (children.length === 0) {
+            childrenList.innerHTML += '<div class="col-12 text-center text-muted fw-bold py-4">فعلا موردی ثبت نشده است</div>';
+            return;
+        }
+        
+        children.forEach(t => {
+            const hasChildren = t.children && t.children.length > 0;
+            childrenList.innerHTML += `
+                <div class="col-md-4">
+                    <div class="card edu-card h-100 p-4 shadow-sm fade-in ${hasChildren ? 'training-child-card' : ''}" style="cursor:pointer;transition:box-shadow .2s;" ${hasChildren ? `onclick=\"showTrainingChildren(${t.id})\"` : ''}>
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-journal-richtext text-info fs-2 ms-2"></i>
+                            <h5 class="mb-0">${t.title}</h5>
+                            ${hasChildren ? '<i class="bi bi-chevron-left text-muted ms-auto"></i>' : ''}
+                        </div>
+                        <p class="mb-0">${t.description || ''}</p>
+                        ${t.filePath ? `<div class='mt-2'><a href='${t.filePath}' class='btn btn-sm btn-outline-primary' target='_blank'>دانلود فایل</a></div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    window.goToRoot = function() {
+        const rootList = document.getElementById('training-root-list');
+        const childrenList = document.getElementById('training-children-list');
+        childrenList.classList.remove('fade-in');
+        childrenList.style.display = 'none';
+        rootList.style.display = '';
+        rootList.querySelectorAll('.training-root-card').forEach(card => card.classList.remove('fade-out'));
+        currentPath = [];
+    }
+
+    window.goToPath = function(index) {
+        if (index >= currentPath.length) return;
+        
+        const targetTraining = currentPath[index];
+        currentPath = currentPath.slice(0, index + 1);
+        
+        const rootList = document.getElementById('training-root-list');
+        const childrenList = document.getElementById('training-children-list');
+        
+        childrenList.classList.remove('fade-in');
+        childrenList.style.display = 'none';
+        rootList.style.display = 'none';
+        
+        setTimeout(() => {
+            renderChildren(targetTraining.id);
+            childrenList.style.display = '';
+            childrenList.classList.add('fade-in');
+        }, 100);
+    }
+
+    window.backToRootTrainings = function() {
+        goToRoot();
+    }
+    </script>
+</section>

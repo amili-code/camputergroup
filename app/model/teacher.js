@@ -39,6 +39,14 @@ module.exports = (sequelize) => {
             comment: 'نام خانوادگی استاد'
         },
         
+        // رمز عبور
+        password: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+            field: 'password',
+            comment: 'رمز عبور استاد'
+        },
+        
         // عکس پرسنلی
         personalImage: {
             type: DataTypes.STRING(255),
@@ -70,6 +78,23 @@ module.exports = (sequelize) => {
                 len: [10, 10], // دقیقاً 10 رقم
                 isNumeric: true
             }
+        },
+        
+        // دروس تدریس - حداکثر 5 درس (ذخیره به صورت "درس1,درس2,درس3")
+        teachingSubjects: {
+            type: DataTypes.STRING(200),
+            allowNull: false,
+            defaultValue: '',
+            field: 'teaching_subjects',
+            comment: 'دروس تدریس استاد - حداکثر 5 درس (با کاما جدا شود)'
+        },
+        
+        // توضیحات
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            field: 'description',
+            comment: 'توضیحات و بیوگرافی استاد'
         },
         
         // برنامه هفتگی - 42 رقم 0 و 1 (6 بازه زمانی × 7 روز)

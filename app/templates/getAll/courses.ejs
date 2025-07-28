@@ -1,0 +1,508 @@
+<%- include('./layout/header.ejs')%>
+
+<section class="container py-5">
+    <h2 class="section-title text-center">همه دوره‌ها و رویدادها</h2>
+    
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-search"></i> جستجو و فیلتر</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="filter-label" for="searchInput">
+                        <i class="bi bi-search"></i> جستجوی عمومی
+                    </label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="عنوان یا توضیحات دوره...">
+                </div>
+                <div class="col-md-2">
+                    <label class="filter-label" for="typeSelect">
+                        <i class="bi bi-tags"></i> دسته‌بندی
+                    </label>
+                    <select id="typeSelect" class="form-select">
+                        <option value="">همه دسته‌ها</option>
+                        <option value="course">دوره</option>
+                        <option value="event">رویداد</option>
+                        <option value="competition">مسابقه</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="filter-label" for="freeSelect">
+                        <i class="bi bi-currency-dollar"></i> هزینه
+                    </label>
+                    <select id="freeSelect" class="form-select">
+                        <option value="">همه</option>
+                        <option value="free">فقط رایگان</option>
+                        <option value="paid">فقط غیررایگان</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="filter-label" for="availabilitySelect">
+                        <i class="bi bi-check-circle"></i> وضعیت
+                    </label>
+                    <select id="availabilitySelect" class="form-select">
+                        <option value="">همه</option>
+                        <option value="active">فقط فعال</option>
+                        <option value="inactive">فقط غیرفعال</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="filter-label" for="tagFilter">
+                        <i class="bi bi-bookmark"></i> تگ
+                    </label>
+                    <select id="tagFilter" class="form-select">
+                        <option value="">همه تگ‌ها</option>
+                        <!-- تگ‌ها با JavaScript پر می‌شوند -->
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="btn btn-secondary btn-sm" onclick="clearAllFilters()">
+                        <i class="bi bi-arrow-clockwise"></i> پاک کردن فیلترها
+                    </button>
+                    <span class="ms-2 text-muted" id="filterStatus"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses List -->
+    <div id="courses-loading" class="text-center my-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div>در حال بارگذاری دوره‌ها...</div>
+    </div>
+    <div id="courses-list" class="row g-4 justify-content-center"></div>
+</section>
+
+<style>
+.filter-label { 
+    font-weight: bold; 
+    margin-bottom: 0.5rem; 
+    color: #495057;
+}
+
+.course-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.course-image {
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.course-card:hover .course-image {
+    transform: scale(1.05);
+}
+
+.type-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+}
+
+.tag-badge {
+    display: inline-block;
+    background: linear-gradient(45deg, #17a2b8, #138496);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    margin: 0.1rem;
+    white-space: nowrap;
+}
+
+.tag-badge:hover {
+    background: linear-gradient(45deg, #138496, #117a8b);
+    transform: scale(1.05);
+}
+
+.price-badge {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+}
+
+.price-badge.free {
+    background: linear-gradient(45deg, #28a745, #20c997);
+}
+
+.price-badge.paid {
+    background: linear-gradient(45deg, #fd7e14, #e83e8c);
+}
+
+.location-badge {
+    background: linear-gradient(45deg, #6c757d, #495057);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
+
+.course-info {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.info-item i {
+    width: 20px;
+    margin-left: 0.5rem;
+    color: #007bff;
+}
+
+.description-text {
+    background: white;
+    border-radius: 8px;
+    padding: 0.75rem;
+    border-left: 4px solid #007bff;
+    font-style: italic;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    max-height: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.filter-status {
+    background: #e3f2fd;
+    border-radius: 5px;
+    padding: 0.5rem;
+    border-left: 4px solid #2196f3;
+}
+
+.register-btn {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.register-btn:hover {
+    background: linear-gradient(45deg, #0056b3, #004085);
+    transform: scale(1.05);
+    color: white;
+}
+
+.register-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.capacity-info {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0.5rem;
+    text-align: center;
+    font-weight: bold;
+    color: #495057;
+}
+
+.deadline-info {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 0.5rem;
+    text-align: center;
+    font-weight: bold;
+    color: #856404;
+}
+</style>
+
+<script>
+let allCourses = [];
+let allTags = new Set();
+
+document.addEventListener('DOMContentLoaded', function() {
+    apiRequest('/courses', 'GET').then(data => {
+        allCourses = (data && data.data && Array.isArray(data.data)) ? data.data : [];
+        document.getElementById('courses-loading').style.display = 'none';
+        
+        // استخراج همه تگ‌ها
+        extractAllTags();
+        
+        // پر کردن فیلتر تگ‌ها
+        populateTagFilter();
+        
+        renderCourses();
+    }).catch(() => {
+        document.getElementById('courses-loading').style.display = 'none';
+        document.getElementById('courses-list').innerHTML = '<div class="text-center text-danger">خطا در دریافت دوره‌ها</div>';
+    });
+    
+    // Event listeners for filters
+    document.getElementById('searchInput').addEventListener('input', renderCourses);
+    document.getElementById('typeSelect').addEventListener('change', renderCourses);
+    document.getElementById('freeSelect').addEventListener('change', renderCourses);
+    document.getElementById('availabilitySelect').addEventListener('change', renderCourses);
+    document.getElementById('tagFilter').addEventListener('change', renderCourses);
+});
+
+function extractAllTags() {
+    allTags.clear();
+    allCourses.forEach(course => {
+        if (course.tags) {
+            const tags = course.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+            tags.forEach(tag => allTags.add(tag));
+        }
+    });
+}
+
+function populateTagFilter() {
+    const select = document.getElementById('tagFilter');
+    select.innerHTML = '<option value="">همه تگ‌ها</option>';
+    
+    Array.from(allTags).sort().forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag;
+        select.appendChild(option);
+    });
+}
+
+function renderCourses() {
+    const search = document.getElementById('searchInput').value.trim();
+    const type = document.getElementById('typeSelect').value;
+    const free = document.getElementById('freeSelect').value;
+    const avail = document.getElementById('availabilitySelect').value;
+    const selectedTag = document.getElementById('tagFilter').value;
+    
+    let filtered = allCourses.filter(c => {
+        let ok = true;
+        
+        // جستجوی عمومی
+        if (search) {
+            const searchLower = search.toLowerCase();
+            ok = (c.title && c.title.toLowerCase().includes(searchLower)) || 
+                 (c.description && c.description.toLowerCase().includes(searchLower));
+        }
+        
+        // فیلتر نوع
+        if (ok && type) {
+            ok = c.type === type;
+        }
+        
+        // فیلتر هزینه
+        if (ok && free) {
+            ok = (free === 'free' ? c.price == 0 : c.price > 0);
+        }
+        
+        // فیلتر وضعیت
+        if (ok && avail) {
+            ok = (avail === 'active' ? c.isAvailable : !c.isAvailable);
+        }
+        
+        // فیلتر تگ
+        if (ok && selectedTag) {
+            ok = c.tags && c.tags.split(',').some(t => t.trim() === selectedTag);
+        }
+        
+        return ok;
+    });
+    
+    // نمایش وضعیت فیلتر
+    updateFilterStatus(filtered.length);
+    
+    const list = document.getElementById('courses-list');
+    if (filtered.length === 0) {
+        list.innerHTML = `
+            <div class="col-12 text-center">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    دوره‌ای با فیلترهای انتخاب شده یافت نشد.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    filtered.forEach(course => {
+        // تگ‌ها
+        let tagsHtml = '';
+        if (course.tags) {
+            const tags = course.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+            tagsHtml = tags.map(tag => `<span class="tag-badge">${tag}</span>`).join('');
+        }
+        
+        // نوع دوره
+        let typeLabel = 'دوره';
+        let typeColor = 'primary';
+        if (course.type === 'event') { typeLabel = 'رویداد'; typeColor = 'warning'; }
+        if (course.type === 'competition') { typeLabel = 'مسابقه'; typeColor = 'success'; }
+        
+        // تصویر
+        let imgHtml = '';
+        if (course.thumbnail && course.thumbnail !== '-' && course.thumbnail !== 'null') {
+            imgHtml = `
+                <div class="position-relative">
+                    <img src="${course.thumbnail}" class="course-image w-100" alt="${course.title}">
+                    <span class="type-badge badge bg-${typeColor}">${typeLabel}</span>
+                </div>
+            `;
+        } else {
+            imgHtml = `
+                <div class="position-relative" style="height:200px;background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                        <i class="bi bi-image fs-1 text-secondary"></i>
+                        <div class="text-muted small">تصویر ندارد</div>
+                    </div>
+                    <span class="type-badge badge bg-${typeColor}">${typeLabel}</span>
+                </div>
+            `;
+        }
+        
+        // مکان
+        let locationHtml = '';
+        if (!course.location || course.location === 'null') {
+            locationHtml = `<span class="location-badge"><i class="bi bi-wifi ms-1"></i>مجازی</span>`;
+        } else {
+            locationHtml = `<span class="location-badge"><i class="bi bi-geo-alt ms-1"></i>${course.location}</span>`;
+        }
+        
+        // قیمت
+        let priceHtml = '';
+        if (course.isAvailable) {
+            if (course.price == 0) {
+                priceHtml = `<span class="price-badge free">رایگان</span>`;
+            } else {
+                priceHtml = `<span class="price-badge paid">${course.price.toLocaleString()} تومان</span>`;
+            }
+        }
+        
+        // وضعیت
+        let statusHtml = '';
+        if (!course.isAvailable) {
+            statusHtml = '<span class="badge bg-danger">غیرفعال</span>';
+        }
+        
+        // دلیل عدم دسترسی
+        let reasonHtml = '';
+        if (!course.isAvailable && course.unavailabilityReason) {
+            reasonHtml = `
+                <div class="alert alert-warning py-2 px-3 my-2 small">
+                    <i class="bi bi-exclamation-triangle-fill ms-1"></i>
+                    علت عدم دسترسی: <b>${course.unavailabilityReason}</b>
+                </div>
+            `;
+        }
+        
+        html += `
+            <div class="col-lg-4 col-md-6">
+                <div class="card course-card h-100" style="cursor: pointer;" onclick="window.location.href='/courses/${course.id}'">
+                    ${imgHtml}
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="fw-bold text-primary mb-0">${course.title || ''}</h5>
+                            ${priceHtml}
+                        </div>
+                        
+                        <div class="course-info">
+                            <div class="info-item">
+                                <i class="bi bi-geo-alt"></i>
+                                <span>مکان: ${locationHtml}</span>
+                            </div>
+                            
+                            <div class="info-item">
+                                <i class="bi bi-people"></i>
+                                <span>ظرفیت: ${course.capacity || '-'}</span>
+                            </div>
+                            
+                            ${course.endDate ? `
+                                <div class="info-item">
+                                    <i class="bi bi-calendar-event"></i>
+                                    <span>مهلت ثبت‌نام: ${course.endDate}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${tagsHtml ? `
+                                <div class="mt-3">
+                                    <strong><i class="bi bi-bookmark"></i> تگ‌ها:</strong>
+                                    <div class="mt-2">
+                                        ${tagsHtml}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${course.description ? `
+                                <div class="description-text">
+                                    <i class="bi bi-chat-quote"></i>
+                                    ${course.description}
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        ${statusHtml}
+                        ${reasonHtml}
+                        
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary btn-sm me-2" onclick="event.stopPropagation(); window.location.href='/courses/${course.id}'">
+                                <i class="bi bi-eye me-1"></i>
+                                مشاهده جزئیات
+                            </button>
+                            <button class="btn register-btn" ${!course.isAvailable ? 'disabled' : ''} onclick="event.stopPropagation();">
+                                <i class="bi bi-person-plus"></i>
+                                ${course.isAvailable ? 'ثبت نام' : 'غیرفعال'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+function updateFilterStatus(filteredCount) {
+    const statusElement = document.getElementById('filterStatus');
+    const totalCount = allCourses.length;
+    
+    if (filteredCount === totalCount) {
+        statusElement.innerHTML = `<span class="filter-status">نمایش همه ${totalCount} دوره</span>`;
+    } else {
+        statusElement.innerHTML = `<span class="filter-status">نمایش ${filteredCount} از ${totalCount} دوره</span>`;
+    }
+}
+
+function clearAllFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('typeSelect').value = '';
+    document.getElementById('freeSelect').value = '';
+    document.getElementById('availabilitySelect').value = '';
+    document.getElementById('tagFilter').value = '';
+    renderCourses();
+}
+</script>
+
+<%- include('./layout/footer.ejs')%>

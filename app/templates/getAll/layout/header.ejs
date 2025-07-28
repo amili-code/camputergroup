@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>گروه کامپیوتر</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/fech-warper.js"></script>
+    <style>
+        @font-face { font-family: peyda; src: url("/font/PeydaWeb-Regular.woff2"); }
+        html, body, * , *::before, *::after { font-family: peyda, sans-serif !important; }
+        body { background: #f8fafc; }
+        .section-title { font-weight: bold; margin-bottom: 2rem; color: #2d3a4b; }
+        .feature-card { border: none; border-radius: 1rem; box-shadow: 0 2px 12px #0001; transition: transform 0.2s; }
+        .feature-card:hover { transform: translateY(-6px) scale(1.03); }
+        .desc-truncate { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; min-height: 3.6em; max-height: 4.5em; }
+        .filter-label { font-weight: bold; margin-bottom: 0.5rem; }
+        .footer { background: #2d3a4b; color: #fff; padding: 2rem 0 1rem 0; }
+        .footer a { color: #fff; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <!-- Navbar (from main.ejs) -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#" style="font-size: 1.5rem;font-weight: bold;">گروه کامپیوتر</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="تغییر منو">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/">خانه</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/courses">دوره‌ها و رویدادها</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/news">اخبار و اطلاعیه ها</a></li>
+                    <li class="nav-item dropdown"><a class="nav-link" href="/tranning">آموزشی</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/community">انجمن</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/teachers">اساتید</a></li>
+                </ul>
+                <div id="auth-section" class="d-none d-lg-inline">
+                    <!-- Login button (shown when not logged in) -->
+                    <a href="/login" class="btn btn-primary ms-3" id="login-btn">ورود</a>
+                    
+                    <!-- User info (shown when logged in) -->
+                    <div class="dropdown ms-3" id="user-info" style="display: none;">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-2"></i>
+                            <span id="user-name">کاربر</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><span class="dropdown-item-text text-muted" id="user-type">نوع کاربر</span></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()">
+                                <i class="bi bi-box-arrow-right me-2"></i>خروج
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Mobile version -->
+                <div class="d-lg-none">
+                    <a href="/login" class="btn btn-primary w-100 mt-2" id="login-btn-mobile">ورود</a>
+                    <div id="user-info-mobile" style="display: none;" class="mt-2">
+                        <div class="d-flex align-items-center justify-content-between p-2 bg-light rounded">
+                            <div>
+                                <i class="bi bi-person-circle me-2"></i>
+                                <span id="user-name-mobile">کاربر</span>
+                                <small class="text-muted d-block" id="user-type-mobile">نوع کاربر</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="logout()">
+                                <i class="bi bi-box-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Authentication Script -->
+    <script>
+        // Prevent duplicate execution
+        if (!window.authInitialized) {
+            window.authInitialized = true;
+            
+            // Check authentication status on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(checkAuthStatus, 100);
+            });
+
+            // Check if user is authenticated
+            async function checkAuthStatus() {
+                try {
+                    const response = await fetch('/api/auth/me');
+                    const result = await response.json();
+                    console.log(result);
+                    
+                    if (result.success && result.data.user) {
+                        showUserInfo(result.data.user);
+                    } else {
+                        showLoginButton();
+                    }
+                } catch (error) {
+                    console.error('خطا در بررسی وضعیت احراز هویت:', error);
+                    showLoginButton();
+                }
+            }
+
+            // Show user information
+            function showUserInfo(user) {
+                const userName = `${user.firstName} ${user.lastName}`;
+                const userType = user.type === 'teacher' ? 'استاد' : 'دانشجو';
+                
+                // Desktop version
+                const loginBtn = document.getElementById('login-btn');
+                const userInfo = document.getElementById('user-info');
+                const userNameEl = document.getElementById('user-name');
+                const userTypeEl = document.getElementById('user-type');
+                console.log("fdl;jkdaskl;fjdaksf;lkadsfj");
+                
+                if (loginBtn) loginBtn.style.display = 'none';
+                if (userInfo) userInfo.style.display = 'block';
+                if (userNameEl) userNameEl.textContent = userName;
+                if (userTypeEl) userTypeEl.textContent = userType;
+                
+                // Mobile version
+                const loginBtnMobile = document.getElementById('login-btn-mobile');
+                const userInfoMobile = document.getElementById('user-info-mobile');
+                const userNameMobile = document.getElementById('user-name-mobile');
+                const userTypeMobile = document.getElementById('user-type-mobile');
+                
+                if (loginBtnMobile) loginBtnMobile.style.display = 'none';
+                if (userInfoMobile) userInfoMobile.style.display = 'block';
+                if (userNameMobile) userNameMobile.textContent = userName;
+                if (userTypeMobile) userTypeMobile.textContent = userType;
+            }
+
+            // Show login button
+            function showLoginButton() {
+                // Desktop version
+                const loginBtn = document.getElementById('login-btn');
+                const userInfo = document.getElementById('user-info');
+                
+                if (loginBtn) loginBtn.style.display = 'inline-block';
+                if (userInfo) userInfo.style.display = 'none';
+                
+                // Mobile version
+                const loginBtnMobile = document.getElementById('login-btn-mobile');
+                const userInfoMobile = document.getElementById('user-info-mobile');
+                
+                if (loginBtnMobile) loginBtnMobile.style.display = 'block';
+                if (userInfoMobile) userInfoMobile.style.display = 'none';
+            }
+
+            // Logout function
+            window.logout = async function() {
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Show success message
+                        showMessage('خروج موفقیت‌آمیز بود', 'success');
+                        
+                        // Refresh page after 1 second
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showMessage('خطا در خروج از سیستم', 'error');
+                    }
+                } catch (error) {
+                    console.error('خطا در خروج:', error);
+                    showMessage('خطا در اتصال به سرور', 'error');
+                }
+            }
+
+            // Show message function
+            function showMessage(message, type) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+                alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                alertDiv.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                document.body.appendChild(alertDiv);
+                
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 3000);
+            }
+        }
+    </script>

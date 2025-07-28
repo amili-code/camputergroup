@@ -373,6 +373,382 @@ class CourseController {
             });
         }
     }
+
+    // ==================== COURSE REGISTRATION METHODS ====================
+
+    // CREATE - درخواست ثبت نام در دوره
+    async createRegistration(req, res) {
+        try {
+            const { studentId, courseId } = req.body;
+
+            // اعتبارسنجی داده‌های ورودی
+            if (!studentId || !courseId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'آیدی دانشجو و آیدی دوره الزامی است'
+                });
+            }
+
+            // بررسی وجود دانشجو
+            const student = await models.Student.findByPk(studentId);
+            if (!student) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'دانشجو یافت نشد'
+                });
+            }
+
+            // بررسی وجود دوره
+            const course = await models.Course.findByPk(courseId);
+            if (!course) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'دوره یافت نشد'
+                });
+            }
+
+            // بررسی در دسترس بودن دوره
+            if (!course.isAvailable) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'این دوره در حال حاضر در دسترس نیست'
+                });
+            }
+
+            // بررسی تکراری نبودن درخواست
+            const existingRegistration = await models.CourseRegistration.findOne({
+                where: { studentId, courseId }
+            });
+
+            if (existingRegistration) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'شما قبلاً برای این دوره درخواست داده‌اید'
+                });
+            }
+
+            // ایجاد درخواست جدید
+            const registration = await models.CourseRegistration.create({
+                studentId,
+                courseId,
+                status: 'pending',
+                requestDate: new Date()
+            });
+
+            res.status(201).json({
+                success: true,
+                message: 'درخواست ثبت نام با موفقیت ارسال شد',
+                data: registration
+            });
+
+        } catch (error) {
+            console.error('خطا در ایجاد درخواست ثبت نام:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در ایجاد درخواست ثبت نام',
+                error: error.message
+            });
+        }
+    }
+
+    // READ - دریافت تمام درخواست‌های ثبت نام
+    async getAllRegistrations(req, res) {
+        try {
+            const { status, page = 1, limit = 10 } = req.query;
+            
+            let whereClause = {};
+            
+            // فیلتر بر اساس وضعیت
+            if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+                whereClause.status = status;
+            }
+
+            const offset = (page - 1) * limit;
+            
+            const registrations = await models.CourseRegistration.findAndCountAll({
+                where: whereClause,
+                include: [
+                    {
+                        model: models.Student,
+                        attributes: ['id', 'studentId', 'firstName', 'lastName', 'phone']
+                    },
+                    {
+                        model: models.Course,
+                        attributes: ['id', 'title', 'type', 'price', 'isAvailable']
+                    }
+                ],
+                order: [['requestDate', 'DESC']],
+                limit: parseInt(limit),
+                offset: parseInt(offset)
+            });
+
+            res.json({
+                success: true,
+                message: 'درخواست‌های ثبت نام با موفقیت دریافت شدند',
+                data: {
+                    registrations: registrations.rows,
+                    pagination: {
+                        currentPage: parseInt(page),
+                        totalPages: Math.ceil(registrations.count / limit),
+                        totalItems: registrations.count,
+                        itemsPerPage: parseInt(limit)
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('خطا در دریافت درخواست‌های ثبت نام:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در دریافت درخواست‌های ثبت نام',
+                error: error.message
+            });
+        }
+    }
+
+    // READ - دریافت درخواست‌های یک دانشجو
+    async getStudentRegistrations(req, res) {
+        try {
+            const { studentId } = req.params;
+            const { status } = req.query;
+
+            let whereClause = { studentId };
+            
+            // فیلتر بر اساس وضعیت
+            if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+                whereClause.status = status;
+            }
+
+            const registrations = await models.CourseRegistration.findAll({
+                where: whereClause,
+                include: [
+                    {
+                        model: models.Course,
+                        attributes: ['id', 'title', 'type', 'price', 'isAvailable', 'thumbnail']
+                    }
+                ],
+                order: [['requestDate', 'DESC']]
+            });
+
+            res.json({
+                success: true,
+                message: 'درخواست‌های دانشجو با موفقیت دریافت شدند',
+                data: registrations
+            });
+
+        } catch (error) {
+            console.error('خطا در دریافت درخواست‌های دانشجو:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در دریافت درخواست‌های دانشجو',
+                error: error.message
+            });
+        }
+    }
+
+    // READ - دریافت درخواست‌های یک دوره
+    async getCourseRegistrations(req, res) {
+        try {
+            const { courseId } = req.params;
+            const { status } = req.query;
+
+            let whereClause = { courseId };
+            
+            // فیلتر بر اساس وضعیت
+            if (status && ['pending', 'approved', 'rejected'].includes(status)) {
+                whereClause.status = status;
+            }
+
+            const registrations = await models.CourseRegistration.findAll({
+                where: whereClause,
+                include: [
+                    {
+                        model: models.Student,
+                        attributes: ['id', 'studentId', 'firstName', 'lastName', 'phone']
+                    }
+                ],
+                order: [['requestDate', 'DESC']]
+            });
+
+            res.json({
+                success: true,
+                message: 'درخواست‌های دوره با موفقیت دریافت شدند',
+                data: registrations
+            });
+
+        } catch (error) {
+            console.error('خطا در دریافت درخواست‌های دوره:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در دریافت درخواست‌های دوره',
+                error: error.message
+            });
+        }
+    }
+
+    // READ - دریافت درخواست بر اساس ID
+    async getRegistrationById(req, res) {
+        try {
+            const { id } = req.params;
+
+            const registration = await models.CourseRegistration.findByPk(id, {
+                include: [
+                    {
+                        model: models.Student,
+                        attributes: ['id', 'studentId', 'firstName', 'lastName', 'phone']
+                    },
+                    {
+                        model: models.Course,
+                        attributes: ['id', 'title', 'type', 'price', 'isAvailable', 'description']
+                    }
+                ]
+            });
+
+            if (!registration) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'درخواست ثبت نام یافت نشد'
+                });
+            }
+
+            res.json({
+                success: true,
+                message: 'درخواست ثبت نام با موفقیت دریافت شد',
+                data: registration
+            });
+
+        } catch (error) {
+            console.error('خطا در دریافت درخواست ثبت نام:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در دریافت درخواست ثبت نام',
+                error: error.message
+            });
+        }
+    }
+
+    // UPDATE - تایید درخواست
+    async approveRegistration(req, res) {
+        try {
+            const { id } = req.params;
+            const { notes } = req.body;
+
+            const registration = await models.CourseRegistration.findByPk(id);
+            if (!registration) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'درخواست ثبت نام یافت نشد'
+                });
+            }
+
+            if (registration.status !== 'pending') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'این درخواست قبلاً تایید یا رد شده است'
+                });
+            }
+
+            await registration.update({
+                status: 'approved',
+                approvalDate: new Date(),
+                notes: notes || null
+            });
+
+            res.json({
+                success: true,
+                message: 'درخواست با موفقیت تایید شد',
+                data: registration
+            });
+
+        } catch (error) {
+            console.error('خطا در تایید درخواست:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در تایید درخواست',
+                error: error.message
+            });
+        }
+    }
+
+    // UPDATE - رد درخواست
+    async rejectRegistration(req, res) {
+        try {
+            const { id } = req.params;
+            const { notes } = req.body;
+
+            if (!notes) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'دلیل رد درخواست الزامی است'
+                });
+            }
+
+            const registration = await models.CourseRegistration.findByPk(id);
+            if (!registration) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'درخواست ثبت نام یافت نشد'
+                });
+            }
+
+            if (registration.status !== 'pending') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'این درخواست قبلاً تایید یا رد شده است'
+                });
+            }
+
+            await registration.update({
+                status: 'rejected',
+                approvalDate: new Date(),
+                notes: notes
+            });
+
+            res.json({
+                success: true,
+                message: 'درخواست با موفقیت رد شد',
+                data: registration
+            });
+
+        } catch (error) {
+            console.error('خطا در رد درخواست:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در رد درخواست',
+                error: error.message
+            });
+        }
+    }
+
+    // DELETE - حذف درخواست
+    async deleteRegistration(req, res) {
+        try {
+            const { id } = req.params;
+
+            const registration = await models.CourseRegistration.findByPk(id);
+            if (!registration) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'درخواست ثبت نام یافت نشد'
+                });
+            }
+
+            await registration.destroy();
+
+            res.json({
+                success: true,
+                message: 'درخواست ثبت نام با موفقیت حذف شد'
+            });
+
+        } catch (error) {
+            console.error('خطا در حذف درخواست ثبت نام:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در حذف درخواست ثبت نام',
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = new CourseController();

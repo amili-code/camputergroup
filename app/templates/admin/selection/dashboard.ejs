@@ -1,0 +1,86 @@
+<div id="dashboard-content" class="content-panel">
+    <h3 class="mb-4"><i class="bi bi-speedometer2"></i> داشبورد</h3>
+    
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="text-primary" id="studentCount">...</h4>
+                        <p class="text-muted mb-0">کل‌دانشجویان</p>
+                    </div>
+                    <div class="text-primary">
+                        <i class="bi bi-people fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="text-success" id="teacherCount">...</h4>
+                        <p class="text-muted mb-0">تعداد اساتید</p>
+                    </div>
+                    <div class="text-success">
+                        <i class="bi bi-person-badge fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="text-warning" id="communityCount">...</h4>
+                        <p class="text-muted mb-0">اعضای‌انجمن</p>
+                    </div>
+                    <div class="text-warning">
+                        <i class="bi bi-people-fill fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="stats-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="text-info" id="trainingCount">...</h4>
+                        <p class="text-muted mb-0">فایل‌آموزشی</p>
+                    </div>
+                    <div class="text-info">
+                        <i class="bi bi-journal-richtext fs-1"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-card">
+        <h5><i class="bi bi-graph-up"></i> آمار کلی</h5>
+        <p class="mb-0">سیستم شما در حال کارکرد عالی است. تمام سرویس‌ها فعال هستند.</p>
+    </div>
+</div>
+<script>
+// بارگذاری آمار داشبورد
+async function loadDashboardStats() {
+    try {
+        const response = await apiRequest('/dashboard-stats', 'GET');
+        if (response && response.success) {
+            const d = response.data;
+            document.getElementById('studentCount').textContent = d.studentCount;
+            document.getElementById('teacherCount').textContent = d.teacherCount;
+            document.getElementById('communityCount').textContent = d.communityCount;
+            document.getElementById('trainingCount').textContent = d.trainingCount;
+        }
+    } catch (e) {
+        // fallback: ...
+    }
+}
+if (document.getElementById('dashboard-content')) {
+    document.addEventListener('DOMContentLoaded', loadDashboardStats);
+}
+</script>

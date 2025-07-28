@@ -198,6 +198,88 @@
     </div>
 </div>
 
+<!-- Course Registrations Modal -->
+<div class="modal fade" id="courseRegistrationsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="courseRegistrationsModalTitle">درخواست‌های ثبت نام</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary" onclick="filterRegistrations('all')">همه</button>
+                            <button type="button" class="btn btn-outline-warning" onclick="filterRegistrations('pending')">در انتظار</button>
+                            <button type="button" class="btn btn-outline-success" onclick="filterRegistrations('approved')">تایید شده</button>
+                            <button type="button" class="btn btn-outline-danger" onclick="filterRegistrations('rejected')">رد شده</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <span class="badge bg-primary" id="registrationCount">0 درخواست</span>
+                    </div>
+                </div>
+                <div id="courseRegistrationsTable"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve/Reject Registration Modal -->
+<div class="modal fade" id="approveRejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approveRejectModalTitle">تایید/رد درخواست</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="approveRejectForm">
+                    <input type="hidden" id="registrationId">
+                    <input type="hidden" id="registrationAction">
+                    
+                    <div class="mb-3">
+                        <div id="studentInfo"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="approveReject" id="approveRegistration" value="approve">
+                            <label class="form-check-label" for="approveRegistration">
+                                <i class="bi bi-check-circle text-success"></i> تایید درخواست
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="approveReject" id="rejectRegistration" value="reject">
+                            <label class="form-check-label" for="rejectRegistration">
+                                <i class="bi bi-x-circle text-danger"></i> رد درخواست
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="rejectReasonDiv" style="display: none;">
+                        <label for="rejectReason" class="form-label">دلیل رد درخواست *</label>
+                        <textarea class="form-control" id="rejectReason" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3" id="approveNotesDiv" style="display: none;">
+                        <label for="approveNotes" class="form-label">توضیحات (اختیاری)</label>
+                        <textarea class="form-control" id="approveNotes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="confirmApproveReject()">تایید</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script>
 // Course Management JavaScript
@@ -323,7 +405,7 @@ function initializeCourseTable() {
                 if (!val) return '-';
                 return val.split(',').map(tag => `<span class='badge bg-info ms-1'>${tag}</span>`).join(' ');
             }},
-            {title: "عملیات", width: 250, headerFilter: false, formatter: function(cell) {
+            {title: "عملیات", width: 300, headerFilter: false, formatter: function(cell) {
                 const course = cell.getRow().getData();
                 return `
                     <div class="btn-group" role="group">
@@ -332,6 +414,9 @@ function initializeCourseTable() {
                         </button>
                         <button class="btn btn-sm btn-outline-warning" onclick="toggleCourseAvailability(${course.id})" title="تغییر وضعیت">
                             <i class="bi bi-toggle-on"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="showCourseRegistrations(${course.id})" title="درخواست‌های ثبت نام">
+                            <i class="bi bi-people"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-info" onclick="showCourseDetails(${course.id})" title="نمایش جزییات">
                             <i class="bi bi-eye"></i>
@@ -687,6 +772,311 @@ function showCourseImageModal(imgSrc) {
         confirmButtonText: 'بستن',
         customClass: {popup: 'text-center'}
     });
+}
+
+// ==================== COURSE REGISTRATIONS FUNCTIONS ====================
+
+let courseRegistrationsTable;
+let currentRegistrations = [];
+let currentCourseId = null;
+let currentFilter = 'all';
+
+// نمایش درخواست‌های ثبت نام دوره
+async function showCourseRegistrations(courseId) {
+    currentCourseId = courseId;
+    currentFilter = 'all';
+    
+    try {
+        const course = currentCourses.find(c => c.id === courseId);
+        if (!course) {
+            Swal.fire('خطا', 'دوره یافت نشد', 'error');
+            return;
+        }
+        
+        document.getElementById('courseRegistrationsModalTitle').textContent = `درخواست‌های ثبت نام - ${course.title}`;
+        
+        // Initialize table
+        initializeCourseRegistrationsTable();
+        
+        // Load registrations
+        await loadCourseRegistrations(courseId);
+        
+        const modal = new bootstrap.Modal(document.getElementById('courseRegistrationsModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('خطا در نمایش درخواست‌های ثبت نام:', error);
+        Swal.fire('خطا', 'خطا در بارگذاری درخواست‌های ثبت نام', 'error');
+    }
+}
+
+// Initialize course registrations table
+function initializeCourseRegistrationsTable() {
+    courseRegistrationsTable = new Tabulator("#courseRegistrationsTable", {
+        layout: "fitColumns",
+        pagination: true,
+        paginationSize: 10,
+        paginationSizeSelector: [5, 10, 20, 50],
+        columns: [
+            {title: "شناسه", field: "id", width: 80, sorter: "number"},
+            {title: "نام دانشجو", field: "Student.firstName", width: 120, sorter: "string"},
+            {title: "نام خانوادگی", field: "Student.lastName", width: 120, sorter: "string"},
+            {title: "شماره دانشجویی", field: "Student.studentId", width: 120, sorter: "string"},
+            {title: "شماره تلفن", field: "Student.phone", width: 120, sorter: "string"},
+            {title: "تاریخ درخواست", field: "requestDate", width: 150, sorter: "datetime", formatter: function(cell) {
+                const date = new Date(cell.getValue());
+                return date.toLocaleDateString('fa-IR');
+            }},
+            {title: "وضعیت", field: "status", width: 120, sorter: "string", formatter: function(cell) {
+                const status = cell.getValue();
+                if (status === 'pending') return '<span class="badge bg-warning">در انتظار</span>';
+                if (status === 'approved') return '<span class="badge bg-success">تایید شده</span>';
+                if (status === 'rejected') return '<span class="badge bg-danger">رد شده</span>';
+                return '-';
+            }},
+            {title: "تاریخ تایید/رد", field: "approvalDate", width: 150, sorter: "datetime", formatter: function(cell) {
+                const val = cell.getValue();
+                if (!val) return '-';
+                const date = new Date(val);
+                return date.toLocaleDateString('fa-IR');
+            }},
+            {title: "توضیحات", field: "notes", width: 200, formatter: function(cell) {
+                const val = cell.getValue();
+                return val || '-';
+            }},
+            {title: "عملیات", width: 200, headerFilter: false, formatter: function(cell) {
+                const registration = cell.getRow().getData();
+                if (registration.status === 'pending') {
+                    return `
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-success" onclick="approveRejectRegistration(${registration.id}, 'approve')" title="تایید">
+                                <i class="bi bi-check-circle"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="approveRejectRegistration(${registration.id}, 'reject')" title="رد">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-info" onclick="showRegistrationDetails(${registration.id})" title="نمایش جزییات">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteRegistration(${registration.id})" title="حذف">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            }}
+        ]
+    });
+}
+
+// بارگذاری درخواست‌های ثبت نام
+async function loadCourseRegistrations(courseId, status = null) {
+    try {
+        let url = `/course-registrations/course/${courseId}`;
+        if (status && status !== 'all') {
+            url += `?status=${status}`;
+        }
+        
+        const response = await apiRequest(url, 'GET');
+        if (response.success) {
+            currentRegistrations = response.data;
+            courseRegistrationsTable.setData(currentRegistrations);
+            updateRegistrationCount();
+        }
+    } catch (error) {
+        console.error('خطا در بارگذاری درخواست‌های ثبت نام:', error);
+        Swal.fire('خطا', 'خطا در بارگذاری درخواست‌های ثبت نام', 'error');
+    }
+}
+
+// فیلتر کردن درخواست‌ها
+function filterRegistrations(status) {
+    currentFilter = status;
+    loadCourseRegistrations(currentCourseId, status);
+}
+
+// به‌روزرسانی تعداد درخواست‌ها
+function updateRegistrationCount() {
+    const count = currentRegistrations.length;
+    document.getElementById('registrationCount').textContent = `${count} درخواست`;
+}
+
+// تایید یا رد درخواست
+async function approveRejectRegistration(registrationId, action) {
+    try {
+        // دریافت اطلاعات درخواست
+        const registration = currentRegistrations.find(r => r.id === registrationId);
+        if (!registration) {
+            Swal.fire('خطا', 'درخواست یافت نشد', 'error');
+            return;
+        }
+        
+        // نمایش اطلاعات دانشجو
+        const student = registration.Student;
+        document.getElementById('studentInfo').innerHTML = `
+            <div class="alert alert-info">
+                <strong>اطلاعات دانشجو:</strong><br>
+                نام: ${student.firstName} ${student.lastName}<br>
+                شماره دانشجویی: ${student.studentId}<br>
+                شماره تلفن: ${student.phone}
+            </div>
+        `;
+        
+        // تنظیم فرم
+        document.getElementById('registrationId').value = registrationId;
+        document.getElementById('registrationAction').value = action;
+        document.getElementById('approveRejectForm').reset();
+        document.getElementById('rejectReasonDiv').style.display = 'none';
+        document.getElementById('approveNotesDiv').style.display = 'none';
+        document.getElementById('rejectReason').required = false;
+        
+        // انتخاب گزینه مناسب
+        if (action === 'approve') {
+            document.getElementById('approveRegistration').checked = true;
+            document.getElementById('approveNotesDiv').style.display = 'block';
+        } else {
+            document.getElementById('rejectRegistration').checked = true;
+            document.getElementById('rejectReasonDiv').style.display = 'block';
+            document.getElementById('rejectReason').required = true;
+        }
+        
+        // Event listeners for radio buttons
+        document.getElementById('approveRegistration').addEventListener('change', function() {
+            document.getElementById('rejectReasonDiv').style.display = 'none';
+            document.getElementById('approveNotesDiv').style.display = 'block';
+            document.getElementById('rejectReason').required = false;
+        });
+        
+        document.getElementById('rejectRegistration').addEventListener('change', function() {
+            document.getElementById('rejectReasonDiv').style.display = 'block';
+            document.getElementById('approveNotesDiv').style.display = 'none';
+            document.getElementById('rejectReason').required = true;
+        });
+        
+        const modal = new bootstrap.Modal(document.getElementById('approveRejectModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('خطا در نمایش فرم تایید/رد:', error);
+        Swal.fire('خطا', 'خطا در نمایش فرم تایید/رد', 'error');
+    }
+}
+
+// تایید عملیات تایید/رد
+async function confirmApproveReject() {
+    const form = document.getElementById('approveRejectForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const registrationId = document.getElementById('registrationId').value;
+    const action = document.querySelector('input[name="approveReject"]:checked').value;
+    
+    try {
+        let url, data;
+        
+        if (action === 'approve') {
+            url = `/course-registration/${registrationId}/approve`;
+            data = {
+                notes: document.getElementById('approveNotes').value.trim() || null
+            };
+        } else {
+            url = `/course-registration/${registrationId}/reject`;
+            data = {
+                notes: document.getElementById('rejectReason').value.trim()
+            };
+        }
+        
+        const response = await apiRequest(url, 'PATCH', data);
+        
+        if (response.success) {
+            Swal.fire('موفقیت', response.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('approveRejectModal')).hide();
+            
+            // Refresh registrations table
+            await loadCourseRegistrations(currentCourseId, currentFilter);
+        }
+        
+    } catch (error) {
+        console.error('خطا در تایید/رد درخواست:', error);
+        Swal.fire('خطا', 'خطا در تایید/رد درخواست', 'error');
+    }
+}
+
+// نمایش جزییات درخواست
+function showRegistrationDetails(registrationId) {
+    const registration = currentRegistrations.find(r => r.id === registrationId);
+    if (!registration) return;
+    
+    const student = registration.Student;
+    let html = `
+        <div class="row">
+            <div class="col-md-6">
+                <strong>اطلاعات دانشجو:</strong><br>
+                نام: ${student.firstName} ${student.lastName}<br>
+                شماره دانشجویی: ${student.studentId}<br>
+                شماره تلفن: ${student.phone}
+            </div>
+            <div class="col-md-6">
+                <strong>اطلاعات درخواست:</strong><br>
+                تاریخ درخواست: ${new Date(registration.requestDate).toLocaleDateString('fa-IR')}<br>
+                وضعیت: ${getStatusText(registration.status)}<br>
+                ${registration.approvalDate ? `تاریخ تایید/رد: ${new Date(registration.approvalDate).toLocaleDateString('fa-IR')}<br>` : ''}
+                ${registration.notes ? `توضیحات: ${registration.notes}` : ''}
+            </div>
+        </div>
+    `;
+    
+    Swal.fire({
+        title: 'جزییات درخواست',
+        html,
+        confirmButtonText: 'بستن',
+        customClass: {popup: 'text-end'}
+    });
+}
+
+// حذف درخواست
+async function deleteRegistration(registrationId) {
+    const result = await Swal.fire({
+        title: 'آیا مطمئن هستید؟',
+        text: 'این عملیات قابل بازگشت نیست!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'بله، حذف کن!',
+        cancelButtonText: 'انصراف'
+    });
+    
+    if (result.isConfirmed) {
+        try {
+            const response = await apiRequest(`/course-registration/${registrationId}`, 'DELETE');
+            
+            if (response.success) {
+                Swal.fire('حذف شد!', response.message, 'success');
+                await loadCourseRegistrations(currentCourseId, currentFilter);
+            }
+        } catch (error) {
+            console.error('خطا در حذف درخواست:', error);
+            Swal.fire('خطا', 'خطا در حذف درخواست', 'error');
+        }
+    }
+}
+
+// تبدیل وضعیت به متن فارسی
+function getStatusText(status) {
+    switch (status) {
+        case 'pending': return 'در انتظار';
+        case 'approved': return 'تایید شده';
+        case 'rejected': return 'رد شده';
+        default: return status;
+    }
 }
 </script>
 

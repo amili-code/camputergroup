@@ -9,7 +9,7 @@ class StudentController {
             const { firstName, lastName, password, phone, nationalCode, isGraduated, studentId } = req.body;
 
             // اعتبارسنجی داده‌های ورودی
-            if (!firstName || !lastName || !password || !phone || !nationalCode || !studentId) {
+            if (!firstName || !lastName || !phone || !nationalCode || !studentId) {
                 return res.status(400).json({
                     success: false,
                     message: 'تمام فیلدهای اجباری باید پر شوند (شامل شماره دانشجویی)'
@@ -51,8 +51,9 @@ class StudentController {
                 });
             }
 
-            // هش کردن رمز عبور
-            const hashedPassword = await bcrypt.hash(password, 10);
+            // اگر پسورد خالی بود، کد ملی را به عنوان پسورد استفاده کن
+            const passwordToUse = password || nationalCode;
+            const hashedPassword = await bcrypt.hash(passwordToUse, 10);
 
             // ایجاد دانشجوی جدید
             const student = await models.Student.create({

@@ -4,6 +4,7 @@ const http = require('http');
 const path = require('path');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const session = require('express-session');
 const { syncDatabase } = require('./config/syncDatabase');
 require('dotenv').config();
 const server = http.createServer(app);
@@ -19,6 +20,18 @@ function setConfig() {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(cors());
+    
+    // Session configuration
+    app.use(session({
+        secret: process.env.SESSION_SECRET || '1234567890',
+        resave: false,
+        saveUninitialized: false,
+        cookie: {
+            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        }
+    }));
 }
 
 function serRouters() {

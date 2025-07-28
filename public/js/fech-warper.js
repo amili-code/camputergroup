@@ -1,5 +1,5 @@
-const baseURL = "http://127.0.0.1:5000/api";
-const baseURLGeter = "http://127.0.0.1:5000";
+const baseURL = "http://localhost:5000/api";
+const baseURLGeter = "http://localhost:5000";
 
 const apiRequest = async (endpoint, method = "GET", body = null, isFormData = false) => {
     const options = {

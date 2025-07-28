@@ -1,0 +1,151 @@
+<section class="py-5" id="courses">
+    <div class="container">
+        <h2 class="section-title text-center">دوره‌ها و رویدادهای اخیر</h2>
+        <div id="courses-row" class="row g-4 justify-content-center">
+            <div class="text-center" id="courses-loading">
+                <div class="spinner-border text-primary" role="status"></div>
+                <div>در حال بارگذاری...</div>
+            </div>
+        </div>
+
+    </div>
+    <style>
+    .desc-truncate {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-height: 3.6em;
+        max-height: 4.5em;
+    }
+    </style>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        apiRequest('/courses', 'GET').then(data => {
+            const courses = (data && data.data && Array.isArray(data.data)) ? data.data.slice(0, 3) : [];
+            const row = document.getElementById('courses-row');
+            document.getElementById('courses-loading').style.display = 'none';
+            if (courses.length === 0) {
+                row.innerHTML = '<div class="text-center text-muted">دوره‌ای یافت نشد.</div>';
+                return;
+            }
+            courses.forEach(course => {
+                // Tags (top right)
+                let tagsHtml = '';
+                if (course.tags) {
+                    tagsHtml = course.tags.split(',').map(tag => `<span class='badge bg-info ms-1'>${tag}</span>`).join(' ');
+                }
+                // Type (top left)
+                let typeLabel = 'دوره';
+                let typeColor = 'primary';
+                if (course.type === 'event') { typeLabel = 'رویداد'; typeColor = 'warning'; }
+                if (course.type === 'competition') { typeLabel = 'مسابقه'; typeColor = 'success'; }
+                let typeHtml = `<span class="badge bg-${typeColor} fw-bold">${typeLabel}</span>`;
+                // Image or fallback
+                let imgHtml = '';
+                if (course.thumbnail && course.thumbnail !== '-' && course.thumbnail !== 'null') {
+                    imgHtml = `
+                        <div class="position-relative mb-3" style="height:180px;">
+                            <img src="${course.thumbnail}" class="rounded-3 w-100 h-100" style="object-fit:cover;" alt="${course.title}">
+                            <div class="position-absolute top-0 start-0 m-2">${typeHtml}</div>
+                            <div class="position-absolute top-0 end-0 m-2">${tagsHtml}</div>
+                        </div>
+                    `;
+                } else {
+                    imgHtml = `
+                        <div class="position-relative mb-3" style="height:180px;background:#f3f3f3;border-radius:1rem;">
+                            <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                                <i class="bi bi-image fs-1 text-secondary"></i>
+                                <div class="text-muted small">تصویر ندارد</div>
+                            </div>
+                            <div class="position-absolute top-0 start-0 m-2">${typeHtml}</div>
+                            <div class="position-absolute top-0 end-0 m-2">${tagsHtml}</div>
+                        </div>
+                    `;
+                }
+                // Location below image, right-aligned
+                let locationHtml = '';
+                if (!course.location || course.location === 'null') {
+                    locationHtml = `<div class="text-start mt-1"><span class="m-2 badge bg-light text-dark border"><i class="bi bi-wifi ms-1"></i>مجازی</span></div>`;
+                } else {
+                    locationHtml = `<div class="text-start mt-1"><span class="m-2 badge bg-secondary"><i class="bi bi-geo-alt ms-1"></i>${course.location}</span></div>`;
+                }
+                // Title (right aligned)
+                let titleHtml = `<h5 class="fw-bold mb-1 text-start">${course.title || ''}</h5>`;
+                // Description (below title, truncate to 3 lines)
+                let desc = course.description || '';
+                let descHtml = `<p class="text-muted mb-2 text-start desc-truncate" title="${desc.replace(/"/g, '&quot;')}">${desc}</p>`;
+                // Price
+                let priceHtml = '';
+                if (course.isAvailable) {
+                    if (course.price == 0) {
+                        priceHtml = `<div class="mb-2 text-start"><span class="fw-bold text-success">رایگان است</span></div>`;
+                    } else {
+                        priceHtml = `<div class="mb-2 text-start"><span class="fw-bold text-dark">${course.price} تومان</span></div>`;
+                    }
+                }
+                // Status
+                let statusBadge = course.isAvailable ? '' : '<span class="badge bg-danger">غیرفعال</span>';
+                let cardClass = 'card feature-card h-100 p-0';
+                if (!course.isAvailable) cardClass += ' bg-light opacity-75';
+                // Unavailability reason (if not available)
+                let reasonHtml = '';
+                if (!course.isAvailable && course.unavailabilityReason) {
+                    reasonHtml = `<div class="alert alert-warning py-2 px-3 my-2 text-start small"><i class="bi bi-exclamation-triangle-fill ms-1"></i>علت عدم دسترسی: <b>${course.unavailabilityReason}</b></div>`;
+                }
+                // Footer: divider, then grid
+                let capacityHtml = `<span class="fw-bold">ظرفیت: ${course.capacity || '-'}</span>`;
+                let endDateHtml = '';
+                if (course.endDate && course.endDate !== null && course.endDate !== 'null') {
+                    endDateHtml = `<span class="fw-bold text-danger">مهلت ثبت‌نام: ${course.endDate}</span>`;
+                } else {
+                    endDateHtml = `<span>&nbsp;</span>`;
+                }
+                let regBtnHtml = `<button class="btn btn-outline-primary btn-sm" ${!course.isAvailable ? 'disabled' : ''}>ثبت نام</button>`;
+                row.innerHTML += `
+                    <div class="col-md-4">
+                        <div class="${cardClass}" style="cursor: pointer;" onclick="window.location.href='/courses/${course.id}'">
+                            ${imgHtml}
+                            ${locationHtml}
+                            <div class="p-3">
+                                ${titleHtml}
+                                ${descHtml}
+                                ${priceHtml}
+                                ${statusBadge}
+                                ${reasonHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            // JS fallback for description truncation (for browsers not supporting -webkit-line-clamp)
+            document.querySelectorAll('.desc-truncate').forEach(function(el) {
+                if (el.scrollHeight > el.offsetHeight + 2) {
+                    let text = el.textContent;
+                    let words = text.split(' ');
+                    let truncated = '';
+                    el.textContent = '';
+                    for (let i = 0; i < words.length; i++) {
+                        el.textContent += (i > 0 ? ' ' : '') + words[i];
+                        if (el.scrollHeight > el.offsetHeight + 2) {
+                            el.textContent = truncated + '...';
+                            break;
+                        }
+                        truncated = el.textContent;
+                    }
+                }
+            });
+        }).catch(() => {
+            const row = document.getElementById('courses-row');
+            document.getElementById('courses-loading').style.display = 'none';
+            row.innerHTML = '<div class="text-center text-danger">خطا در دریافت اطلاعات دوره‌ها</div>';
+        });
+    });
+    </script>
+    
+    <div style="text-align: center;" class="mt-5">
+        <a href="/courses" class="btn btn-outline-dark">مشاهده تمام بخش دوره ها و رویداد</a>
+    </div>
+
+</section>

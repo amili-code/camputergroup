@@ -1,0 +1,938 @@
+<%- include('../getAll/layout/header.ejs')%>
+
+<div class="container my-5">
+    <!-- Loading Spinner -->
+    <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">در حال بارگذاری...</span>
+        </div>
+        <p class="mt-3">در حال بارگذاری اطلاعات دوره...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error" class="alert alert-danger d-none" role="alert">
+        <h4 class="alert-heading">خطا!</h4>
+        <p id="error-message"></p>
+        <hr>
+        <a href="/courses" class="btn btn-outline-danger">بازگشت به لیست دوره‌ها</a>
+    </div>
+
+    <!-- Course Details -->
+    <div id="course-details" class="d-none">
+        <!-- Course Header -->
+        <div class="row mb-5">
+            <div class="col-lg-8">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">خانه</a></li>
+                        <li class="breadcrumb-item"><a href="/courses">دوره‌ها</a></li>
+                        <li class="breadcrumb-item active" aria-current="page" id="course-title-breadcrumb">جزئیات دوره</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-4 fw-bold text-primary mb-3" id="course-title"></h1>
+                
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    <span class="badge bg-primary fs-6" id="course-type"></span>
+                    <span class="badge bg-success fs-6" id="course-status"></span>
+                    <span class="badge bg-info fs-6" id="course-price"></span>
+                </div>
+
+                <div class="course-description mb-4">
+                    <h5 class="fw-bold mb-3">توضیحات دوره:</h5>
+                    <p class="lead" id="course-description"></p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card shadow-lg border-0 rounded-3">
+                    <img id="course-thumbnail" class="card-img-top rounded-top-3" style="height: 250px; object-fit: cover;" alt="تصویر دوره" onerror="this.src='/pic/course/course-1753099709769-277813812-CE (1).jpg'">
+                    <div class="card-body p-4">
+                        <div class="d-grid gap-3">
+                            <button id="register-btn" class="btn btn-primary btn-lg fw-bold d-none">
+                                <i class="bi bi-person-plus me-2"></i>
+                                ثبت نام در دوره
+                            </button>
+                            <button id="unavailable-btn" class="btn btn-secondary btn-lg fw-bold d-none" disabled>
+                                <i class="bi bi-x-circle me-2"></i>
+                                دوره غیرفعال
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Information -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 rounded-3 mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4 text-primary">
+                            <i class="bi bi-info-circle me-2"></i>
+                            اطلاعات دوره
+                        </h4>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-calendar-event text-primary me-3 fs-5"></i>
+                                    <div>
+                                        <small class="text-muted d-block">تاریخ اتمام</small>
+                                        <strong id="course-end-date">نامشخص</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-people text-primary me-3 fs-5"></i>
+                                    <div>
+                                        <small class="text-muted d-block">ظرفیت</small>
+                                        <strong id="course-capacity">نامحدود</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-geo-alt text-primary me-3 fs-5"></i>
+                                    <div>
+                                        <small class="text-muted d-block">مکان برگزاری</small>
+                                        <strong id="course-location">مجازی</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-tags text-primary me-3 fs-5"></i>
+                                    <div>
+                                        <small class="text-muted d-block">برچسب‌ها</small>
+                                        <div id="course-tags"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suitable For -->
+                <div class="card shadow-sm border-0 rounded-3 mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4 text-primary">
+                            <i class="bi bi-mortarboard me-2"></i>
+                            مناسب برای
+                        </h4>
+                        <div id="suitable-terms" class="row g-2"></div>
+                    </div>
+                </div>
+
+                <!-- Unavailability Reason -->
+                <div id="unavailability-reason" class="card shadow-sm border-0 rounded-3 mb-4 d-none">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4 text-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            علت عدم دسترسی
+                        </h4>
+                        <p class="mb-0" id="unavailability-text"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Quick Info Card -->
+                <div class="card shadow-sm border-0 rounded-3 mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3 text-primary">خلاصه اطلاعات</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">نوع دوره:</span>
+                            <span class="fw-bold" id="course-type-summary"></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">وضعیت:</span>
+                            <span class="fw-bold" id="course-status-summary"></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">قیمت:</span>
+                            <span class="fw-bold text-success" id="course-price-summary"></span>
+                        </div>
+                        <hr>
+                        <div class="d-grid">
+                            <a href="/courses" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-right me-2"></i>
+                                مشاهده سایر دوره‌ها
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">
+                    <i class="bi bi-credit-card me-2"></i>
+                    پرداخت آنلاین
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Course Summary -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h6 class="card-title fw-bold mb-3">خلاصه سفارش</h6>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <p class="mb-2"><strong>دوره:</strong> <span id="payment-course-title"></span></p>
+                                <p class="mb-2"><strong>نوع:</strong> <span id="payment-course-type"></span></p>
+                                <p class="mb-0"><strong>قیمت:</strong> <span id="payment-course-price" class="text-success fw-bold"></span></p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <img id="payment-course-thumbnail" src="" alt="تصویر دوره" class="img-fluid rounded" style="max-height: 80px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Form -->
+                <form id="paymentForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cardNumber" class="form-label">شماره کارت</label>
+                            <input type="text" class="form-control" id="cardNumber" placeholder="6037-XXXX-XXXX-XXXX" maxlength="19" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="expiryMonth" class="form-label">ماه</label>
+                            <select class="form-select" id="expiryMonth" required>
+                                <option value="">انتخاب</option>
+                                <option value="01">01</option>
+                                <option value="02">02</option>
+                                <option value="03">03</option>
+                                <option value="04">04</option>
+                                <option value="05">05</option>
+                                <option value="06">06</option>
+                                <option value="07">07</option>
+                                <option value="08">08</option>
+                                <option value="09">09</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="expiryYear" class="form-label">سال</label>
+                            <select class="form-select" id="expiryYear" required>
+                                <option value="">انتخاب</option>
+                                <option value="25">1404</option>
+                                <option value="26">1405</option>
+                                <option value="27">1406</option>
+                                <option value="28">1407</option>
+                                <option value="29">1408</option>
+                                <option value="30">1409</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cvv" class="form-label">کد امنیتی (CVV)</label>
+                            <input type="text" class="form-control" id="cvv" placeholder="123" maxlength="4" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="cardHolder" class="form-label">نام صاحب کارت</label>
+                            <input type="text" class="form-control" id="cardHolder" placeholder="نام و نام خانوادگی" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phoneNumber" class="form-label">شماره موبایل</label>
+                        <input type="tel" class="form-control" id="phoneNumber" placeholder="09XXXXXXXXX" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="termsAccepted" required>
+                        <label class="form-check-label" for="termsAccepted">
+                            <small>قوانین و شرایط استفاده از خدمات را مطالعه کرده و می‌پذیرم</small>
+                        </label>
+                    </div>
+                </form>
+
+                <!-- Payment Progress -->
+                <div id="paymentProgress" class="d-none">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">در حال پردازش...</span>
+                        </div>
+                        <h6 class="text-primary">در حال پردازش پرداخت...</h6>
+                        <p class="text-muted small">لطفاً صبر کنید، این فرآیند ممکن است چند ثانیه طول بکشد</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" id="processPaymentBtn" onclick="processPayment()">
+                    <i class="bi bi-credit-card me-2"></i>
+                    پرداخت و ثبت نام
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Registration Success Modal -->
+<div class="modal fade" id="registrationSuccessModal" tabindex="-1" aria-labelledby="registrationSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="registrationSuccessModalLabel">
+                    <i class="bi bi-check-circle me-2"></i>
+                    ثبت نام موفق
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+                </div>
+                <h5 class="text-success mb-3">ثبت نام شما با موفقیت انجام شد!</h5>
+                <p class="text-muted">درخواست شما برای بررسی ارسال شده و پس از تایید، اطلاع‌رسانی خواهد شد.</p>
+                <div class="alert alert-info">
+                    <small>
+                        <i class="bi bi-info-circle me-1"></i>
+                        <strong>شماره پیگیری:</strong> <span id="trackingNumber"></span>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">باشه</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Registration Status Modal -->
+<div class="modal fade" id="registrationStatusModal" tabindex="-1" aria-labelledby="registrationStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" id="statusModalHeader">
+                <h5 class="modal-title" id="registrationStatusModalLabel">
+                    <i class="bi bi-info-circle me-2"></i>
+                    وضعیت ثبت نام
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-4">
+                    <i id="statusIcon" class="bi" style="font-size: 4rem;"></i>
+                </div>
+                <h5 id="statusTitle" class="mb-3"></h5>
+                <p id="statusMessage" class="text-muted"></p>
+                <div id="statusDetails" class="alert" style="display: none;">
+                    <small id="statusDetailsText"></small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                <button type="button" class="btn btn-primary" id="statusActionBtn" style="display: none;">دسترسی به محتوا</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Clean up any existing modal backdrops
+    cleanupModalBackdrop();
+    
+    // Get course ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const courseId = pathParts[pathParts.length - 1];
+    
+    if (!courseId || isNaN(courseId)) {
+        showError('شناسه دوره نامعتبر است');
+        return;
+    }
+    
+    // Fetch course data
+    fetchCourseData(courseId);
+    
+    // Initialize payment form
+    initializePaymentForm();
+    
+    // Check user registration status
+    checkUserRegistrationStatus(courseId);
+});
+
+async function fetchCourseData(courseId) {
+    try {
+        const response = await apiRequest(`/course/${courseId}`, 'GET');
+        
+        if (response.success) {
+            displayCourseData(response.data);
+        } else {
+            showError(response.message || 'خطا در دریافت اطلاعات دوره');
+        }
+    } catch (error) {
+        console.error('Error fetching course data:', error);
+        showError('خطا در ارتباط با سرور');
+    }
+}
+
+function displayCourseData(course) {
+    // Hide loading, show course details
+    document.getElementById('loading').classList.add('d-none');
+    document.getElementById('course-details').classList.remove('d-none');
+    
+    // Set basic information
+    document.getElementById('course-title').textContent = course.title;
+    document.getElementById('course-title-breadcrumb').textContent = course.title;
+    document.getElementById('course-description').textContent = course.description || 'توضیحات دوره در دسترس نیست';
+    
+    // Set type badge
+    const typeText = getTypeText(course.type);
+    document.getElementById('course-type').textContent = typeText;
+    document.getElementById('course-type-summary').textContent = typeText;
+    
+    // Set status
+    const statusText = course.isAvailable ? 'فعال' : 'غیرفعال';
+    const statusClass = course.isAvailable ? 'bg-success' : 'bg-danger';
+    document.getElementById('course-status').textContent = statusText;
+    document.getElementById('course-status').className = `badge ${statusClass} fs-6`;
+    document.getElementById('course-status-summary').textContent = statusText;
+    
+    // Set price
+    const priceText = course.price === 0 ? 'رایگان' : `${course.price.toLocaleString()} تومان`;
+    document.getElementById('course-price').textContent = priceText;
+    document.getElementById('course-price-summary').textContent = priceText;
+    
+    // Set thumbnail
+    if (course.thumbnail) {
+        document.getElementById('course-thumbnail').src = course.thumbnail;
+    } else {
+        // استفاده از یک تصویر پیش‌فرض یا نمایش یک placeholder
+        document.getElementById('course-thumbnail').src = '/pic/course/course-1753099709769-277813812-CE (1).jpg';
+        document.getElementById('course-thumbnail').alt = 'تصویر دوره';
+    }
+    
+    // Set end date
+    if (course.endDate && course.endDate.trim() !== '' && course.endDate.trim() !== 'null') {
+        document.getElementById('course-end-date').textContent = course.endDate;
+    } else {
+        document.getElementById('course-end-date').textContent = 'تاریخ اتمام ثبت نام تعیین نشده است';
+        document.getElementById('course-end-date').className = 'text-muted fst-italic';
+    }
+    
+    // Set capacity
+    if (course.capacity) {
+        document.getElementById('course-capacity').textContent = course.capacity + ' نفر';
+    }
+    
+    // Set location
+    if (course.location) {
+        document.getElementById('course-location').textContent = course.location;
+    }
+    
+    // Set tags
+    if (course.tags && course.tags.trim() !== '' && course.tags.trim() !== 'null') {
+        const tagsContainer = document.getElementById('course-tags');
+        const tags = course.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+        if (tags.length > 0) {
+            tagsContainer.innerHTML = tags.map(tag => 
+                `<span class="badge bg-light text-dark me-1">${tag}</span>`
+            ).join('');
+        } else {
+            tagsContainer.innerHTML = '<span class="text-muted fst-italic">تگی وجود ندارد</span>';
+        }
+    } else {
+        document.getElementById('course-tags').innerHTML = '<span class="text-muted fst-italic">تگی وجود ندارد</span>';
+    }
+    
+    // Set suitable terms
+    displaySuitableTerms(course.suitableFor);
+    
+    // Show/hide register button based on availability
+    if (course.isAvailable) {
+        document.getElementById('register-btn').classList.remove('d-none');
+    } else {
+        document.getElementById('unavailable-btn').classList.remove('d-none');
+        
+        // Show unavailability reason if exists
+        if (course.unavailabilityReason) {
+            document.getElementById('unavailability-reason').classList.remove('d-none');
+            document.getElementById('unavailability-text').textContent = course.unavailabilityReason;
+        }
+    }
+    
+    // Add event listener to register button
+    document.getElementById('register-btn').addEventListener('click', function() {
+        handleCourseRegistration(course);
+    });
+    
+    // Store course data for registration status check
+    window.currentCourseData = course;
+}
+
+function displaySuitableTerms(suitableFor) {
+    const terms = [
+        'ترم 1', 'ترم 2', 'ترم 3', 'ترم 4', 'ترم 5', 'ترم 6',
+        'ترم 7', 'ترم 8', 'ترم 9', 'ترم 10', 'ترم 11', 'ترم 12'
+    ];
+    
+    const container = document.getElementById('suitable-terms');
+    container.innerHTML = '';
+    
+    for (let i = 0; i < 12; i++) {
+        const isSuitable = suitableFor[i] === '1';
+        const termElement = document.createElement('div');
+        termElement.className = 'col-6 col-md-4 col-lg-3';
+        termElement.innerHTML = `
+            <div class="d-flex align-items-center p-2 rounded ${isSuitable ? 'bg-success bg-opacity-10' : 'bg-light'}">
+                <i class="bi ${isSuitable ? 'bi-check-circle-fill text-success' : 'bi-x-circle text-muted'} me-2"></i>
+                <span class="${isSuitable ? 'fw-bold' : 'text-muted'}">${terms[i]}</span>
+            </div>
+        `;
+        container.appendChild(termElement);
+    }
+}
+
+function getTypeText(type) {
+    const typeMap = {
+        'course': 'دوره آموزشی',
+        'event': 'رویداد',
+        'competition': 'مسابقه'
+    };
+    return typeMap[type] || type;
+}
+
+function showError(message) {
+    document.getElementById('loading').classList.add('d-none');
+    document.getElementById('error').classList.remove('d-none');
+    document.getElementById('error-message').textContent = message;
+}
+
+// ==================== COURSE REGISTRATION FUNCTIONS ====================
+
+let currentCourse = null;
+let currentUser = null;
+
+// Handle course registration
+async function handleCourseRegistration(course) {
+    currentCourse = course;
+    
+    try {
+        // Check if user is logged in
+        const authResponse = await apiRequest('/auth/me', 'GET');
+        
+        if (!authResponse.success) {
+            // User not logged in
+            Swal.fire({
+                title: 'ورود الزامی است',
+                text: 'برای ثبت نام در دوره، ابتدا وارد حساب کاربری خود شوید',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'ورود',
+                cancelButtonText: 'انصراف'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '/login';
+                }
+            });
+            return;
+        }
+        
+        currentUser = authResponse.data.user;
+        
+        // Check if user exists and has required properties
+        if (!currentUser || !currentUser.id) {
+            Swal.fire('خطا', 'اطلاعات کاربر یافت نشد', 'error');
+            return;
+        }
+        
+        // Check if user is a student
+        if (currentUser.type !== 'student') {
+            Swal.fire('خطا', 'فقط دانشجویان می‌توانند در دوره‌ها ثبت نام کنند', 'error');
+            return;
+        }
+        
+        // Check if user already has a registration for this course
+        if (userRegistrationStatus) {
+            if (userRegistrationStatus.status === 'rejected') {
+                // User was rejected, ask if they want to see the reason or try again
+                Swal.fire({
+                    title: 'درخواست قبلی رد شده',
+                    text: 'درخواست قبلی شما رد شده است. آیا می‌خواهید دلیل رد را مشاهده کنید یا درخواست جدید ارسال کنید؟',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    showDenyButton: true,
+                    confirmButtonText: 'مشاهده دلیل رد',
+                    denyButtonText: 'درخواست جدید',
+                    cancelButtonText: 'انصراف'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        showRegistrationStatus(userRegistrationStatus);
+                    } else if (result.isDenied) {
+                        // Allow new registration attempt
+                        proceedWithRegistration(course, currentUser);
+                    }
+                });
+                return;
+            } else {
+                // User already has a registration (pending or approved), show status
+                showRegistrationStatus(userRegistrationStatus);
+                return;
+            }
+        }
+        
+        // Proceed with registration
+        await proceedWithRegistration(course, currentUser);
+        
+    } catch (error) {
+        console.error('Error checking authentication:', error);
+        Swal.fire('خطا', 'خطا در بررسی وضعیت ورود', 'error');
+    }
+}
+
+// Show payment modal
+function showPaymentModal(course) {
+    // Check if user is already approved for this course
+    if (userRegistrationStatus && userRegistrationStatus.status === 'approved') {
+        // User is already approved, show status instead of payment
+        showRegistrationStatus(userRegistrationStatus);
+        return;
+    }
+    
+    // Set course information in payment modal
+    document.getElementById('payment-course-title').textContent = course.title;
+    document.getElementById('payment-course-type').textContent = getTypeText(course.type);
+    document.getElementById('payment-course-price').textContent = course.price === 0 ? 'رایگان' : `${course.price.toLocaleString()} تومان`;
+    
+    if (course.thumbnail) {
+        document.getElementById('payment-course-thumbnail').src = course.thumbnail;
+    } else {
+        document.getElementById('payment-course-thumbnail').src = '/pic/course/course-1753099709769-277813812-CE (1).jpg';
+    }
+    
+    // Pre-fill user information if available
+    if (currentUser) {
+        document.getElementById('cardHolder').value = `${currentUser.firstName} ${currentUser.lastName}`;
+        document.getElementById('phoneNumber').value = currentUser.phone || '';
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    modal.show();
+    
+    // Clean up backdrop when modal is hidden
+    document.getElementById('paymentModal').addEventListener('hidden.bs.modal', cleanupModalBackdrop);
+}
+
+// Initialize payment form
+function initializePaymentForm() {
+    // Card number formatting
+    const cardNumberInput = document.getElementById('cardNumber');
+    cardNumberInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.replace(/(\d{4})(?=\d)/g, '$1-');
+        e.target.value = value;
+    });
+    
+    // CVV validation
+    const cvvInput = document.getElementById('cvv');
+    cvvInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+    });
+    
+    // Phone number formatting
+    const phoneInput = document.getElementById('phoneNumber');
+    phoneInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '');
+    });
+}
+
+// Process payment
+async function processPayment() {
+    const form = document.getElementById('paymentForm');
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    // Show payment progress
+    document.getElementById('paymentProgress').classList.remove('d-none');
+    document.getElementById('processPaymentBtn').disabled = true;
+    
+    try {
+        // Simulate payment processing
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        // Simulate successful payment
+        const paymentSuccess = Math.random() > 0.1; // 90% success rate
+        
+        if (paymentSuccess) {
+            // Payment successful - register for course
+            await registerForCourse(currentCourse, currentUser);
+            
+            // Hide payment modal
+            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+        } else {
+            // Payment failed
+            throw new Error('پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.');
+        }
+        
+    } catch (error) {
+        console.error('Payment error:', error);
+        Swal.fire('خطا در پرداخت', error.message, 'error');
+    } finally {
+        // Hide payment progress
+        document.getElementById('paymentProgress').classList.add('d-none');
+        document.getElementById('processPaymentBtn').disabled = false;
+    }
+}
+
+// Register for course
+async function registerForCourse(course, user) {
+    try {
+        const registrationData = {
+            studentId: user.id,
+            courseId: course.id
+        };
+        
+        const response = await apiRequest('/course-registration', 'POST', registrationData);
+        
+        if (response.success) {
+            // Show success modal
+            const trackingNumber = generateTrackingNumber();
+            document.getElementById('trackingNumber').textContent = trackingNumber;
+            
+            const successModal = new bootstrap.Modal(document.getElementById('registrationSuccessModal'));
+            successModal.show();
+            
+            // Clean up backdrop when modal is hidden
+            document.getElementById('registrationSuccessModal').addEventListener('hidden.bs.modal', cleanupModalBackdrop);
+            
+            // Refresh registration status
+            const pathParts = window.location.pathname.split('/');
+            const courseId = pathParts[pathParts.length - 1];
+            await checkUserRegistrationStatus(courseId);
+            
+        } else {
+            throw new Error(response.message || 'خطا در ثبت نام');
+        }
+        
+    } catch (error) {
+        console.error('Registration error:', error);
+        
+        if (error.message.includes('قبلاً')) {
+            Swal.fire('اطلاع', 'شما قبلاً برای این دوره درخواست داده‌اید', 'info');
+        } else {
+            Swal.fire('خطا', error.message || 'خطا در ثبت نام در دوره', 'error');
+        }
+    }
+}
+
+// Generate tracking number
+function generateTrackingNumber() {
+    const timestamp = Date.now().toString();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `TRK${timestamp.slice(-6)}${random}`;
+}
+
+// ==================== REGISTRATION STATUS FUNCTIONS ====================
+
+let userRegistrationStatus = null;
+
+// Check user registration status for the course
+async function checkUserRegistrationStatus(courseId) {
+    try {
+        // First check if user is logged in
+        const authResponse = await apiRequest('/auth/me', 'GET');
+        
+        if (!authResponse.success) {
+            // User not logged in, show normal register button
+            return;
+        }
+        
+        const currentUser = authResponse.data.user;
+        
+        // Check if user is a student
+        if (currentUser.type !== 'student') {
+            return;
+        }
+        
+        // Get user's registration status for this course
+        const response = await apiRequest(`/course-registrations/student/${currentUser.id}`, 'GET');
+        
+        if (response.success) {
+            const registrations = response.data;
+            const courseRegistration = registrations.find(reg => reg.courseId === parseInt(courseId));
+            
+            if (courseRegistration) {
+                userRegistrationStatus = courseRegistration;
+                updateRegistrationButton(courseRegistration);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error checking registration status:', error);
+    }
+}
+
+// Update registration button based on status
+function updateRegistrationButton(registration) {
+    const registerBtn = document.getElementById('register-btn');
+    const unavailableBtn = document.getElementById('unavailable-btn');
+    
+    // Hide both buttons first
+    registerBtn.classList.add('d-none');
+    unavailableBtn.classList.add('d-none');
+    
+    switch (registration.status) {
+        case 'pending':
+            registerBtn.classList.remove('d-none');
+            registerBtn.disabled = true;
+            registerBtn.innerHTML = '<i class="bi bi-clock me-2"></i>در انتظار تایید';
+            registerBtn.className = 'btn btn-warning btn-lg fw-bold';
+            registerBtn.onclick = () => showRegistrationStatus(registration);
+            break;
+            
+        case 'approved':
+            registerBtn.classList.remove('d-none');
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>دسترسی به محتوا';
+            registerBtn.className = 'btn btn-success btn-lg fw-bold';
+            registerBtn.onclick = () => showRegistrationStatus(registration);
+            break;
+            
+        case 'rejected':
+            registerBtn.classList.remove('d-none');
+            registerBtn.disabled = false;
+            registerBtn.innerHTML = '<i class="bi bi-x-circle me-2"></i>مشاهده دلیل رد';
+            registerBtn.className = 'btn btn-danger btn-lg fw-bold';
+            registerBtn.onclick = () => showRegistrationStatus(registration);
+            break;
+            
+        default:
+            // No registration found, show normal register button
+            if (window.currentCourseData && window.currentCourseData.isAvailable) {
+                registerBtn.classList.remove('d-none');
+                registerBtn.disabled = false;
+                registerBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i>ثبت نام در دوره';
+                registerBtn.className = 'btn btn-primary btn-lg fw-bold';
+                registerBtn.onclick = () => handleCourseRegistration(window.currentCourseData);
+            }
+            break;
+    }
+}
+
+// Show registration status modal
+function showRegistrationStatus(registration) {
+    const modal = document.getElementById('registrationStatusModal');
+    const header = document.getElementById('statusModalHeader');
+    const icon = document.getElementById('statusIcon');
+    const title = document.getElementById('statusTitle');
+    const message = document.getElementById('statusMessage');
+    const details = document.getElementById('statusDetails');
+    const detailsText = document.getElementById('statusDetailsText');
+    const actionBtn = document.getElementById('statusActionBtn');
+    
+    switch (registration.status) {
+        case 'pending':
+            header.className = 'modal-header bg-warning text-dark';
+            icon.className = 'bi bi-clock text-warning';
+            title.textContent = 'در انتظار تایید';
+            title.className = 'text-warning mb-3';
+            message.textContent = 'درخواست شما برای بررسی ارسال شده است. پس از بررسی، نتیجه به شما اطلاع داده خواهد شد.';
+            details.style.display = 'none';
+            actionBtn.style.display = 'none';
+            break;
+            
+        case 'approved':
+            header.className = 'modal-header bg-success text-white';
+            icon.className = 'bi bi-check-circle text-success';
+            title.textContent = 'تایید شده';
+            title.className = 'text-success mb-3';
+            message.textContent = 'تبریک! درخواست شما تایید شده است. اکنون می‌توانید به محتوای دوره دسترسی داشته باشید.';
+            details.style.display = 'block';
+            details.className = 'alert alert-success';
+            detailsText.innerHTML = `
+                <div class="mb-3">
+                    <strong>تاریخ تایید:</strong> ${new Date(registration.approvalDate).toLocaleDateString('fa-IR')}
+                </div>
+                ${registration.notes ? `
+                <div class="border-start border-success border-3 ps-3">
+                    <strong class="text-success">توضیحات:</strong><br>
+                    <span class="text-dark">${registration.notes}</span>
+                </div>
+                ` : ''}
+            `;
+            actionBtn.style.display = 'block';
+            actionBtn.textContent = 'دسترسی به محتوا';
+            actionBtn.className = 'btn btn-success';
+            actionBtn.onclick = () => accessCourseContent();
+            break;
+            
+        case 'rejected':
+            header.className = 'modal-header bg-danger text-white';
+            icon.className = 'bi bi-x-circle text-danger';
+            title.textContent = 'رد صلاحیت';
+            title.className = 'text-danger mb-3';
+            message.textContent = 'متأسفانه درخواست شما تایید نشده است. لطفاً دلیل رد را مطالعه کنید.';
+            details.style.display = 'block';
+            details.className = 'alert alert-danger';
+            detailsText.innerHTML = `
+                <div class="mb-3">
+                    <strong>تاریخ رد:</strong> ${new Date(registration.approvalDate).toLocaleDateString('fa-IR')}
+                </div>
+                <div class="border-start border-danger border-3 ps-3">
+                    <strong class="text-danger">دلیل رد:</strong><br>
+                    <span class="text-dark">${registration.notes || 'دلیلی ذکر نشده است'}</span>
+                </div>
+            `;
+            actionBtn.style.display = 'none';
+            break;
+    }
+    
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+    
+    // Clean up backdrop when modal is hidden
+    modal.addEventListener('hidden.bs.modal', cleanupModalBackdrop);
+}
+
+// Proceed with registration (free or paid)
+async function proceedWithRegistration(course, user) {
+    // Check if course is free or paid
+    if (course.price === 0) {
+        // Free course - direct registration
+        await registerForCourse(course, user);
+    } else {
+        // Paid course - show payment modal
+        showPaymentModal(course);
+    }
+}
+
+// Clean up modal backdrop
+function cleanupModalBackdrop() {
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) {
+        backdrop.remove();
+    }
+    document.body.classList.remove('modal-open');
+    document.body.style.paddingRight = '';
+}
+
+// Access course content (placeholder function)
+function accessCourseContent() {
+    Swal.fire({
+        title: 'دسترسی به محتوا',
+        text: 'سیستم دسترسی به محتوای دوره به زودی فعال خواهد شد',
+        icon: 'info',
+        confirmButtonText: 'باشه'
+    });
+}
+</script>
+
+<%- include('../getAll/layout/footer.ejs')%>

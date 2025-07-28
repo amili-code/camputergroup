@@ -2,12 +2,12 @@ const { models, sequelize } = require('../config/models');
 const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
-
+const bcrypt = require('bcrypt');
 class TeacherController {
     // CREATE - ایجاد استاد جدید
     async createTeacher(req, res) {
         try {
-            const { firstName, lastName, phone, nationalCode, weeklySchedule, teacherId } = req.body;
+            const { firstName, lastName, phone, nationalCode, weeklySchedule, teacherId, password, teachingSubjects, description } = req.body;
 
             // اعتبارسنجی داده‌های ورودی
             if (!firstName || !lastName || !phone || !nationalCode || !teacherId) {
@@ -60,20 +60,38 @@ class TeacherController {
                 });
             }
 
+            // اعتبارسنجی دروس تدریس (حداکثر 5 درس)
+            if (teachingSubjects) {
+                const subjects = teachingSubjects.split(',').map(subject => subject.trim()).filter(subject => subject.length > 0);
+                if (subjects.length > 5) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'حداکثر 5 درس تدریس مجاز است'
+                    });
+                }
+            }
+
             // پردازش تصویر آپلود شده
             let personalImagePath = null;
             if (req.file) {
                 personalImagePath = `/pic/teachers/${req.file.filename}`;
             }
+            
+            // اگر پسورد خالی بود، کد ملی را به عنوان پسورد استفاده کن
+            const passwordToUse = password || nationalCode;
+            const hashedPassword = await bcrypt.hash(passwordToUse, 10);
 
             // ایجاد استاد جدید
             const teacher = await models.Teacher.create({
                 teacherId,
                 firstName,
                 lastName,
+                password: hashedPassword,
                 personalImage: personalImagePath,
                 phone,
                 nationalCode,
+                teachingSubjects: teachingSubjects || '',
+                description: description || null,
                 weeklySchedule: weeklySchedule || '000000000000000000000000000000000000000000'
             });
 
@@ -156,7 +174,7 @@ class TeacherController {
     async updateTeacher(req, res) {
         try {
             const { id } = req.params;
-            const { firstName, lastName, phone, nationalCode, weeklySchedule, teacherId, personalImage } = req.body;
+            const { firstName, lastName, phone, nationalCode, weeklySchedule, teacherId, personalImage, password, teachingSubjects, description } = req.body;
 
             // بررسی وجود استاد
             const teacher = await models.Teacher.findByPk(id);
@@ -214,6 +232,17 @@ class TeacherController {
                 });
             }
 
+            // اعتبارسنجی دروس تدریس (حداکثر 5 درس)
+            if (teachingSubjects) {
+                const subjects = teachingSubjects.split(',').map(subject => subject.trim()).filter(subject => subject.length > 0);
+                if (subjects.length > 5) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'حداکثر 5 درس تدریس مجاز است'
+                    });
+                }
+            }
+
             // پردازش تصویر آپلود شده یا حذف تصویر
             let personalImagePath = teacher.personalImage; // نگه داشتن تصویر قبلی
             if (req.file) {
@@ -251,9 +280,15 @@ class TeacherController {
             if (teacherId && teacherId !== teacher.teacherId) updateData.teacherId = teacherId;
             if (firstName) updateData.firstName = firstName;
             if (lastName) updateData.lastName = lastName;
+            if (password) {
+                const hashedPassword = await bcrypt.hash(password, 10);
+                updateData.password = hashedPassword;
+            }
             if (req.file || personalImage === '') updateData.personalImage = personalImagePath;
             if (phone) updateData.phone = phone;
             if (nationalCode) updateData.nationalCode = nationalCode;
+            if (teachingSubjects !== undefined) updateData.teachingSubjects = teachingSubjects;
+            if (description !== undefined) updateData.description = description;
             if (weeklySchedule) updateData.weeklySchedule = weeklySchedule;
 
             // بروزرسانی استاد
@@ -337,7 +372,9 @@ class TeacherController {
                     { lastName: { [Op.like]: `%${q}%` } },
                     { phone: { [Op.like]: `%${q}%` } },
                     { nationalCode: { [Op.like]: `%${q}%` } },
-                    { teacherId: { [Op.like]: `%${q}%` } }
+                    { teacherId: { [Op.like]: `%${q}%` } },
+                    { teachingSubjects: { [Op.like]: `%${q}%` } },
+                    { description: { [Op.like]: `%${q}%` } }
                 ]
             };
 
@@ -400,6 +437,43 @@ class TeacherController {
             res.status(500).json({
                 success: false,
                 message: 'خطا در دریافت اساتید بر اساس برنامه',
+                error: error.message
+            });
+        }
+    }
+
+    // دریافت اساتید بر اساس درس تدریس
+    async getTeachersBySubject(req, res) {
+        try {
+            const { subject } = req.query;
+
+            if (!subject) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'نام درس الزامی است'
+                });
+            }
+
+            const teachers = await models.Teacher.findAll({
+                where: {
+                    teachingSubjects: {
+                        [Op.like]: `%${subject}%`
+                    }
+                },
+                order: [['teacherId', 'ASC']]
+            });
+
+            res.json({
+                success: true,
+                message: 'اساتید با درس تدریس مشخص شده دریافت شدند',
+                data: teachers
+            });
+
+        } catch (error) {
+            console.error('خطا در دریافت اساتید بر اساس درس:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در دریافت اساتید بر اساس درس',
                 error: error.message
             });
         }

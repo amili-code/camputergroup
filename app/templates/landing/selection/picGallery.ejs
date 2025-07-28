@@ -1,0 +1,81 @@
+<section class="hero-section" id="hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h1 class="display-5 fw-bold mb-3" id="title-landing"></h1>
+                <p class="lead mb-4" id="description-landing"></p>
+                <a href="#courses" class="btn btn-primary btn-lg">آشنایی با گروه کامپیوتر</a>
+            </div>
+            <div class="col-lg-6">
+                <!-- Bootstrap Carousel (dynamic) -->
+                <div id="gallerySlider" class="carousel slide shadow" data-bs-ride="carousel">
+                    <div class="carousel-inner rounded-4" id="galleryCarouselInner">
+                        <div class="carousel-item active" id="gallery-loading-slide">
+                            <div class="d-flex flex-column align-items-center justify-content-center" style="height:340px;">
+                                <div class="spinner-border text-primary mb-3" role="status"></div>
+                                <span>در حال بارگذاری تصاویر گالری...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#gallerySlider" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">قبلی</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#gallerySlider" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">بعدی</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+        apiRequest('/settings', 'GET').then(data => {
+            const gallery = (data && data.data && Array.isArray(data.data.gallery)) ? data.data.gallery : [];
+            const carouselInner = document.getElementById('galleryCarouselInner');
+            carouselInner.innerHTML = '';
+            document.getElementById('title-landing').innerHTML = data.data.universityName;
+            document.getElementById('description-landing').innerHTML = data.data.description;
+            if (gallery.length === 0) {
+                carouselInner.innerHTML = `
+                    <div class="carousel-item active">
+                        <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=800&q=80" class="d-block w-100 slider-img" alt="نمونه تصویر">
+                        <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded-3 p-3">
+                            <h5 class="mb-1">نمونه تصویر</h5>
+                            <p class="mb-0">گالری تصاویر دانشگاه</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                gallery.forEach(function(img, idx) {
+                    carouselInner.innerHTML += `
+                        <div class="carousel-item${idx === 0 ? ' active' : ''}">
+                            <img src="${img.imagePath}" class="d-block w-100 slider-img" alt="${img.title || ''}">
+                            <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded-3 p-3">
+                                <h5 class="mb-1">${img.title || ''}</h5>
+                                <p class="mb-0">${img.description || ''}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }).catch(() => {
+            const carouselInner = document.getElementById('galleryCarouselInner');
+            carouselInner.innerHTML = `
+
+                <div class="carousel-item active">
+                    <div class="d-flex flex-column align-items-center justify-content-center" style="height:340px;">
+                        <span class="text-danger">خطا در بارگذاری تصاویر گالری</span>
+                    </div>
+                </div>
+            `;
+        });
+    });
+    </script>
+
+
+
+</section>

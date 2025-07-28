@@ -1,5 +1,6 @@
 const fs = require('fs/promises');
 const path = require('path');
+const { models } = require('../config/models');
 
 const SETTING_PATH = path.join(__dirname, '../setting.json');
 const GALLERY_DIR = path.join(__dirname, '../../settings');
@@ -103,6 +104,29 @@ class SettingController {
             res.json({ success: true, message: 'عکس با موفقیت حذف شد.' });
         } catch (error) {
             res.status(500).json({ success: false, message: 'خطا در حذف عکس', error: error.message });
+        }
+    }
+
+    // GET - آمار داشبورد
+    async getDashboardStats(req, res) {
+        try {
+            const [studentCount, teacherCount, communityCount, trainingCount] = await Promise.all([
+                models.Student.count(),
+                models.Teacher.count(),
+                models.Community.count({ where: { isAccepted: true } }),
+                models.Training.count()
+            ]);
+            res.json({
+                success: true,
+                data: {
+                    studentCount,
+                    teacherCount,
+                    communityCount,
+                    trainingCount
+                }
+            });
+        } catch (error) {
+            res.status(500).json({ success: false, message: 'خطا در دریافت آمار داشبورد', error: error.message });
         }
     }
 }

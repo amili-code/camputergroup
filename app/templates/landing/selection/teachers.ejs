@@ -1,0 +1,83 @@
+<section class="py-5" id="teachers">
+    <div class="container">
+        <h2 class="section-title text-center">اساتید گروه</h2>
+        <div id="teachers-loading" class="text-center my-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div>در حال بارگذاری اساتید...</div>
+        </div>
+        <div id="teachers-list"></div>
+        <div class="text-center mt-4">
+            <a href="/teachers" class="btn btn-outline-dark">مشاهده کامل اساتید</a>
+        </div>
+    </div>
+    <script src="/js/fech-warper.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        apiRequest('/teachers', 'GET').then(data => {
+            const teachers = (data && data.data && Array.isArray(data.data)) ? data.data : [];
+            document.getElementById('teachers-loading').style.display = 'none';
+            const listDiv = document.getElementById('teachers-list');
+            if (teachers.length === 0) {
+                listDiv.innerHTML = '<div class="text-center text-muted">استادی ثبت نشده است.</div>';
+                return;
+            }
+            if (teachers.length <= 3) {
+                // Show as cards
+                let html = '<div class="row g-4 justify-content-center">';
+                teachers.forEach(t => {
+                    html += teacherCardHtml(t);
+                });
+                html += '</div>';
+                listDiv.innerHTML = html;
+            } else {
+                // Show as Bootstrap carousel
+                let html = `
+                <div id="teachersCarousel" class="carousel slide" data-bs-ride="carousel">
+                  <div class="carousel-inner">
+                `;
+                for (let i = 0; i < teachers.length; i += 3) {
+                    html += `<div class="carousel-item${i === 0 ? ' active' : ''}">
+                        <div class="row g-4 justify-content-center">`;
+                    for (let j = i; j < i + 3 && j < teachers.length; j++) {
+                        html += teacherCardHtml(teachers[j]);
+                    }
+                    html += '</div></div>';
+                }
+                html += `</div>
+                  <button class="carousel-control-prev" type="button" data-bs-target="#teachersCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">قبلی</span>
+                  </button>
+                  <button class="carousel-control-next" type="button" data-bs-target="#teachersCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">بعدی</span>
+                  </button>
+                </div>`;
+                listDiv.innerHTML = html;
+            }
+        }).catch(() => {
+            document.getElementById('teachers-loading').style.display = 'none';
+            document.getElementById('teachers-list').innerHTML = '<div class="text-center text-danger">خطا در دریافت اساتید</div>';
+        });
+    });
+    function teacherCardHtml(t) {
+        const name = (t.firstName || '') + ' ' + (t.lastName || '');
+        let imgHtml = '';
+        if (t.personalImage && t.personalImage !== 'null') {
+            imgHtml = `<img src="${t.personalImage}" class="rounded-circle mb-3" style="width:90px;height:90px;object-fit:cover;" alt="${name}">`;
+        } else {
+            imgHtml = `<div class="rounded-circle mb-3 d-flex align-items-center justify-content-center bg-light border" style="width:90px;height:90px;height:90px;font-size:2.5rem;color:#888;"><i class="bi bi-person-circle"></i></div>`;
+        }
+        return `
+            <div class="col-md-4">
+                <div class="card feature-card h-100 text-center p-4">
+                    ${imgHtml}
+                    <h5 class="fw-bold mb-2">${name}</h5>
+                    <p class="text-muted mb-1">${t.teachingSubjects || ''}</p>
+                    <p class="small">${t.description || ''}</p>
+                </div>
+            </div>
+        `;
+    }
+    </script>
+</section>

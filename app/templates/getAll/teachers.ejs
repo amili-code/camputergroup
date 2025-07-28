@@ -1,0 +1,1163 @@
+<%- include('./layout/header.ejs')%>
+
+<section class="container py-5">
+    <h2 class="section-title text-center">همه اساتید</h2>
+    
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-search"></i> جستجو و فیلتر</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="filter-label" for="searchInput">
+                        <i class="bi bi-search"></i> جستجوی عمومی
+                    </label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="نام، نام خانوادگی، شماره تلفن...">
+                </div>
+                <div class="col-md-3">
+                    <label class="filter-label" for="teacherIdInput">
+                        <i class="bi bi-person-badge"></i> کد پرسنلی
+                    </label>
+                    <input type="text" id="teacherIdInput" class="form-control" placeholder="کد پرسنلی...">
+                </div>
+                <div class="col-md-3">
+                    <label class="filter-label" for="subjectFilter">
+                        <i class="bi bi-book"></i> درس تدریس
+                    </label>
+                    <select id="subjectFilter" class="form-select">
+                        <option value="">همه دروس</option>
+                        <!-- دروس با JavaScript پر می‌شوند -->
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="filter-label">&nbsp;</label>
+                    <button class="btn btn-outline-primary w-100" onclick="showScheduleModal()">
+                        <i class="bi bi-calendar3"></i> برنامه هفتگی
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="btn btn-secondary btn-sm" onclick="clearAllFilters()">
+                        <i class="bi bi-arrow-clockwise"></i> پاک کردن فیلترها
+                    </button>
+                    <span class="ms-2 text-muted" id="filterStatus"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teachers List -->
+    <div id="teachers-loading" class="text-center my-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div>در حال بارگذاری اساتید...</div>
+    </div>
+    <div id="teachers-list" class="row g-4 justify-content-center"></div>
+</section>
+
+<!-- Schedule Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">برنامه هفتگی اساتید</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- راهنمای رنگ‌ها -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <h6 class="mb-2"><i class="bi bi-info-circle"></i> راهنمای رنگ‌ها:</h6>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <span class="badge bg-success">خالی</span> - اساتید در دسترس
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge bg-warning text-dark">در حال انتظار</span> - درخواست شما در انتظار تایید
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge bg-info">تایید شده</span> - درخواست شما تایید شده
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge bg-danger">رد شده</span> - درخواست شما رد شده
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ساعت</th>
+                                <th>شنبه</th>
+                                <th>یکشنبه</th>
+                                <th>دوشنبه</th>
+                                <th>سه‌شنبه</th>
+                                <th>چهارشنبه</th>
+                                <th>پنج‌شنبه</th>
+                                <th>جمعه</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                            <tr>
+                                <td class="table-secondary fw-bold">۸-۱۰</td>
+                                <td class="schedule-cell" data-day="0" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="1" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="2" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="3" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="4" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="5" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="6" data-slot="0" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۰-۱۲</td>
+                                <td class="schedule-cell" data-day="0" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="1" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="2" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="3" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="4" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="5" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="6" data-slot="1" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۲-۱۴</td>
+                                <td class="schedule-cell" data-day="0" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="1" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="2" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="3" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="4" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="5" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="6" data-slot="2" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۴-۱۶</td>
+                                <td class="schedule-cell" data-day="0" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="1" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="2" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="3" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="4" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="5" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="6" data-slot="3" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۶-۱۸</td>
+                                <td class="schedule-cell" data-day="0" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="1" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="2" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="3" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="4" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="5" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="6" data-slot="4" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۸-۲۰</td>
+                                <td class="schedule-cell" data-day="0" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="1" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="2" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="3" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="4" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="5" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="schedule-cell" data-day="6" data-slot="5" style="cursor:pointer;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Teachers Modal -->
+<div class="modal fade" id="availableTeachersModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="availableTeachersTitle">اساتید موجود</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="availableTeachersList">
+                <!-- Teachers will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Teacher Schedule Modal -->
+<div class="modal fade" id="teacherScheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="teacherScheduleTitle">برنامه هفتگی استاد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- راهنمای رنگ‌ها -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <h6 class="mb-2"><i class="bi bi-info-circle"></i> راهنمای رنگ‌ها:</h6>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <span class="badge bg-success">خالی</span> - زمان در دسترس
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge bg-warning text-dark">در حال انتظار</span> - درخواست شما در انتظار تایید
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge bg-info">تایید شده</span> - درخواست شما تایید شده
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge bg-danger">رد شده</span> - درخواست شما رد شده
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ساعت</th>
+                                <th>شنبه</th>
+                                <th>یکشنبه</th>
+                                <th>دوشنبه</th>
+                                <th>سه‌شنبه</th>
+                                <th>چهارشنبه</th>
+                                <th>پنج‌شنبه</th>
+                                <th>جمعه</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherScheduleTableBody">
+                            <tr>
+                                <td class="table-secondary fw-bold">۸-۱۰</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="0" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="0" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۰-۱۲</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="1" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="1" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۲-۱۴</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="2" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="2" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۴-۱۶</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="3" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="3" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۶-۱۸</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="4" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="4" style="cursor:pointer;"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۸-۲۰</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="5" style="cursor:pointer;"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="5" style="cursor:pointer;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reservation Modal -->
+<div class="modal fade" id="reservationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">رزرو وقت مشاوره</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="reservationForm">
+                    <input type="hidden" id="reservationTeacherId">
+                    <input type="hidden" id="reservationTimeSlot">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person"></i> استاد انتخاب شده:
+                        </label>
+                        <div class="alert alert-info" id="selectedTeacherInfo">
+                            <!-- اطلاعات استاد اینجا نمایش داده می‌شود -->
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar3"></i> زمان انتخاب شده:
+                        </label>
+                        <div class="alert alert-success" id="selectedTimeInfo">
+                            <!-- اطلاعات زمان اینجا نمایش داده می‌شود -->
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="loginRequiredSection" style="display: none;">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>ابتدا وارد حساب کاربری خود شوید</strong>
+                            <br>
+                            برای رزرو وقت مشاوره، ابتدا باید وارد حساب کاربری خود شوید.
+                            <div class="mt-2">
+                                <a href="/login" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-box-arrow-in-right"></i> ورود به سیستم
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="userInfoSection" style="display: none;">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person-badge"></i> اطلاعات دانشجو:
+                        </label>
+                        <div class="alert alert-info" id="userInfoDisplay">
+                            <!-- اطلاعات کاربر اینجا نمایش داده می‌شود -->
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reservationDescription" class="form-label fw-bold">
+                            <i class="bi bi-chat-text"></i> توضیحات درخواست:
+                        </label>
+                        <textarea class="form-control" id="reservationDescription" rows="4" 
+                                  placeholder="موضوع مشاوره و توضیحات خود را بنویسید..."></textarea>
+                        <div class="form-text">توضیح دهید که برای چه موضوعی نیاز به مشاوره دارید</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> انصراف
+                </button>
+                <button type="button" class="btn btn-primary" id="submitReservationBtn" onclick="submitReservation()" style="display: none;">
+                    <i class="bi bi-check-circle"></i> ثبت رزرو
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.filter-label { 
+    font-weight: bold; 
+    margin-bottom: 0.5rem; 
+    color: #495057;
+}
+.schedule-cell { 
+    transition: background-color 0.2s; 
+    min-height: 60px;
+    vertical-align: middle;
+}
+.schedule-cell:hover { 
+    background-color: #e9ecef !important; 
+    transform: scale(1.05);
+}
+.schedule-cell.available { 
+    background-color: #d4edda !important; 
+    border: 2px solid #28a745;
+}
+.schedule-cell.busy { 
+    background-color: #f8d7da !important; 
+    border: 2px solid #dc3545;
+}
+
+.schedule-cell.pending { 
+    background-color: #fff3cd !important; 
+    border: 2px solid #ffc107;
+}
+
+.schedule-cell.approved { 
+    background-color: #d1edff !important; 
+    border: 2px solid #17a2b8;
+}
+
+.schedule-cell.rejected { 
+    background-color: #f8d7da !important; 
+    border: 2px solid #dc3545;
+}
+
+.schedule-cell.cancelled { 
+    background-color: #e2e3e5 !important; 
+    border: 2px solid #6c757d;
+}
+
+.teacher-schedule-cell { 
+    transition: background-color 0.2s; 
+    min-height: 60px;
+    vertical-align: middle;
+}
+.teacher-schedule-cell:hover { 
+    background-color: #e9ecef !important; 
+    transform: scale(1.05);
+}
+.teacher-schedule-cell.available { 
+    background-color: #d4edda !important; 
+    border: 2px solid #28a745;
+}
+.teacher-schedule-cell.busy { 
+    background-color: #f8d7da !important; 
+    border: 2px solid #dc3545;
+}
+
+.teacher-schedule-cell.pending { 
+    background-color: #fff3cd !important; 
+    border: 2px solid #ffc107;
+}
+
+.teacher-schedule-cell.approved { 
+    background-color: #d1edff !important; 
+    border: 2px solid #17a2b8;
+}
+
+.teacher-schedule-cell.rejected { 
+    background-color: #f8d7da !important; 
+    border: 2px solid #dc3545;
+}
+
+.teacher-schedule-cell.cancelled { 
+    background-color: #e2e3e5 !important; 
+    border: 2px solid #6c757d;
+}
+
+.teacher-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.teacher-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.subject-badge {
+    display: inline-block;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    margin: 0.1rem;
+    white-space: nowrap;
+}
+
+.subject-badge:hover {
+    background: linear-gradient(45deg, #0056b3, #004085);
+    transform: scale(1.05);
+}
+
+.teacher-image {
+    border: 3px solid #007bff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.teacher-info {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.info-item i {
+    width: 20px;
+    margin-left: 0.5rem;
+    color: #007bff;
+}
+
+.description-text {
+    background: white;
+    border-radius: 8px;
+    padding: 0.75rem;
+    border-left: 4px solid #007bff;
+    font-style: italic;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.filter-status {
+    background: #e3f2fd;
+    border-radius: 5px;
+    padding: 0.5rem;
+    border-left: 4px solid #2196f3;
+}
+</style>
+
+
+<script>
+let allTeachers = [];
+let scheduleModal, availableTeachersModal, reservationModal, teacherScheduleModal;
+let allSubjects = new Set();
+let currentUser = null;
+let selectedTeacherId = null;
+let userReservations = []; // درخواست‌های رزرو کاربر
+
+document.addEventListener('DOMContentLoaded', async function() {
+    scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+    availableTeachersModal = new bootstrap.Modal(document.getElementById('availableTeachersModal'));
+    reservationModal = new bootstrap.Modal(document.getElementById('reservationModal'));
+    teacherScheduleModal = new bootstrap.Modal(document.getElementById('teacherScheduleModal'));
+    
+    // بررسی وضعیت لاگین کاربر
+    await checkUserLogin();
+    
+    // دریافت درخواست‌های رزرو کاربر اگر لاگین باشد
+    if (currentUser && currentUser.type === 'student') {
+        try {
+            const reservationsResponse = await apiRequest(`/reservations/student/${currentUser.id}`, 'GET');
+            if (reservationsResponse && reservationsResponse.success) {
+                userReservations = reservationsResponse.data || [];
+            }
+        } catch (error) {
+            console.log('خطا در دریافت درخواست‌های رزرو:', error);
+            userReservations = [];
+        }
+    }
+    
+    apiRequest('/teachers', 'GET').then(data => {
+        allTeachers = (data && data.data && Array.isArray(data.data)) ? data.data : [];
+        document.getElementById('teachers-loading').style.display = 'none';
+        
+        // استخراج همه دروس تدریس
+        extractAllSubjects();
+        
+        // پر کردن فیلتر دروس
+        populateSubjectFilter();
+        
+        renderTeachers();
+        updateScheduleTable();
+    }).catch(() => {
+        document.getElementById('teachers-loading').style.display = 'none';
+        document.getElementById('teachers-list').innerHTML = '<div class="text-center text-danger">خطا در دریافت اساتید</div>';
+    });
+    
+    // Event listeners for filters
+    document.getElementById('searchInput').addEventListener('input', renderTeachers);
+    document.getElementById('teacherIdInput').addEventListener('input', renderTeachers);
+    document.getElementById('subjectFilter').addEventListener('change', renderTeachers);
+    
+    // Schedule cell click events
+    document.querySelectorAll('.schedule-cell').forEach(cell => {
+        cell.addEventListener('click', function() {
+            const day = this.dataset.day;
+            const slot = this.dataset.slot;
+            showAvailableTeachers(day, slot);
+        });
+    });
+});
+
+function extractAllSubjects() {
+    allSubjects.clear();
+    allTeachers.forEach(teacher => {
+        if (teacher.teachingSubjects) {
+            const subjects = teacher.teachingSubjects.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            subjects.forEach(subject => allSubjects.add(subject));
+        }
+    });
+}
+
+function populateSubjectFilter() {
+    const select = document.getElementById('subjectFilter');
+    select.innerHTML = '<option value="">همه دروس</option>';
+    
+    Array.from(allSubjects).sort().forEach(subject => {
+        const option = document.createElement('option');
+        option.value = subject;
+        option.textContent = subject;
+        select.appendChild(option);
+    });
+}
+
+function renderTeachers() {
+    const search = document.getElementById('searchInput').value.trim();
+    const teacherId = document.getElementById('teacherIdInput').value.trim();
+    const selectedSubject = document.getElementById('subjectFilter').value;
+    
+    let filtered = allTeachers.filter(t => {
+        let ok = true;
+        
+        // جستجوی عمومی
+        if (search) {
+            const fullName = (t.firstName || '') + ' ' + (t.lastName || '');
+            const searchLower = search.toLowerCase();
+            ok = fullName.toLowerCase().includes(searchLower) || 
+                 (t.phone && t.phone.includes(search)) ||
+                 (t.description && t.description.toLowerCase().includes(searchLower));
+        }
+        
+        // فیلتر کد پرسنلی
+        if (ok && teacherId) {
+            ok = t.teacherId && t.teacherId.includes(teacherId);
+        }
+        
+
+        
+        // فیلتر درس تدریس
+        if (ok && selectedSubject) {
+            ok = t.teachingSubjects && t.teachingSubjects.includes(selectedSubject);
+        }
+        
+        return ok;
+    });
+    
+    // نمایش وضعیت فیلتر
+    updateFilterStatus(filtered.length);
+    
+    const list = document.getElementById('teachers-list');
+    if (filtered.length === 0) {
+        list.innerHTML = `
+            <div class="col-12 text-center">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    استادی با فیلترهای انتخاب شده یافت نشد.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    filtered.forEach(t => {
+        const img = t.personalImage && t.personalImage !== 'null' ? t.personalImage : 'https://randomuser.me/api/portraits/lego/1.jpg';
+        const name = (t.firstName || '') + ' ' + (t.lastName || '');
+        const subjects = t.teachingSubjects ? t.teachingSubjects.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+        
+        html += `
+            <div class="col-lg-4 col-md-6">
+                <div class="card teacher-card h-100">
+                    <div class="card-body text-center p-4">
+                        <img src="${img}" class="rounded-circle teacher-image mb-3" style="width:100px;height:100px;object-fit:cover;" alt="${name}">
+                        <h5 class="fw-bold mb-2 text-primary">${name}</h5>
+                        
+                        <div class="teacher-info">
+                            <div class="info-item">
+                                <i class="bi bi-person-badge"></i>
+                                <span>کد پرسنلی: ${t.teacherId || '-'}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="bi bi-telephone"></i>
+                                <span>${t.phone || '-'}</span>
+                            </div>
+                            
+                            ${subjects.length > 0 ? `
+                                <div class="mt-3">
+                                    <strong><i class="bi bi-book"></i> دروس تدریس:</strong>
+                                    <div class="mt-2">
+                                        ${subjects.map(subject => `<span class="subject-badge">${subject}</span>`).join('')}
+                                    </div>
+                                </div>
+                            ` : '<p class="text-muted mt-2">دروس تدریس تعریف نشده</p>'}
+                            
+                            ${t.description ? `
+                                <div class="description-text">
+                                    <i class="bi bi-chat-quote"></i>
+                                    ${t.description}
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="mt-3 text-center">
+                            <button class="btn btn-success btn-sm" onclick="showTeacherScheduleModal(${t.id}, '${name}')">
+                                <i class="bi bi-calendar-check"></i> رزرو وقت مشاوره
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+function updateFilterStatus(filteredCount) {
+    const statusElement = document.getElementById('filterStatus');
+    const totalCount = allTeachers.length;
+    
+    if (filteredCount === totalCount) {
+        statusElement.innerHTML = `<span class="filter-status">نمایش همه ${totalCount} استاد</span>`;
+    } else {
+        statusElement.innerHTML = `<span class="filter-status">نمایش ${filteredCount} از ${totalCount} استاد</span>`;
+    }
+}
+
+function clearAllFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('teacherIdInput').value = '';
+    document.getElementById('subjectFilter').value = '';
+    renderTeachers();
+}
+
+function updateScheduleTable() {
+    document.querySelectorAll('.schedule-cell').forEach(cell => {
+        const day = parseInt(cell.dataset.day);
+        const slot = parseInt(cell.dataset.slot);
+        const position = (day * 6) + slot;
+        
+        let availableCount = 0;
+        let userReservationCount = 0;
+        let userReservationStatus = null;
+        
+        allTeachers.forEach(teacher => {
+            if (teacher.weeklySchedule && teacher.weeklySchedule[position] === '1') {
+                availableCount++;
+                
+                // بررسی درخواست رزرو کاربر برای این استاد
+                if (currentUser && currentUser.type === 'student') {
+                    const userReservation = userReservations.find(r => 
+                        r.teacherId === teacher.id && r.requestedTimeSlot === position
+                    );
+                    if (userReservation) {
+                        userReservationCount++;
+                        userReservationStatus = userReservation.status;
+                    }
+                }
+            }
+        });
+        
+        cell.className = 'schedule-cell';
+        
+        // اگر کاربر درخواست رزرو دارد
+        if (userReservationCount > 0) {
+            let statusText = '';
+            let statusClass = '';
+            
+            switch (userReservationStatus) {
+                case 'pending':
+                    statusText = 'در حال انتظار';
+                    statusClass = 'text-warning';
+                    cell.classList.add('pending');
+                    break;
+                case 'approved':
+                    statusText = 'تایید شده';
+                    statusClass = 'text-success';
+                    cell.classList.add('approved');
+                    break;
+                case 'rejected':
+                    statusText = 'رد شده';
+                    statusClass = 'text-danger';
+                    cell.classList.add('rejected');
+                    break;
+                case 'cancelled':
+                    statusText = 'لغو شده';
+                    statusClass = 'text-secondary';
+                    cell.classList.add('cancelled');
+                    break;
+            }
+            
+            cell.innerHTML = `<small class="fw-bold ${statusClass}">${statusText}</small>`;
+        } else if (availableCount > 0) {
+            cell.classList.add('available');
+            cell.innerHTML = `<small class="text-success fw-bold">${availableCount} استاد</small>`;
+        } else {
+            cell.classList.add('busy');
+            cell.innerHTML = '<small class="text-danger fw-bold">مشغول</small>';
+        }
+    });
+}
+
+function showScheduleModal() {
+    // بروزرسانی جدول هفتگی قبل از نمایش مودال
+    updateScheduleTable();
+    scheduleModal.show();
+}
+
+function showAvailableTeachers(day, slot) {
+    const position = (day * 6) + parseInt(slot);
+    const dayNames = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+    const timeSlots = ['۸-۱۰', '۱۰-۱۲', '۱۲-۱۴', '۱۴-۱۶', '۱۶-۱۸', '۱۸-۲۰'];
+    
+    const availableTeachers = allTeachers.filter(teacher => 
+        teacher.weeklySchedule && teacher.weeklySchedule[position] === '1'
+    );
+    
+    document.getElementById('availableTeachersTitle').textContent = 
+        `اساتید موجود در ${dayNames[day]} ساعت ${timeSlots[slot]}`;
+    
+    const list = document.getElementById('availableTeachersList');
+    if (availableTeachers.length === 0) {
+        list.innerHTML = '<div class="text-center text-muted">هیچ استادی در این زمان در دسترس نیست.</div>';
+    } else {
+        let html = '<div class="row g-3">';
+        availableTeachers.forEach(t => {
+            const img = t.personalImage && t.personalImage !== 'null' ? t.personalImage : 'https://randomuser.me/api/portraits/lego/1.jpg';
+            const name = (t.firstName || '') + ' ' + (t.lastName || '');
+            const subjects = t.teachingSubjects ? t.teachingSubjects.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
+            
+            html += `
+                <div class="col-md-6">
+                    <div class="card p-3">
+                        <div class="d-flex align-items-start">
+                            <img src="${img}" class="rounded-circle me-3" style="width:60px;height:60px;object-fit:cover;" alt="${name}">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold">${name}</h6>
+                                <small class="text-muted d-block mb-2">کد پرسنلی: ${t.teacherId || '-'}</small>
+                                ${subjects.length > 0 ? `
+                                    <div class="mb-2">
+                                        ${subjects.map(subject => `<span class="subject-badge">${subject}</span>`).join('')}
+                                    </div>
+                                ` : '<small class="text-muted mb-2 d-block">دروس تدریس تعریف نشده</small>'}
+                                <button class="btn btn-primary btn-sm" onclick="showReservationModal(${t.id}, '${name}', ${day}, ${slot})">
+                                    <i class="bi bi-calendar-plus"></i> رزرو وقت
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        list.innerHTML = html;
+    }
+    
+    availableTeachersModal.show();
+}
+
+
+
+
+
+function showAlert(message, type = 'info') {
+    // ایجاد alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // حذف خودکار بعد از 5 ثانیه
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+async function checkUserLogin() {
+    try {
+        const response = await apiRequest('/auth/me', 'GET');
+        if (response && response.success && response.data && response.data.user) {
+            currentUser = response.data.user;
+            console.log('کاربر لاگین است:', currentUser);
+        } else {
+            currentUser = null;
+            console.log('کاربر لاگین نیست');
+        }
+    } catch (error) {
+        currentUser = null;
+        console.log('کاربر لاگین نیست:', error);
+    }
+}
+
+function showTeacherScheduleModal(teacherId, teacherName) {
+    selectedTeacherId = teacherId;
+    document.getElementById('teacherScheduleTitle').textContent = `برنامه هفتگی ${teacherName}`;
+    
+    // پیدا کردن استاد و نمایش برنامه هفتگی
+    const teacher = allTeachers.find(t => t.id == teacherId);
+    if (teacher) {
+        updateTeacherScheduleTable(teacher);
+    }
+    
+    teacherScheduleModal.show();
+}
+
+function updateTeacherScheduleTable(teacher) {
+    document.querySelectorAll('.teacher-schedule-cell').forEach(cell => {
+        const day = parseInt(cell.dataset.day);
+        const slot = parseInt(cell.dataset.slot);
+        const position = (day * 6) + slot;
+        
+        cell.className = 'teacher-schedule-cell';
+        
+        // بررسی وضعیت درخواست رزرو کاربر برای این استاد و زمان
+        let reservationStatus = null;
+        if (currentUser && currentUser.type === 'student') {
+            const userReservation = userReservations.find(r => 
+                r.teacherId === teacher.id && r.requestedTimeSlot === position
+            );
+            if (userReservation) {
+                reservationStatus = userReservation.status;
+            }
+        }
+        
+        if (teacher.weeklySchedule && teacher.weeklySchedule[position] === '1') {
+            // نمایش وضعیت درخواست رزرو
+            if (reservationStatus) {
+                let statusText = '';
+                let statusClass = '';
+                
+                switch (reservationStatus) {
+                    case 'pending':
+                        statusText = 'در حال انتظار';
+                        statusClass = 'text-warning';
+                        cell.classList.add('pending');
+                        break;
+                    case 'approved':
+                        statusText = 'تایید شده';
+                        statusClass = 'text-success';
+                        cell.classList.add('approved');
+                        break;
+                    case 'rejected':
+                        statusText = 'رد شده';
+                        statusClass = 'text-danger';
+                        cell.classList.add('rejected');
+                        break;
+                    case 'cancelled':
+                        statusText = 'لغو شده';
+                        statusClass = 'text-secondary';
+                        cell.classList.add('cancelled');
+                        break;
+                }
+                
+                cell.innerHTML = `<small class="fw-bold ${statusClass}">${statusText}</small>`;
+            } else {
+                cell.classList.add('available');
+                cell.innerHTML = '<small class="text-success fw-bold">خالی</small>';
+            }
+        } else {
+            // نمایش وضعیت درخواست رزرو حتی اگر زمان مشغول باشد
+            if (reservationStatus) {
+                let statusText = '';
+                let statusClass = '';
+                
+                switch (reservationStatus) {
+                    case 'pending':
+                        statusText = 'در حال انتظار';
+                        statusClass = 'text-warning';
+                        cell.classList.add('pending');
+                        break;
+                    case 'approved':
+                        statusText = 'تایید شده';
+                        statusClass = 'text-success';
+                        cell.classList.add('approved');
+                        break;
+                    case 'rejected':
+                        statusText = 'رد شده';
+                        statusClass = 'text-danger';
+                        cell.classList.add('rejected');
+                        break;
+                    case 'cancelled':
+                        statusText = 'لغو شده';
+                        statusClass = 'text-secondary';
+                        cell.classList.add('cancelled');
+                        break;
+                }
+                
+                cell.innerHTML = `<small class="fw-bold ${statusClass}">${statusText}</small>`;
+            } else {
+                cell.classList.add('busy');
+                cell.innerHTML = '<small class="text-danger fw-bold">مشغول</small>';
+            }
+        }
+    });
+    
+    // اضافه کردن event listener برای کلیک
+    document.querySelectorAll('.teacher-schedule-cell').forEach(cell => {
+        cell.onclick = function() {
+            const day = parseInt(this.dataset.day);
+            const slot = parseInt(this.dataset.slot);
+            const position = (day * 6) + slot;
+            
+            // بررسی وضعیت درخواست رزرو کاربر
+            let reservationStatus = null;
+            if (currentUser && currentUser.type === 'student') {
+                const userReservation = userReservations.find(r => 
+                    r.teacherId === teacher.id && r.requestedTimeSlot === position
+                );
+                if (userReservation) {
+                    reservationStatus = userReservation.status;
+                }
+            }
+            
+            // اگر کاربر قبلاً درخواست داده و در حال انتظار یا تایید شده است، اجازه رزرو مجدد نده
+            if (reservationStatus === 'pending' || reservationStatus === 'approved') {
+                let message = '';
+                if (reservationStatus === 'pending') {
+                    message = 'شما قبلاً برای این زمان درخواست داده‌اید و در حال انتظار تایید استاد می‌باشید.';
+                } else {
+                    message = 'این زمان قبلاً برای شما تایید شده است.';
+                }
+                showAlert(message, 'info');
+                return;
+            }
+            
+            if (teacher.weeklySchedule && teacher.weeklySchedule[position] === '1') {
+                showReservationModal(teacher.id, teacher.firstName + ' ' + teacher.lastName, day, slot);
+                teacherScheduleModal.hide();
+            } else {
+                showAlert('این بازه زمانی در دسترس نیست', 'warning');
+            }
+        };
+    });
+}
+
+function showReservationModal(teacherId, teacherName, day, slot) {
+    const dayNames = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+    const timeSlots = ['۸-۱۰', '۱۰-۱۲', '۱۲-۱۴', '۱۴-۱۶', '۱۶-۱۸', '۱۸-۲۰'];
+    const timeSlot = (day * 6) + parseInt(slot);
+    
+    // پر کردن اطلاعات فرم
+    document.getElementById('reservationTeacherId').value = teacherId;
+    document.getElementById('reservationTimeSlot').value = timeSlot;
+    
+    // نمایش اطلاعات استاد
+    document.getElementById('selectedTeacherInfo').innerHTML = `
+        <i class="bi bi-person-circle"></i>
+        <strong>${teacherName}</strong>
+    `;
+    
+    // نمایش اطلاعات زمان
+    document.getElementById('selectedTimeInfo').innerHTML = `
+        <i class="bi bi-calendar-event"></i>
+        <strong>${dayNames[day]} ساعت ${timeSlots[slot]}</strong>
+    `;
+    
+    // بررسی وضعیت لاگین کاربر
+    if (currentUser && currentUser.type === 'student') {
+        // کاربر لاگین است
+        document.getElementById('loginRequiredSection').style.display = 'none';
+        document.getElementById('userInfoSection').style.display = 'block';
+        document.getElementById('submitReservationBtn').style.display = 'inline-block';
+        
+        // نمایش اطلاعات کاربر
+        document.getElementById('userInfoDisplay').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>نام:</strong> ${currentUser.firstName} ${currentUser.lastName}
+                </div>
+                <div class="col-md-6">
+                    <strong>شماره دانشجویی:</strong> ${currentUser.studentId}
+                </div>
+            </div>
+        `;
+    } else {
+        // کاربر لاگین نیست
+        document.getElementById('loginRequiredSection').style.display = 'block';
+        document.getElementById('userInfoSection').style.display = 'none';
+        document.getElementById('submitReservationBtn').style.display = 'none';
+    }
+    
+    // پاک کردن فیلد توضیحات
+    document.getElementById('reservationDescription').value = '';
+    
+    reservationModal.show();
+}
+
+async function submitReservation() {
+    if (!currentUser || currentUser.type !== 'student') {
+        showAlert('ابتدا وارد حساب کاربری خود شوید', 'warning');
+        return;
+    }
+    
+    const teacherId = document.getElementById('reservationTeacherId').value;
+    const timeSlot = document.getElementById('reservationTimeSlot').value;
+    const description = document.getElementById('reservationDescription').value.trim();
+    
+    // نمایش loading
+    const submitBtn = document.getElementById('submitReservationBtn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> در حال ثبت...';
+    submitBtn.disabled = true;
+    
+    try {
+        // ارسال درخواست رزرو
+        const reservationData = {
+            studentId: currentUser.id,
+            teacherId: parseInt(teacherId),
+            requestedTimeSlot: parseInt(timeSlot),
+            description: description || 'درخواست مشاوره'
+        };
+        
+        const response = await apiRequest('/reservation', 'POST', reservationData);
+        
+        if (response && response.success) {
+            showAlert('رزرو شما با موفقیت ثبت شد و در انتظار تایید استاد می‌باشد.', 'success');
+            reservationModal.hide();
+            
+            // بروزرسانی درخواست‌های رزرو کاربر
+            try {
+                const reservationsResponse = await apiRequest(`/reservations/student/${currentUser.id}`, 'GET');
+                if (reservationsResponse && reservationsResponse.success) {
+                    userReservations = reservationsResponse.data || [];
+                }
+            } catch (error) {
+                console.log('خطا در بروزرسانی درخواست‌های رزرو:', error);
+            }
+            
+            // بروزرسانی برنامه هفتگی استاد
+            if (selectedTeacherId) {
+                const teacher = allTeachers.find(t => t.id == selectedTeacherId);
+                if (teacher) {
+                    updateTeacherScheduleTable(teacher);
+                }
+            }
+            
+            // بروزرسانی جدول هفتگی عمومی
+            updateScheduleTable();
+        } else {
+            showAlert(response?.message || 'خطا در ثبت رزرو', 'danger');
+        }
+        
+    } catch (error) {
+        console.error('خطا در ثبت رزرو:', error);
+        showAlert('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.', 'danger');
+    } finally {
+        // بازگرداندن دکمه به حالت عادی
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+</script>
+
+<%- include('./layout/footer.ejs')%>

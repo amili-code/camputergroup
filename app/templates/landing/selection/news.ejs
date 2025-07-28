@@ -1,0 +1,180 @@
+<section class="bg-gray py-5 bg-light" id="news">
+    <div class="container">
+        <h2 class="section-title text-center">اخبار و اطلاعیه‌های اخیر</h2>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div id="latest-news-card">
+                    <div class="text-center py-5" id="news-loading">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <div>در حال بارگذاری خبر...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6" id="announcements">
+                <div id="latest-announcement-card">
+                    <div class="text-center py-5" id="announcement-loading">
+                        <div class="spinner-border text-danger" role="status"></div>
+                        <div>در حال بارگذاری اطلاعیه...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/fech-warper.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        apiRequest('/news', 'GET').then(data => {
+            const all = (data && data.data && Array.isArray(data.data)) ? data.data : [];
+            // Latest news
+            const news = all.find(n => n.type === 'news');
+            // Latest announcement
+            const announcement = all.find(n => n.type === 'announcement');
+            // Render news
+            const newsCard = document.getElementById('latest-news-card');
+            document.getElementById('news-loading').style.display = 'none';
+            if (!news) {
+                newsCard.innerHTML = '<div class="text-center text-muted">خبری یافت نشد.</div>';
+            } else {
+                let tagsHtml = '';
+                if (news.tags) tagsHtml = news.tags.split(',').map(tag => `<span class='badge bg-info ms-1'>${tag}</span>`).join(' ');
+                let imgHtml = '';
+                if (news.image) {
+                    imgHtml = `<img src="${news.image}" class="mb-3 rounded-3 w-100" style="height:180px;object-fit:cover;" alt="${news.title}">`;
+                }
+                let dateHtml = news.createdAt ? `<span class="text-muted small">${new Date(news.createdAt).toLocaleDateString('fa-IR')}</span>` : '';
+                newsCard.innerHTML = `
+                    <div class="card news-card h-100 p-3" style="cursor: pointer;" onclick="window.location.href='/news/${news.id}'">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-newspaper text-primary fs-3 ms-2"></i>
+                            <h6 class="mb-0">خبر</h6>
+                        </div>
+                        ${imgHtml}
+                        <div class="mb-2 text-start">${tagsHtml}</div>
+                        <h5 class="fw-bold text-start">${news.title || ''}</h5>
+                        <p class="mb-2 text-start">${news.description || ''}</p>
+                        ${dateHtml}
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation(); window.location.href='/news/${news.id}'">
+                                <i class="bi bi-eye me-1"></i>
+                                مشاهده جزئیات
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            // Render announcement
+            const annCard = document.getElementById('latest-announcement-card');
+            document.getElementById('announcement-loading').style.display = 'none';
+            if (!announcement) {
+                annCard.innerHTML = '<div class="text-center text-muted">اطلاعیه‌ای یافت نشد.</div>';
+            } else {
+                let tagsHtml = '';
+                if (announcement.tags) tagsHtml = announcement.tags.split(',').map(tag => `<span class='badge bg-info ms-1'>${tag}</span>`).join(' ');
+                let imgHtml = '';
+                if (announcement.image) {
+                    imgHtml = `<img src="${announcement.image}" class="mb-3 rounded-3 w-100" style="height:180px;object-fit:cover;" alt="${announcement.title}">`;
+                }
+                let dateHtml = announcement.createdAt ? `<span class="text-muted small">${new Date(announcement.createdAt).toLocaleDateString('fa-IR')}</span>` : '';
+                let pollPreviewHtml = '<div id="poll-preview-loading" class="text-center text-secondary small my-2">در حال دریافت نظرسنجی...</div>';
+                annCard.innerHTML = `
+                    <div class="card news-card h-100 p-3" style="cursor: pointer;" onclick="window.location.href='/news/${announcement.id}'">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-megaphone text-danger fs-3 ms-2"></i>
+                            <h6 class="mb-0">اطلاعیه</h6>
+                        </div>
+                        ${imgHtml}
+                        <div class="mb-2 text-start">${tagsHtml}</div>
+                        <h5 class="fw-bold text-start">${announcement.title || ''}</h5>
+                        <p class="mb-2 text-start">${announcement.description || ''}</p>
+                        ${dateHtml}
+                        <div id="poll-preview"></div>
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-danger btn-sm" onclick="event.stopPropagation(); window.location.href='/news/${announcement.id}'">
+                                <i class="bi bi-eye me-1"></i>
+                                مشاهده جزئیات
+                            </button>
+                        </div>
+                    </div>
+                `;
+                // Fetch poll preview
+                apiRequest(`/news/${announcement.id}/poll`, 'GET').then(pollData => {
+                    const pollDiv = document.getElementById('poll-preview');
+                    document.getElementById('poll-preview-loading')?.remove();
+                    if (pollData && pollData.data && Array.isArray(pollData.data) && pollData.data.length > 0) {
+                        let html = '<div class="bg-light border rounded-3 p-2 mt-2"><b class="text-danger">نظرسنجی اطلاعیه:</b>';
+                        pollData.data.forEach(q => {
+                            html += `<div class='mt-2'><span class='fw-bold'>${q.question}</span><ul class='mb-1 mt-1 ps-3'>`;
+                            (q.options || []).forEach(opt => {
+                                html += `<li class='small'>${opt.optionText}</li>`;
+                            });
+                            html += '</ul></div>';
+                        });
+                        html += '</div>';
+                        pollDiv.innerHTML = html;
+                    } else {
+                        pollDiv.innerHTML = '';
+                    }
+                }).catch(() => {
+                    const pollDiv = document.getElementById('poll-preview');
+                    document.getElementById('poll-preview-loading')?.remove();
+                    pollDiv.innerHTML = '';
+                });
+            }
+        }).catch(() => {
+            document.getElementById('news-loading').style.display = 'none';
+            document.getElementById('latest-news-card').innerHTML = '<div class="text-center text-danger">خطا در دریافت خبر</div>';
+            document.getElementById('announcement-loading').style.display = 'none';
+            document.getElementById('latest-announcement-card').innerHTML = '<div class="text-center text-danger">خطا در دریافت اطلاعیه</div>';
+        });
+        window.showNewsDetails = function(id) {
+            apiRequest(`/news/${id}`, 'GET').then(data => {
+                const news = data && data.data ? data.data : null;
+                if (!news) return;
+                let html = `<b>عنوان:</b> ${news.title}<br>`;
+                html += `<b>توضیحات:</b> ${news.description || '-'}<br>`;
+                html += `<b>تگ‌ها:</b> ${news.tags || '-'}<br>`;
+                html += `<b>تاریخ:</b> ${news.createdAt ? new Date(news.createdAt).toLocaleDateString('fa-IR') : '-'}<br>`;
+                html += `<b>وضعیت:</b> ${news.isActive ? 'فعال' : 'غیرفعال'}<br>`;
+                if (news.image) html += `<img src="${news.image}" class="w-100 rounded-3 my-2" style="max-width:300px;object-fit:cover;" alt="${news.title}">`;
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'جزییات خبر',
+                        html,
+                        confirmButtonText: 'بستن',
+                        customClass: {popup: 'text-start'}
+                    });
+                } else {
+                    alert(html.replace(/<br>/g, '\n'));
+                }
+            });
+        }
+        window.showAnnouncementDetails = function(id) {
+            apiRequest(`/news/${id}`, 'GET').then(data => {
+                const ann = data && data.data ? data.data : null;
+                if (!ann) return;
+                let html = `<b>عنوان:</b> ${ann.title}<br>`;
+                html += `<b>توضیحات:</b> ${ann.description || '-'}<br>`;
+                html += `<b>تگ‌ها:</b> ${ann.tags || '-'}<br>`;
+                html += `<b>تاریخ:</b> ${ann.createdAt ? new Date(ann.createdAt).toLocaleDateString('fa-IR') : '-'}<br>`;
+                html += `<b>وضعیت:</b> ${ann.isActive ? 'فعال' : 'غیرفعال'}<br>`;
+                if (ann.image) html += `<img src="${ann.image}" class="w-100 rounded-3 my-2" style="max-width:300px;object-fit:cover;" alt="${ann.title}">`;
+                if (window.Swal) {
+                    Swal.fire({
+                        title: 'جزییات اطلاعیه',
+                        html,
+                        confirmButtonText: 'بستن',
+                        customClass: {popup: 'text-start'}
+                    });
+                } else {
+                    alert(html.replace(/<br>/g, '\n'));
+                }
+            });
+        }
+    });
+    </script>
+
+
+<div style="text-align: center;" class="mt-5">
+    <a href="/news" class="btn btn-outline-dark">مشاهده تمام اخبار و اطلاعیه ها</a>
+</div>
+</section>

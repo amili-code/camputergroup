@@ -1,0 +1,420 @@
+<%- include('./layout/header.ejs')%>
+
+<section class="container py-5">
+    <h2 class="section-title text-center">همه اخبار و اطلاعیه‌ها</h2>
+    
+    <!-- Search and Filters -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-search"></i> جستجو و فیلتر</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="filter-label" for="searchInput">
+                        <i class="bi bi-search"></i> جستجوی عمومی
+                    </label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="عنوان یا توضیحات...">
+                </div>
+                <div class="col-md-3">
+                    <label class="filter-label" for="typeSelect">
+                        <i class="bi bi-tags"></i> نوع
+                    </label>
+                    <select id="typeSelect" class="form-select">
+                        <option value="">همه</option>
+                        <option value="news">خبر</option>
+                        <option value="announcement">اطلاعیه</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="filter-label" for="tagFilter">
+                        <i class="bi bi-bookmark"></i> تگ
+                    </label>
+                    <select id="tagFilter" class="form-select">
+                        <option value="">همه تگ‌ها</option>
+                        <!-- تگ‌ها با JavaScript پر می‌شوند -->
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="filter-label" for="statusFilter">
+                        <i class="bi bi-check-circle"></i> وضعیت
+                    </label>
+                    <select id="statusFilter" class="form-select">
+                        <option value="">همه</option>
+                        <option value="active">فقط فعال</option>
+                        <option value="inactive">فقط غیرفعال</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button class="btn btn-secondary btn-sm" onclick="clearAllFilters()">
+                        <i class="bi bi-arrow-clockwise"></i> پاک کردن فیلترها
+                    </button>
+                    <span class="ms-2 text-muted" id="filterStatus"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- News List -->
+    <div id="news-loading" class="text-center my-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div>در حال بارگذاری اخبار...</div>
+    </div>
+    <div id="news-list" class="row g-4 justify-content-center"></div>
+</section>
+
+<style>
+.filter-label { 
+    font-weight: bold; 
+    margin-bottom: 0.5rem; 
+    color: #495057;
+}
+
+.news-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.news-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.news-image {
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.news-card:hover .news-image {
+    transform: scale(1.05);
+}
+
+.type-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+}
+
+.tag-badge {
+    display: inline-block;
+    background: linear-gradient(45deg, #17a2b8, #138496);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    margin: 0.1rem;
+    white-space: nowrap;
+}
+
+.tag-badge:hover {
+    background: linear-gradient(45deg, #138496, #117a8b);
+    transform: scale(1.05);
+}
+
+.news-info {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.info-item i {
+    width: 20px;
+    margin-left: 0.5rem;
+    color: #007bff;
+}
+
+.description-text {
+    background: white;
+    border-radius: 8px;
+    padding: 0.75rem;
+    border-left: 4px solid #007bff;
+    font-style: italic;
+    color: #6c757d;
+    margin-top: 0.5rem;
+    max-height: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.filter-status {
+    background: #e3f2fd;
+    border-radius: 5px;
+    padding: 0.5rem;
+    border-left: 4px solid #2196f3;
+}
+
+.date-badge {
+    background: linear-gradient(45deg, #6c757d, #495057);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
+
+.status-badge {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
+
+.status-badge.inactive {
+    background: linear-gradient(45deg, #dc3545, #c82333);
+}
+
+.type-icon {
+    font-size: 2rem;
+    margin-left: 1rem;
+}
+
+.type-icon.news {
+    color: #007bff;
+}
+
+.type-icon.announcement {
+    color: #dc3545;
+}
+</style>
+
+
+<script>
+let allNews = [];
+let allTags = new Set();
+
+document.addEventListener('DOMContentLoaded', function() {
+    apiRequest('/news', 'GET').then(data => {
+        allNews = (data && data.data && Array.isArray(data.data)) ? data.data : [];
+        document.getElementById('news-loading').style.display = 'none';
+        
+        // استخراج همه تگ‌ها
+        extractAllTags();
+        
+        // پر کردن فیلتر تگ‌ها
+        populateTagFilter();
+        
+        renderNews();
+    }).catch(() => {
+        document.getElementById('news-loading').style.display = 'none';
+        document.getElementById('news-list').innerHTML = '<div class="text-center text-danger">خطا در دریافت اخبار</div>';
+    });
+    
+    // Event listeners for filters
+    document.getElementById('searchInput').addEventListener('input', renderNews);
+    document.getElementById('typeSelect').addEventListener('change', renderNews);
+    document.getElementById('tagFilter').addEventListener('change', renderNews);
+    document.getElementById('statusFilter').addEventListener('change', renderNews);
+});
+
+function extractAllTags() {
+    allTags.clear();
+    allNews.forEach(news => {
+        if (news.tags) {
+            const tags = news.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+            tags.forEach(tag => allTags.add(tag));
+        }
+    });
+}
+
+function populateTagFilter() {
+    const select = document.getElementById('tagFilter');
+    select.innerHTML = '<option value="">همه تگ‌ها</option>';
+    
+    Array.from(allTags).sort().forEach(tag => {
+        const option = document.createElement('option');
+        option.value = tag;
+        option.textContent = tag;
+        select.appendChild(option);
+    });
+}
+
+function renderNews() {
+    const search = document.getElementById('searchInput').value.trim();
+    const type = document.getElementById('typeSelect').value;
+    const selectedTag = document.getElementById('tagFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    let filtered = allNews.filter(n => {
+        let ok = true;
+        
+        // جستجوی عمومی
+        if (search) {
+            const searchLower = search.toLowerCase();
+            ok = (n.title && n.title.toLowerCase().includes(searchLower)) || 
+                 (n.description && n.description.toLowerCase().includes(searchLower));
+        }
+        
+        // فیلتر نوع
+        if (ok && type) {
+            ok = n.type === type;
+        }
+        
+        // فیلتر تگ
+        if (ok && selectedTag) {
+            ok = n.tags && n.tags.split(',').some(t => t.trim() === selectedTag);
+        }
+        
+        // فیلتر وضعیت
+        if (ok && status) {
+            ok = (status === 'active' ? n.isActive : !n.isActive);
+        }
+        
+        return ok;
+    });
+    
+    // نمایش وضعیت فیلتر
+    updateFilterStatus(filtered.length);
+    
+    const list = document.getElementById('news-list');
+    if (filtered.length === 0) {
+        list.innerHTML = `
+            <div class="col-12 text-center">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    خبری با فیلترهای انتخاب شده یافت نشد.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    filtered.forEach(news => {
+        // تگ‌ها
+        let tagsHtml = '';
+        if (news.tags) {
+            const tags = news.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+            tagsHtml = tags.map(tag => `<span class="tag-badge">${tag}</span>`).join('');
+        }
+        
+        // نوع خبر
+        let typeLabel = news.type === 'announcement' ? 'اطلاعیه' : 'خبر';
+        let typeColor = news.type === 'announcement' ? 'danger' : 'primary';
+        let typeIcon = news.type === 'announcement' ? 'bi-megaphone' : 'bi-newspaper';
+        
+        // تصویر
+        let imgHtml = '';
+        if (news.image && news.image !== '-' && news.image !== 'null') {
+            imgHtml = `
+                <div class="position-relative">
+                    <img src="${news.image}" class="news-image w-100" alt="${news.title}">
+                    <span class="type-badge badge bg-${typeColor}">${typeLabel}</span>
+                </div>
+            `;
+        } else {
+            imgHtml = `
+                <div class="position-relative" style="height:200px;background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                        <i class="bi bi-image fs-1 text-secondary"></i>
+                        <div class="text-muted small">تصویر ندارد</div>
+                    </div>
+                    <span class="type-badge badge bg-${typeColor}">${typeLabel}</span>
+                </div>
+            `;
+        }
+        
+        // تاریخ
+        let dateHtml = '';
+        if (news.createdAt) {
+            const date = new Date(news.createdAt);
+            const persianDate = date.toLocaleDateString('fa-IR');
+            dateHtml = `<span class="date-badge"><i class="bi bi-calendar ms-1"></i>${persianDate}</span>`;
+        }
+        
+        // وضعیت
+        let statusHtml = '';
+        if (news.isActive) {
+            statusHtml = '<span class="status-badge"><i class="bi bi-check-circle ms-1"></i>فعال</span>';
+        } else {
+            statusHtml = '<span class="status-badge inactive"><i class="bi bi-x-circle ms-1"></i>غیرفعال</span>';
+        }
+        
+        html += `
+            <div class="col-lg-6 col-md-6">
+                <div class="card news-card h-100" style="cursor: pointer;" onclick="window.location.href='/news/${news.id}'">
+                    ${imgHtml}
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi ${typeIcon} type-icon ${news.type}"></i>
+                            <div class="flex-grow-1">
+                                <h5 class="fw-bold text-primary mb-1">${news.title || ''}</h5>
+                                <div class="d-flex gap-2">
+                                    ${dateHtml}
+                                    ${statusHtml}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="news-info">
+                            ${tagsHtml ? `
+                                <div class="mb-3">
+                                    <strong><i class="bi bi-bookmark"></i> تگ‌ها:</strong>
+                                    <div class="mt-2">
+                                        ${tagsHtml}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${news.description ? `
+                                <div class="description-text">
+                                    <i class="bi bi-chat-quote"></i>
+                                    ${news.description}
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i>
+                                مشاهده جزئیات
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    list.innerHTML = html;
+}
+
+function updateFilterStatus(filteredCount) {
+    const statusElement = document.getElementById('filterStatus');
+    const totalCount = allNews.length;
+    
+    if (filteredCount === totalCount) {
+        statusElement.innerHTML = `<span class="filter-status">نمایش همه ${totalCount} خبر</span>`;
+    } else {
+        statusElement.innerHTML = `<span class="filter-status">نمایش ${filteredCount} از ${totalCount} خبر</span>`;
+    }
+}
+
+function clearAllFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('typeSelect').value = '';
+    document.getElementById('tagFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    renderNews();
+}
+</script>
+
+<%- include('./layout/footer.ejs')%>

@@ -1,0 +1,624 @@
+<%- include('../getAll/layout/header.ejs')%>
+
+<div class="container my-5">
+    <!-- Loading Spinner -->
+    <div id="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">در حال بارگذاری...</span>
+        </div>
+        <p class="mt-3">در حال بارگذاری اطلاعات خبر/اطلاعیه...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error" class="alert alert-danger d-none" role="alert">
+        <h4 class="alert-heading">خطا!</h4>
+        <p id="error-message"></p>
+        <hr>
+        <a href="/news" class="btn btn-outline-danger">بازگشت به لیست اخبار</a>
+    </div>
+
+    <!-- News Details -->
+    <div id="news-details" class="d-none">
+        <!-- News Header -->
+        <div class="row mb-5">
+            <div class="col-lg-6">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">خانه</a></li>
+                        <li class="breadcrumb-item"><a href="/news">اخبار و اطلاعیه‌ها</a></li>
+                        <li class="breadcrumb-item active" aria-current="page" id="news-title-breadcrumb">جزئیات خبر</li>
+                    </ol>
+                </nav>
+                
+                <h1 class="display-4 fw-bold text-primary mb-3" id="news-title"></h1>
+                
+                <div class="d-flex flex-wrap gap-3 mb-4">
+                    <span class="badge bg-primary fs-6" id="news-type"></span>
+                    <span class="badge bg-success fs-6" id="news-status"></span>
+                    <span class="badge bg-info fs-6" id="news-date"></span>
+                </div>
+
+                <div class="news-description mb-4">
+                    <h5 class="fw-bold mb-3">متن خبر/اطلاعیه:</h5>
+                    <div class="lead" id="news-description" style="word-wrap: break-word; white-space: pre-line;"></div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card shadow-lg border-0 rounded-3">
+                    <img id="news-image" class="card-img-top rounded-top-3" style="height: 300px; object-fit: cover;" alt="تصویر خبر" onerror="this.src='/pic/news/news-1753264567887-666408363-esk.jpg'">
+                    <div class="card-body p-4">
+                        <div class="d-grid gap-3">
+                            <button id="poll-btn" class="btn btn-warning btn-lg fw-bold d-none">
+                                <i class="bi bi-clipboard-check me-2"></i>
+                                شرکت در نظرسنجی
+                            </button>
+                            <button id="no-poll-btn" class="btn btn-secondary btn-lg fw-bold d-none" disabled>
+                                <i class="bi bi-info-circle me-2"></i>
+                                نظرسنجی موجود نیست
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Information -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 rounded-3 mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4 text-primary">
+                            <i class="bi bi-info-circle me-2"></i>
+                            اطلاعات خبر/اطلاعیه
+                        </h4>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-calendar-event text-primary me-3 fs-5"></i>
+                                    <div>
+                                        <small class="text-muted d-block">تاریخ انتشار</small>
+                                        <strong id="news-created-date"></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-clock text-primary me-3 fs-5"></i>
+                                    <div>
+                                        <small class="text-muted d-block">ساعت انتشار</small>
+                                        <strong id="news-created-time"></strong>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-tags text-primary me-3 fs-5"></i>
+                                    <div>
+                                        <small class="text-muted d-block">برچسب‌ها</small>
+                                        <div id="news-tags"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="bi bi-eye text-primary me-3 fs-5"></i>
+                                    <div>
+                                        <small class="text-muted d-block">وضعیت</small>
+                                        <strong id="news-status-detail"></strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Poll Preview -->
+                <div id="poll-preview" class="card shadow-sm border-0 rounded-3 mb-4 d-none">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-4 text-warning">
+                            <i class="bi bi-clipboard-check me-2"></i>
+                            پیش‌نمایش نظرسنجی
+                        </h4>
+                        <div id="poll-preview-content"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- Quick Info Card -->
+                <div class="card shadow-sm border-0 rounded-3 mb-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3 text-primary">خلاصه اطلاعات</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">نوع:</span>
+                            <span class="fw-bold" id="news-type-summary"></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">وضعیت:</span>
+                            <span class="fw-bold" id="news-status-summary"></span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">تاریخ:</span>
+                            <span class="fw-bold text-info" id="news-date-summary"></span>
+                        </div>
+                        <hr>
+                        <div class="d-grid">
+                            <a href="/news" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-right me-2"></i>
+                                مشاهده سایر اخبار
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Poll Modal -->
+<div class="modal fade" id="pollModal" tabindex="-1" aria-labelledby="pollModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pollModalLabel">
+                    <i class="bi bi-clipboard-check me-2"></i>
+                    نظرسنجی
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="poll-modal-content">
+                <!-- Poll content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" id="submit-poll-btn">
+                    <i class="bi bi-send me-2"></i>
+                    ارسال پاسخ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentNewsId = null;
+let pollData = null;
+let currentUser = null;
+let userVotes = {}; // رای‌های کاربر برای هر سوال
+let pollStats = {}; // آمار رای‌ها
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // بررسی وضعیت لاگین کاربر
+    await checkUserLogin();
+    
+    // Get news ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const newsId = pathParts[pathParts.length - 1];
+    
+    if (!newsId || isNaN(newsId)) {
+        showError('شناسه خبر/اطلاعیه نامعتبر است');
+        return;
+    }
+    
+    currentNewsId = newsId;
+    
+    // Fetch news data
+    fetchNewsData(newsId);
+});
+
+async function fetchNewsData(newsId) {
+    try {
+        const response = await apiRequest(`/news/${newsId}`, 'GET');
+        
+        if (response.success) {
+            displayNewsData(response.data);
+            // Check if this is an announcement and fetch poll data
+            if (response.data.type === 'announcement') {
+                await fetchPollData(newsId);
+            }
+        } else {
+            showError(response.message || 'خطا در دریافت اطلاعات خبر/اطلاعیه');
+        }
+    } catch (error) {
+        console.error('Error fetching news data:', error);
+        showError('خطا در ارتباط با سرور');
+    }
+}
+
+async function fetchPollData(newsId) {
+    try {
+        const response = await apiRequest(`/news/${newsId}/poll`, 'GET');
+        
+        if (response.success && response.data && response.data.length > 0) {
+            pollData = response.data;
+            
+            // دریافت رای‌های کاربر اگر لاگین باشد
+            if (currentUser) {
+                await fetchUserVotes();
+            }
+            
+                    // دریافت آمار رای‌ها
+        await fetchPollStats();
+        
+
+            
+            displayPollPreview();
+            document.getElementById('poll-btn').classList.remove('d-none');
+            
+            // بررسی وضعیت رای کاربر و تنظیم دکمه نظرسنجی
+            const hasVoted = pollData.some(poll => userVotes[poll.id]);
+            const pollBtn = document.getElementById('poll-btn');
+            
+            if (hasVoted) {
+                pollBtn.disabled = true;
+                pollBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>نظرسنجی تکمیل شد';
+                pollBtn.className = 'btn btn-success btn-lg fw-bold';
+            } else if (!currentUser) {
+                pollBtn.innerHTML = '<i class="bi bi-person-plus me-2"></i>ورود برای شرکت در نظرسنجی';
+                pollBtn.className = 'btn btn-warning btn-lg fw-bold';
+            } else {
+                pollBtn.addEventListener('click', function() {
+                    showPollModal();
+                });
+            }
+        } else {
+            document.getElementById('no-poll-btn').classList.remove('d-none');
+        }
+    } catch (error) {
+        console.error('Error fetching poll data:', error);
+        document.getElementById('no-poll-btn').classList.remove('d-none');
+    }
+}
+
+async function fetchUserVotes() {
+    try {
+        for (const poll of pollData) {
+            const response = await apiRequest(`/poll-vote/check/${currentUser.type}/${currentUser.id}/${poll.id}`, 'GET');
+            if (response && response.success && response.data) {
+                userVotes[poll.id] = response.data.pollOptionId;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching user votes:', error);
+    }
+}
+
+async function fetchPollStats() {
+    try {
+        for (const poll of pollData) {
+            const response = await apiRequest(`/poll-votes/stats/${poll.id}`, 'GET');
+            if (response && response.success) {
+                pollStats[poll.id] = response.data;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching poll stats:', error);
+    }
+}
+
+function displayNewsData(news) {
+    // Hide loading, show news details
+    document.getElementById('loading').classList.add('d-none');
+    document.getElementById('news-details').classList.remove('d-none');
+    
+    // Set basic information
+    document.getElementById('news-title').textContent = news.title;
+    document.getElementById('news-title-breadcrumb').textContent = news.title;
+    document.getElementById('news-description').textContent = news.description;
+    
+    // Set type badge
+    const typeText = getTypeText(news.type);
+    document.getElementById('news-type').textContent = typeText;
+    document.getElementById('news-type-summary').textContent = typeText;
+    
+    // Set status
+    const statusText = news.isActive ? 'فعال' : 'غیرفعال';
+    const statusClass = news.isActive ? 'bg-success' : 'bg-danger';
+    document.getElementById('news-status').textContent = statusText;
+    document.getElementById('news-status').className = `badge ${statusClass} fs-6`;
+    document.getElementById('news-status-summary').textContent = statusText;
+    document.getElementById('news-status-detail').textContent = statusText;
+    
+    // Set date and time
+    const createdDate = new Date(news.createdAt);
+    const dateText = createdDate.toLocaleDateString('fa-IR');
+    const timeText = createdDate.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+    
+    document.getElementById('news-date').textContent = dateText;
+    document.getElementById('news-date-summary').textContent = dateText;
+    document.getElementById('news-created-date').textContent = dateText;
+    document.getElementById('news-created-time').textContent = timeText;
+    
+    // Set image
+    if (news.image) {
+        document.getElementById('news-image').src = news.image;
+    } else {
+        document.getElementById('news-image').src = '/pic/news/news-1753264567887-666408363-esk.jpg';
+    }
+    
+    // Set tags
+    if (news.tags && news.tags.trim() !== '' && news.tags.trim() !== 'null') {
+        const tagsContainer = document.getElementById('news-tags');
+        const tags = news.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== '');
+        if (tags.length > 0) {
+            tagsContainer.innerHTML = tags.map(tag => 
+                `<span class="badge bg-light text-dark me-1">${tag}</span>`
+            ).join('');
+        } else {
+            tagsContainer.innerHTML = '<span class="text-muted fst-italic">تگی وجود ندارد</span>';
+        }
+    } else {
+        document.getElementById('news-tags').innerHTML = '<span class="text-muted fst-italic">تگی وجود ندارد</span>';
+    }
+    
+    
+}
+
+function displayPollPreview() {
+    if (!pollData || pollData.length === 0) return;
+    
+    const previewContainer = document.getElementById('poll-preview');
+    const previewContent = document.getElementById('poll-preview-content');
+    
+    previewContainer.classList.remove('d-none');
+    
+    let previewHTML = '';
+    pollData.forEach((poll, index) => {
+        const stats = pollStats[poll.id];
+        const totalVotes = stats ? stats.totalVotes : 0;
+        const hasUserVoted = userVotes[poll.id];
+        
+        previewHTML += `
+            <div class="mb-4 ${index > 0 ? 'border-top pt-3' : ''}">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0">${poll.question}</h6>
+                    <span class="badge bg-info">${totalVotes} رای</span>
+                </div>
+                <div class="ms-3">
+                    ${poll.options.map(option => {
+                        const optionStats = stats && stats.options ? stats.options.find(opt => opt.optionId === option.id) : null;
+                        const voteCount = optionStats ? optionStats.voteCount : 0;
+                        const percentage = optionStats ? optionStats.percentage : 0;
+                        const isUserVote = hasUserVoted === option.id;
+                        
+                        return `
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="text-muted">
+                                    ${isUserVote ? '<i class="bi bi-check-circle-fill text-success me-1"></i>' : '• '}${option.optionText}
+                                </div>
+                                <div class="text-muted small">
+                                    ${voteCount} رای (${percentage}%)
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    });
+    
+    previewContent.innerHTML = previewHTML;
+}
+
+function showPollModal() {
+    if (!pollData || pollData.length === 0) return;
+    
+    // بررسی لاگین کاربر
+    if (!currentUser) {
+        alert('برای شرکت در نظرسنجی ابتدا وارد حساب کاربری خود شوید');
+        return;
+    }
+    
+    // بررسی اینکه کاربر قبلاً رای داده است یا نه
+    const hasVoted = pollData.some(poll => userVotes[poll.id]);
+    if (hasVoted) {
+        alert('شما قبلاً در این نظرسنجی شرکت کرده‌اید');
+        return;
+    }
+    
+    const modalContent = document.getElementById('poll-modal-content');
+    let modalHTML = '<div class="alert alert-info mb-4"><i class="bi bi-info-circle me-2"></i>لطفاً به سوالات زیر پاسخ دهید:</div>';
+    
+    pollData.forEach((poll, pollIndex) => {
+        modalHTML += `
+            <div class="mb-4">
+                <h6 class="fw-bold mb-3">${poll.question}</h6>
+                <div class="ms-3">
+                    ${poll.options.map((option, optionIndex) => 
+                        `<div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="poll_${poll.id}" id="option_${option.id}" value="${option.id}" required>
+                            <label class="form-check-label" for="option_${option.id}">
+                                ${option.optionText}
+                            </label>
+                        </div>`
+                    ).join('')}
+                </div>
+            </div>
+        `;
+    });
+    
+    modalContent.innerHTML = modalHTML;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('pollModal'));
+    modal.show();
+    
+    // Add event listener to submit button
+    document.getElementById('submit-poll-btn').onclick = submitPoll;
+}
+
+async function submitPoll() {
+    // Collect all answers
+    const answers = {};
+    let allAnswered = true;
+    
+    pollData.forEach(poll => {
+        const selectedOption = document.querySelector(`input[name="poll_${poll.id}"]:checked`);
+        if (selectedOption) {
+            answers[poll.id] = selectedOption.value;
+        } else {
+            allAnswered = false;
+        }
+    });
+    
+    if (!allAnswered) {
+        alert('لطفاً به تمام سوالات پاسخ دهید');
+        return;
+    }
+    
+    // نمایش loading
+    const submitBtn = document.getElementById('submit-poll-btn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> در حال ثبت...';
+    submitBtn.disabled = true;
+    
+    try {
+        // ارسال رای‌ها به سرور
+        const votePromises = Object.entries(answers).map(([pollId, optionId]) => {
+            const voteData = {
+                userId: currentUser.id,
+                userType: currentUser.type,
+                pollQuestionId: parseInt(pollId),
+                pollOptionId: parseInt(optionId)
+            };
+            return apiRequest('/poll-vote', 'POST', voteData);
+        });
+        
+        await Promise.all(votePromises);
+        
+        // بروزرسانی رای‌های کاربر و آمار
+        await fetchUserVotes();
+        await fetchPollStats();
+        
+        // نمایش پیام موفقیت
+        alert('نظرسنجی شما با موفقیت ثبت شد. متشکریم!');
+        
+        // بستن مودال
+        const modal = bootstrap.Modal.getInstance(document.getElementById('pollModal'));
+        modal.hide();
+        
+        // غیرفعال کردن دکمه نظرسنجی
+        document.getElementById('poll-btn').disabled = true;
+        document.getElementById('poll-btn').innerHTML = '<i class="bi bi-check-circle me-2"></i>نظرسنجی تکمیل شد';
+        document.getElementById('poll-btn').className = 'btn btn-success btn-lg fw-bold';
+        
+        // بروزرسانی پیش‌نمایش نظرسنجی
+        displayPollPreview();
+        
+        // نمایش نتایج زنده
+        showLiveResults();
+        
+    } catch (error) {
+        console.error('Error submitting poll:', error);
+        alert('خطا در ثبت نظرسنجی. لطفاً دوباره تلاش کنید.');
+    } finally {
+        // بازگرداندن دکمه به حالت عادی
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+function getTypeText(type) {
+    const typeMap = {
+        'news': 'خبر',
+        'announcement': 'اطلاعیه'
+    };
+    return typeMap[type] || type;
+}
+
+async function checkUserLogin() {
+    try {
+        const response = await apiRequest('/auth/me', 'GET');
+        if (response && response.success && response.data && response.data.user) {
+            currentUser = response.data.user;
+            console.log('کاربر لاگین است:', currentUser);
+        } else {
+            currentUser = null;
+            console.log('کاربر لاگین نیست');
+        }
+    } catch (error) {
+        currentUser = null;
+        console.log('کاربر لاگین نیست:', error);
+    }
+}
+
+function showLiveResults() {
+    if (!pollData || pollData.length === 0) return;
+    
+    const modalContent = document.getElementById('poll-modal-content');
+    let modalHTML = `
+        <div class="alert alert-success mb-4">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>نظرسنجی شما با موفقیت ثبت شد!</strong>
+            <br>
+            در ادامه نتایج زنده نظرسنجی را مشاهده می‌کنید:
+        </div>
+    `;
+    
+    pollData.forEach((poll, pollIndex) => {
+        const stats = pollStats[poll.id];
+        const totalVotes = stats ? stats.totalVotes : 0;
+        const userVote = userVotes[poll.id];
+        
+        modalHTML += `
+            <div class="mb-4 ${pollIndex > 0 ? 'border-top pt-3' : ''}">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0">${poll.question}</h6>
+                    <span class="badge bg-info">${totalVotes} رای</span>
+                </div>
+                <div class="ms-3">
+                    ${poll.options.map(option => {
+                        const optionStats = stats ? stats.options.find(opt => opt.optionId === option.id) : null;
+                        const voteCount = optionStats ? optionStats.voteCount : 0;
+                        const percentage = optionStats ? optionStats.percentage : 0;
+                        const isUserVote = userVote === option.id;
+                        
+                        return `
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="progress flex-grow-1 me-3" style="height: 20px;">
+                                        <div class="progress-bar ${isUserVote ? 'bg-success' : 'bg-primary'}" 
+                                             style="width: ${percentage}%" 
+                                             title="${voteCount} رای (${percentage}%)">
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small" style="min-width: 80px;">
+                                        ${voteCount} رای
+                                    </div>
+                                </div>
+                                <div class="ms-2">
+                                    ${isUserVote ? '<i class="bi bi-check-circle-fill text-success"></i>' : ''}
+                                </div>
+                            </div>
+                            <div class="text-muted small ms-3 mb-2">${option.optionText}</div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    });
+    
+    modalContent.innerHTML = modalHTML;
+    
+    // تغییر دکمه‌ها
+    const submitBtn = document.getElementById('submit-poll-btn');
+    submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>متوجه شدم';
+    submitBtn.onclick = function() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('pollModal'));
+        modal.hide();
+    };
+}
+
+function showError(message) {
+    document.getElementById('loading').classList.add('d-none');
+    document.getElementById('error').classList.remove('d-none');
+    document.getElementById('error-message').textContent = message;
+}
+</script>
+
+<%- include('../getAll/layout/footer.ejs')%>
