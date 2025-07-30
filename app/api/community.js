@@ -31,8 +31,27 @@ class CommunityController {
     // READ - دریافت همه اعضا
     async getAllMembers(req, res) {
         try {
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // بررسی مدیر انجمن
+            const isCommunityAdmin = req.session && req.session.admin && req.session.admin.role === 'communityAdmin';
+            
             const members = await models.Community.findAll({
-                include: [models.Student],
+                include: [{
+                    model: models.Student,
+                    attributes: isRealAdmin || isCommunityAdmin 
+                        ? { exclude: ['password', 'nationalCode'] } 
+                        : { exclude: ['studentId', 'phone', 'password', 'nationalCode'] }
+                }],
                 order: [['createdAt', 'DESC']]
             });
             res.json({ success: true, data: members });
@@ -45,7 +64,12 @@ class CommunityController {
     async getMemberById(req, res) {
         try {
             const { id } = req.params;
-            const member = await models.Community.findByPk(id, { include: [{ model: models.Student, as: 'student' }] });
+            const member = await models.Community.findByPk(id, {
+                include: [{
+                    model: models.Student,
+                    attributes: { exclude: ['studentId', 'phone', 'password', 'nationalCode'] }
+                }]
+            });
             if (!member) {
                 return res.status(404).json({ success: false, message: 'عضو یافت نشد.' });
             }
@@ -82,6 +106,18 @@ class CommunityController {
             // فقط یک مدیر مجاز است
             await models.Community.update({ isManager: false }, { where: {} });
             await member.update({ isManager: true });
+
+            // دریافت نام خانوادگی مدیر جدید
+            const student = await models.Student.findByPk(member.studentId);
+            let lastName = student ? student.lastName : '';
+            // به‌روزرسانی admin.json
+            const fs = require('fs');
+            const path = require('path');
+            const adminPath = path.join(__dirname, '../../scripts/admin.json');
+            let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+            adminData.communityAdminName = lastName;
+            fs.writeFileSync(adminPath, JSON.stringify(adminData, null, 4), 'utf8');
+
             res.json({ success: true, message: 'مدیر گروه با موفقیت تعیین شد.', data: member });
         } catch (error) {
             res.status(500).json({ success: false, message: 'خطا در تعیین مدیر گروه', error: error.message });

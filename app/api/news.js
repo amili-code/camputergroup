@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 class NewsController {
+    
     // CREATE - ایجاد خبر/اطلاعیه
     async createNews(req, res) {
         try {
@@ -11,6 +12,32 @@ class NewsController {
             let image = null;
             if (req.file) {
                 image = `/pic/news/${req.file.filename}`;
+            }
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // بررسی تگ انجمن
+            let tagsArr = [];
+            if (tags) {
+                tagsArr = tags.split(',').map(t => t.trim()).filter(Boolean);
+            }
+            const hasAnjomanTag = tagsArr.includes('انجمن');
+            if (hasAnjomanTag) {
+                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
+                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند خبر با تگ انجمن ایجاد کند.' });
+                }
+            } else {
+                if (!isRealAdmin) {
+                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند خبر بدون تگ انجمن ایجاد کند.' });
+                }
             }
             const news = await models.News.create({
                 type,
@@ -95,6 +122,43 @@ class NewsController {
                     message: 'خبر/اطلاعیه یافت نشد'
                 });
             }
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // بررسی تگ انجمن قبلی
+            let oldTagsArr = [];
+            if (news.tags) {
+                oldTagsArr = news.tags.split(',').map(t => t.trim()).filter(Boolean);
+            }
+            const hadAnjomanTag = oldTagsArr.includes('انجمن');
+            // بررسی تگ جدید (در صورت تغییر)
+            let newTagsArr = oldTagsArr;
+            if (tags) {
+                newTagsArr = tags.split(',').map(t => t.trim()).filter(Boolean);
+            }
+            const hasAnjomanTag = newTagsArr.includes('انجمن');
+            // شرط دسترسی: اگر قبلاً انجمن داشت فقط مدیر انجمن یا ادمین بتواند و اگر نداشت فقط ادمین
+            if (hadAnjomanTag || hasAnjomanTag) {
+                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
+                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند خبر با تگ انجمن را ویرایش کند.' });
+                }
+            } else {
+                if (!isRealAdmin) {
+                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند خبر بدون تگ انجمن را ویرایش کند.' });
+                }
+            }
+            // اگر خبر قبلاً تگ انجمن نداشته و مدیر انجمن می‌خواهد تگ انجمن اضافه کند، اجازه نده
+            if (!hadAnjomanTag && hasAnjomanTag && !isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
+                return res.status(403).json({ success: false, message: 'مدیر انجمن نمی‌تواند تگ انجمن را به خبرهایی که قبلاً نداشته‌اند اضافه کند.' });
+            }
             let newImage = news.image;
             if (req.file) {
                 if (news.image) {
@@ -147,6 +211,32 @@ class NewsController {
                     success: false,
                     message: 'خبر/اطلاعیه یافت نشد'
                 });
+            }
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // بررسی تگ انجمن
+            let tagsArr = [];
+            if (news.tags) {
+                tagsArr = news.tags.split(',').map(t => t.trim()).filter(Boolean);
+            }
+            const hasAnjomanTag = tagsArr.includes('انجمن');
+            if (hasAnjomanTag) {
+                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
+                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند خبر با تگ انجمن را حذف کند.' });
+                }
+            } else {
+                if (!isRealAdmin) {
+                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند خبر بدون تگ انجمن را حذف کند.' });
+                }
             }
             if (news.image) {
                 try {
@@ -221,6 +311,32 @@ class NewsController {
                     message: 'اطلاعیه یافت نشد'
                 });
             }
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // بررسی تگ انجمن
+            let tagsArr = [];
+            if (news.tags) {
+                tagsArr = news.tags.split(',').map(t => t.trim()).filter(Boolean);
+            }
+            const hasAnjomanTag = tagsArr.includes('انجمن');
+            if (hasAnjomanTag) {
+                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
+                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند برای خبر با تگ انجمن نظرسنجی ایجاد کند.' });
+                }
+            } else {
+                if (!isRealAdmin) {
+                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند برای خبر بدون تگ انجمن نظرسنجی ایجاد کند.' });
+                }
+            }
             // ایجاد سوال
             const pollQuestion = await models.PollQuestion.create({
                 newsId,
@@ -294,6 +410,35 @@ class NewsController {
                     success: false,
                     message: 'سوال نظرسنجی یافت نشد'
                 });
+            }
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // بررسی تگ انجمن خبر مربوطه
+            const news = await models.News.findByPk(pollQuestion.newsId);
+            if (news) {
+                let tagsArr = [];
+                if (news.tags) {
+                    tagsArr = news.tags.split(',').map(t => t.trim()).filter(Boolean);
+                }
+                const hasAnjomanTag = tagsArr.includes('انجمن');
+                if (hasAnjomanTag) {
+                    if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
+                        return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند نظرسنجی خبر با تگ انجمن را حذف کند.' });
+                    }
+                } else {
+                    if (!isRealAdmin) {
+                        return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند نظرسنجی خبر بدون تگ انجمن را حذف کند.' });
+                    }
+                }
             }
             // حذف همه گزینه‌های این سوال
             await models.PollOption.destroy({ where: { pollQuestionId } });

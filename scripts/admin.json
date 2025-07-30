@@ -1,0 +1,13 @@
+{
+    "admin": {
+        "username": "محمدی",
+        "password": "$2b$10$tRKKoql5ChSsPLuVzBHlFuSckMfTHRQpyqpjVe19DN1rzKv2Kge5m",
+        "role": "admin"
+    },
+    "communityAdmin": {
+        "username": "رضایی",
+        "password": "$2b$10$2wFCku1rOuN.8L7BG/2ga.zmiWRYv3nGstMTrXpdSmHUMbYss3g7q",
+        "role": "communityAdmin"
+    },
+    "communityAdminName": "نام خانوادگی مدیر فعلی"
+}

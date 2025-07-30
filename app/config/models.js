@@ -12,6 +12,7 @@ const PollOption = require('../model/Poll/PollOption')(sequelize);
 const PollVote = require('../model/Poll/PollVote')(sequelize);
 const Community = require('../model/Community')(sequelize);
 const Reservation = require('../model/Reservation')(sequelize);
+const Log = require('../model/Log')(sequelize);
 
 // ثبت مدل‌ها در Sequelize
 const models = {
@@ -25,7 +26,8 @@ const models = {
     PollOption,
     PollVote,
     Community,
-    Reservation
+    Reservation,
+    Log
 };
 
 // تعریف روابط بین مدل‌ها (cascade delete)

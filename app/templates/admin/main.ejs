@@ -83,7 +83,7 @@
                                     </div>
                                     <div>
                                         <h6 class="mb-0">خوش آمدید</h6>
-                                        <small class="text-muted">مدیر سیستم</small>
+                                        <small class="text-muted"><%= adminUsername ? adminUsername : 'مدیر سیستم' %></small>
                                     </div>
                                 </div>
                             </div>
@@ -136,5 +136,23 @@
     
     <!-- Custom JavaScript -->
     <script src="/js/main.js"></script>
+    <script>
+        function logout() {
+            fetch('/api/admin/logout', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/login';
+                } else {
+                    alert(data.message || 'خروج ناموفق بود');
+                }
+            })
+            .catch(() => alert('خطا در ارتباط با سرور'));
+        }
+    </script>
 </body>
 </html>

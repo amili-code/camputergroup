@@ -1,6 +1,9 @@
 const { models } = require('../config/models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+const { logUserAction } = require('../config/loger');
 
 // JWT Secret Key - در محیط تولید باید از متغیر محیطی استفاده شود
 const JWT_SECRET = process.env.JWT_SECRET || '1234567890';
@@ -72,6 +75,13 @@ class AuthController {
                     token: token
                 };
             }
+
+            // ثبت لاگ ورود دانشجو
+            await logUserAction(
+                student.id,
+                'student',
+                `دانشجوی عزیز ${student.firstName} شما در تاریخ ${new Date().toLocaleString('fa-IR')} وارد سامانه ی گروه کامپیوتر شدین`
+            );
 
             // ارسال پاسخ موفق
             res.json({
@@ -159,6 +169,13 @@ class AuthController {
                 };
             }
 
+            // ثبت لاگ ورود دبیر
+            await logUserAction(
+                teacher.id,
+                'teacher',
+                `استاد محترم ${teacher.firstName} شما در تاریخ ${new Date().toLocaleString('fa-IR')} وارد سامانه ی گروه کامپیوتر شدین`
+            );
+
             // ارسال پاسخ موفق
             res.json({
                 success: true,
@@ -186,6 +203,65 @@ class AuthController {
         }
     }
 
+    // Admin Login
+    async adminLogin(req, res) {
+        try {
+            const { username, password } = req.body;
+            const adminPath = path.join(__dirname, '../../scripts/admin.json');
+            let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+            let admin = adminData.admin;
+            let communityAdmin = adminData.communityAdmin;
+            // اگر رمز communityAdmin خالی بود، رمز جدید را رمزنگاری و ذخیره کن
+            if (username === communityAdmin.username && !communityAdmin.password) {
+                const hashed = await bcrypt.hash(password, 10);
+                communityAdmin.password = hashed;
+                adminData.communityAdmin.password = hashed;
+                fs.writeFileSync(adminPath, JSON.stringify(adminData, null, 4), 'utf8');
+            }
+            // بررسی نام کاربری و رمز برای ادمین
+            const isUserValid = username === admin.username;
+            const isPassValid = await bcrypt.compare(password, admin.password);
+            // بررسی نام کاربری و رمز برای مدیر انجمن
+            const isCommunityUserValid = username === communityAdmin.username;
+            const isCommunityPassValid = await bcrypt.compare(password, communityAdmin.password);
+            if (isUserValid && isPassValid) {
+                // ست کردن session ادمین
+                if (req.session) {
+                    req.session.admin = {
+                        username: admin.username,
+                        role: admin.role
+                    };
+                }
+                await logUserAction(
+                    0,
+                    'groupAdmin',
+                    `ادمین ${admin.username} در تاریخ ${new Date().toLocaleString('fa-IR')} وارد سامانه شد`
+                );
+                return res.json({ success: true, message: 'ورود ادمین موفقیت‌آمیز بود', role: 'admin' });
+            } else if (isCommunityUserValid && isCommunityPassValid) {
+                // ست کردن session مدیر انجمن
+                if (req.session) {
+                    req.session.admin = {
+                        username: communityAdmin.username,
+                        role: communityAdmin.role,
+                        communityAdminName: adminData.communityAdminName || ''
+                    };
+                }
+                await logUserAction(
+                    0,
+                    'communityAdmin',
+                    `مدیر انجمن ${communityAdmin.username} در تاریخ ${new Date().toLocaleString('fa-IR')} وارد سامانه شد`
+                );
+                return res.json({ success: true, message: 'ورود مدیر انجمن موفقیت‌آمیز بود', role: 'communityAdmin' });
+            } else {
+                return res.status(401).json({ success: false, message: 'نام کاربری یا رمز عبور اشتباه است' });
+            }
+        } catch (error) {
+            console.error('خطا در ورود ادمین:', error);
+            res.status(500).json({ success: false, message: 'خطا در ورود ادمین', error: error.message });
+        }
+    }
+
     // Logout
     async logout(req, res) {
         try {
@@ -201,9 +277,26 @@ class AuthController {
                         });
                     }
 
+                    // ثبت لاگ خروج
+                    if (req.session && req.session.user) {
+                        logUserAction(
+                            req.session.user.id,
+                            req.session.user.type,
+                            `شما در تاریخ ${new Date().toLocaleString('fa-IR')} از سامانه خارج شدین`
+                        );
+                    }
+
                     // حذف کوکی session
                     res.clearCookie('connect.sid');
                     
+                    // ثبت لاگ خروج دقیقاً قبل از ارسال پاسخ
+                    if (req.session && req.session.user) {
+                        logUserAction(
+                            req.session.user.id,
+                            req.session.user.type,
+                            `شما در تاریخ ${new Date().toLocaleString('fa-IR')} از سامانه خارج شدین`
+                        );
+                    }
                     res.json({
                         success: true,
                         message: 'خروج موفقیت‌آمیز بود'
@@ -225,6 +318,39 @@ class AuthController {
                 message: 'خطا در خروج از سیستم',
                 error: error.message
             });
+        }
+    }
+
+    // Admin Logout
+    async adminLogout(req, res) {
+        try {
+            if (req.session && req.session.admin) {
+                req.session.destroy((err) => {
+                    if (err) {
+                        return res.status(500).json({ success: false, message: 'خطا در خروج ادمین' });
+                    }
+                    res.clearCookie('connect.sid');
+
+                    // ثبت لاگ خروج ادمین قبل از ارسال پاسخ
+                    logUserAction(
+                        0,
+                        'groupAdmin',
+                        `ادمین در تاریخ ${new Date().toLocaleString('fa-IR')} از سامانه خارج شد`
+                    );
+                    return res.json({ success: true, message: 'خروج موفقیت‌آمیز بود' });
+                });
+            } else {
+                res.clearCookie('connect.sid');
+                // ثبت لاگ خروج ادمین حتی اگر session نبود (ایمنی بیشتر)
+                logUserAction(
+                    0,
+                    'groupAdmin',
+                    `ادمین در تاریخ ${new Date().toLocaleString('fa-IR')} از سامانه خارج شد`
+                );
+                return res.json({ success: true, message: 'خروج موفقیت‌آمیز بود' });
+            }
+        } catch (error) {
+            res.status(500).json({ success: false, message: 'خطا در خروج ادمین', error: error.message });
         }
     }
 

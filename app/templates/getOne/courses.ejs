@@ -412,9 +412,15 @@ function displayCourseData(course) {
     if (course.thumbnail) {
         document.getElementById('course-thumbnail').src = course.thumbnail;
     } else {
-        // استفاده از یک تصویر پیش‌فرض یا نمایش یک placeholder
-        document.getElementById('course-thumbnail').src = '/pic/course/course-1753099709769-277813812-CE (1).jpg';
-        document.getElementById('course-thumbnail').alt = 'تصویر دوره';
+        // نمایش متن "تصویر موجود نیست" به جای تصویر پیش‌فرض
+        const thumbnailElement = document.getElementById('course-thumbnail');
+        thumbnailElement.style.display = 'none';
+        const cardBody = thumbnailElement.parentElement;
+        const noImageDiv = document.createElement('div');
+        noImageDiv.className = 'd-flex align-items-center justify-content-center bg-light rounded-top-3';
+        noImageDiv.style.height = '250px';
+        noImageDiv.innerHTML = '<span class="text-muted fst-italic">تصویر موجود نیست</span>';
+        cardBody.insertBefore(noImageDiv, thumbnailElement);
     }
     
     // Set end date

@@ -37,8 +37,9 @@ class CourseController {
             }
 
             // اعتبارسنجی تگ‌ها (حداکثر ۳ تگ، جدا شده با کاما)
+            let tagsArr = [];
             if (courseData.tags) {
-                const tagsArr = courseData.tags.split(',').map(t => t.trim()).filter(Boolean);
+                tagsArr = courseData.tags.split(',').map(t => t.trim()).filter(Boolean);
                 if (tagsArr.length > 3) {
                     return res.status(400).json({
                         success: false,
@@ -46,6 +47,28 @@ class CourseController {
                     });
                 }
                 courseData.tags = tagsArr.join(',');
+            }
+
+            // شرط دسترسی: اگر تگ انجمن داشت فقط مدیر انجمن (یا ادمین) بتواند ایجاد کند، اگر نداشت فقط ادمین
+            const hasAnjomanTag = tagsArr.includes('انجمن');
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            if (hasAnjomanTag) {
+                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
+                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند دوره با تگ انجمن ایجاد کند.' });
+                }
+            } else {
+                if (!isRealAdmin) {
+                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند دوره بدون تگ انجمن ایجاد کند.' });
+                }
             }
 
             // تاریخ اتمام: فقط به صورت رشته شمسی ذخیره شود (در فرانت باید شمسی باشد)
@@ -187,6 +210,50 @@ class CourseController {
                     message: 'دوره مورد نظر یافت نشد'
                 });
             }
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // بررسی تگ انجمن قبلی
+            let oldTagsArr = [];
+            if (course.tags) {
+                oldTagsArr = course.tags.split(',').map(t => t.trim()).filter(Boolean);
+            }
+            const hadAnjomanTag = oldTagsArr.includes('انجمن');
+            // بررسی تگ جدید (در صورت تغییر)
+            let newTagsArr = oldTagsArr;
+            if (updateData.tags) {
+                newTagsArr = updateData.tags.split(',').map(t => t.trim()).filter(Boolean);
+                if (newTagsArr.length > 3) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'حداکثر ۳ تگ مجاز است.'
+                    });
+                }
+                updateData.tags = newTagsArr.join(',');
+            }
+            const hasAnjomanTag = newTagsArr.includes('انجمن');
+            // شرط دسترسی: اگر قبلاً انجمن داشت فقط مدیر انجمن یا ادمین بتواند و اگر نداشت فقط ادمین
+            if (hadAnjomanTag || hasAnjomanTag) {
+                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
+                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند دوره با تگ انجمن را ویرایش کند.' });
+                }
+            } else {
+                if (!isRealAdmin) {
+                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند دوره بدون تگ انجمن را ویرایش کند.' });
+                }
+            }
+            // اگر دوره قبلاً تگ انجمن نداشته و مدیر انجمن می‌خواهد تگ انجمن اضافه کند، اجازه نده
+            if (!hadAnjomanTag && hasAnjomanTag && !isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
+                return res.status(403).json({ success: false, message: 'مدیر انجمن نمی‌تواند تگ انجمن را به دوره‌هایی که قبلاً نداشته‌اند اضافه کند.' });
+            }
             // suitableFor: اگر نبود، همه ۱ باشد
             if (!updateData.suitableFor) {
                 updateData.suitableFor = '111111111111';
@@ -210,16 +277,7 @@ class CourseController {
                 updateData.price = parseInt(updateData.price, 10) || 0;
             }
             // اعتبارسنجی تگ‌ها (حداکثر ۳ تگ، جدا شده با کاما)
-            if (updateData.tags) {
-                const tagsArr = updateData.tags.split(',').map(t => t.trim()).filter(Boolean);
-                if (tagsArr.length > 3) {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'حداکثر ۳ تگ مجاز است.'
-                    });
-                }
-                updateData.tags = tagsArr.join(',');
-            }
+            // (قبلاً انجام شد)
             // تاریخ اتمام: فقط به صورت رشته شمسی ذخیره شود
             if (updateData.endDate && typeof updateData.endDate !== 'string') {
                 updateData.endDate = String(updateData.endDate);
@@ -265,6 +323,32 @@ class CourseController {
                     message: 'دوره مورد نظر یافت نشد'
                 });
             }
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // بررسی تگ انجمن
+            let tagsArr = [];
+            if (course.tags) {
+                tagsArr = course.tags.split(',').map(t => t.trim()).filter(Boolean);
+            }
+            const hasAnjomanTag = tagsArr.includes('انجمن');
+            if (hasAnjomanTag) {
+                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
+                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند وضعیت دوره با تگ انجمن را تغییر دهد.' });
+                }
+            } else {
+                if (!isRealAdmin) {
+                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند وضعیت دوره بدون تگ انجمن را تغییر دهد.' });
+                }
+            }
 
             // اگر دوره غیرفعال می‌شود، بررسی علت
             if (isAvailable === false && !unavailabilityReason) {
@@ -307,6 +391,32 @@ class CourseController {
                 });
             }
 
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // بررسی تگ انجمن
+            let tagsArr = [];
+            if (course.tags) {
+                tagsArr = course.tags.split(',').map(t => t.trim()).filter(Boolean);
+            }
+            const hasAnjomanTag = tagsArr.includes('انجمن');
+            if (hasAnjomanTag) {
+                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
+                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند دوره با تگ انجمن را حذف کند.' });
+                }
+            } else {
+                if (!isRealAdmin) {
+                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند دوره بدون تگ انجمن را حذف کند.' });
+                }
+            }
             await course.destroy();
             
             res.json({
@@ -457,14 +567,31 @@ class CourseController {
             const { status, page = 1, limit = 10 } = req.query;
             
             let whereClause = {};
-            
             // فیلتر بر اساس وضعیت
             if (status && ['pending', 'approved', 'rejected'].includes(status)) {
                 whereClause.status = status;
             }
-
             const offset = (page - 1) * limit;
-            
+
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // اگر مدیر انجمن است فقط درخواست‌های دوره‌هایی که تگ انجمن دارند را ببیند
+            let courseWhere = {};
+            if (!isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
+                courseWhere = {
+                    tags: { [Op.like]: '%انجمن%' }
+                };
+            }
+
             const registrations = await models.CourseRegistration.findAndCountAll({
                 where: whereClause,
                 include: [
@@ -474,7 +601,8 @@ class CourseController {
                     },
                     {
                         model: models.Course,
-                        attributes: ['id', 'title', 'type', 'price', 'isAvailable']
+                        attributes: ['id', 'title', 'type', 'price', 'isAvailable', 'tags'],
+                        where: courseWhere
                     }
                 ],
                 order: [['requestDate', 'DESC']],
@@ -495,7 +623,6 @@ class CourseController {
                     }
                 }
             });
-
         } catch (error) {
             console.error('خطا در دریافت درخواست‌های ثبت نام:', error);
             res.status(500).json({
@@ -513,18 +640,35 @@ class CourseController {
             const { status } = req.query;
 
             let whereClause = { studentId };
-            
             // فیلتر بر اساس وضعیت
             if (status && ['pending', 'approved', 'rejected'].includes(status)) {
                 whereClause.status = status;
             }
-
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // اگر مدیر انجمن است فقط درخواست‌های دوره‌هایی که تگ انجمن دارند را ببیند
+            let courseWhere = {};
+            if (!isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
+                courseWhere = {
+                    tags: { [Op.like]: '%انجمن%' }
+                };
+            }
             const registrations = await models.CourseRegistration.findAll({
                 where: whereClause,
                 include: [
                     {
                         model: models.Course,
-                        attributes: ['id', 'title', 'type', 'price', 'isAvailable', 'thumbnail']
+                        attributes: ['id', 'title', 'type', 'price', 'isAvailable', 'thumbnail', 'tags'],
+                        where: courseWhere
                     }
                 ],
                 order: [['requestDate', 'DESC']]
@@ -535,7 +679,6 @@ class CourseController {
                 message: 'درخواست‌های دانشجو با موفقیت دریافت شدند',
                 data: registrations
             });
-
         } catch (error) {
             console.error('خطا در دریافت درخواست‌های دانشجو:', error);
             res.status(500).json({
@@ -553,12 +696,28 @@ class CourseController {
             const { status } = req.query;
 
             let whereClause = { courseId };
-            
             // فیلتر بر اساس وضعیت
             if (status && ['pending', 'approved', 'rejected'].includes(status)) {
                 whereClause.status = status;
             }
-
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // اگر مدیر انجمن است فقط اگر این دوره تگ انجمن دارد اجازه مشاهده دارد
+            if (!isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
+                const course = await models.Course.findByPk(courseId);
+                if (!course || !(course.tags && course.tags.includes('انجمن'))) {
+                    return res.status(403).json({ success: false, message: 'دسترسی فقط برای دوره‌های انجمن مجاز است.' });
+                }
+            }
             const registrations = await models.CourseRegistration.findAll({
                 where: whereClause,
                 include: [
@@ -575,7 +734,6 @@ class CourseController {
                 message: 'درخواست‌های دوره با موفقیت دریافت شدند',
                 data: registrations
             });
-
         } catch (error) {
             console.error('خطا در دریافت درخواست‌های دوره:', error);
             res.status(500).json({
@@ -599,7 +757,7 @@ class CourseController {
                     },
                     {
                         model: models.Course,
-                        attributes: ['id', 'title', 'type', 'price', 'isAvailable', 'description']
+                        attributes: ['id', 'title', 'type', 'price', 'isAvailable', 'description', 'tags']
                     }
                 ]
             });
@@ -610,13 +768,28 @@ class CourseController {
                     message: 'درخواست ثبت نام یافت نشد'
                 });
             }
-
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // اگر مدیر انجمن است فقط اگر این دوره تگ انجمن دارد اجازه مشاهده دارد
+            if (!isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
+                if (!(registration.Course && registration.Course.tags && registration.Course.tags.includes('انجمن'))) {
+                    return res.status(403).json({ success: false, message: 'دسترسی فقط برای دوره‌های انجمن مجاز است.' });
+                }
+            }
             res.json({
                 success: true,
                 message: 'درخواست ثبت نام با موفقیت دریافت شد',
                 data: registration
             });
-
         } catch (error) {
             console.error('خطا در دریافت درخواست ثبت نام:', error);
             res.status(500).json({
@@ -633,33 +806,53 @@ class CourseController {
             const { id } = req.params;
             const { notes } = req.body;
 
-            const registration = await models.CourseRegistration.findByPk(id);
+            const registration = await models.CourseRegistration.findByPk(id, {
+                include: [
+                    {
+                        model: models.Course,
+                        attributes: ['id', 'tags']
+                    }
+                ]
+            });
             if (!registration) {
                 return res.status(404).json({
                     success: false,
                     message: 'درخواست ثبت نام یافت نشد'
                 });
             }
-
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // اگر مدیر انجمن است فقط اگر این دوره تگ انجمن دارد اجازه تایید دارد
+            if (!isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
+                if (!(registration.Course && registration.Course.tags && registration.Course.tags.includes('انجمن'))) {
+                    return res.status(403).json({ success: false, message: 'دسترسی فقط برای دوره‌های انجمن مجاز است.' });
+                }
+            }
             if (registration.status !== 'pending') {
                 return res.status(400).json({
                     success: false,
                     message: 'این درخواست قبلاً تایید یا رد شده است'
                 });
             }
-
             await registration.update({
                 status: 'approved',
                 approvalDate: new Date(),
                 notes: notes || null
             });
-
             res.json({
                 success: true,
                 message: 'درخواست با موفقیت تایید شد',
                 data: registration
             });
-
         } catch (error) {
             console.error('خطا در تایید درخواست:', error);
             res.status(500).json({
@@ -682,34 +875,53 @@ class CourseController {
                     message: 'دلیل رد درخواست الزامی است'
                 });
             }
-
-            const registration = await models.CourseRegistration.findByPk(id);
+            const registration = await models.CourseRegistration.findByPk(id, {
+                include: [
+                    {
+                        model: models.Course,
+                        attributes: ['id', 'tags']
+                    }
+                ]
+            });
             if (!registration) {
                 return res.status(404).json({
                     success: false,
                     message: 'درخواست ثبت نام یافت نشد'
                 });
             }
-
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // اگر مدیر انجمن است فقط اگر این دوره تگ انجمن دارد اجازه رد دارد
+            if (!isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
+                if (!(registration.Course && registration.Course.tags && registration.Course.tags.includes('انجمن'))) {
+                    return res.status(403).json({ success: false, message: 'دسترسی فقط برای دوره‌های انجمن مجاز است.' });
+                }
+            }
             if (registration.status !== 'pending') {
                 return res.status(400).json({
                     success: false,
                     message: 'این درخواست قبلاً تایید یا رد شده است'
                 });
             }
-
             await registration.update({
                 status: 'rejected',
                 approvalDate: new Date(),
                 notes: notes
             });
-
             res.json({
                 success: true,
                 message: 'درخواست با موفقیت رد شد',
                 data: registration
             });
-
         } catch (error) {
             console.error('خطا در رد درخواست:', error);
             res.status(500).json({
@@ -725,21 +937,42 @@ class CourseController {
         try {
             const { id } = req.params;
 
-            const registration = await models.CourseRegistration.findByPk(id);
+            const registration = await models.CourseRegistration.findByPk(id, {
+                include: [
+                    {
+                        model: models.Course,
+                        attributes: ['id', 'tags']
+                    }
+                ]
+            });
             if (!registration) {
                 return res.status(404).json({
                     success: false,
                     message: 'درخواست ثبت نام یافت نشد'
                 });
             }
-
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // اگر مدیر انجمن است فقط اگر این دوره تگ انجمن دارد اجازه حذف دارد
+            if (!isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
+                if (!(registration.Course && registration.Course.tags && registration.Course.tags.includes('انجمن'))) {
+                    return res.status(403).json({ success: false, message: 'دسترسی فقط برای دوره‌های انجمن مجاز است.' });
+                }
+            }
             await registration.destroy();
-
             res.json({
                 success: true,
                 message: 'درخواست ثبت نام با موفقیت حذف شد'
             });
-
         } catch (error) {
             console.error('خطا در حذف درخواست ثبت نام:', error);
             res.status(500).json({

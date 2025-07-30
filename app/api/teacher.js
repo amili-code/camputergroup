@@ -123,11 +123,29 @@ class TeacherController {
             const teachers = await models.Teacher.findAll({
                 order
             });
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // حذف رمز عبور و کد ملی از خروجی (مگر برای ادمین واقعی)
+            const teachersSafe = teachers.map(t => {
+                const obj = t.toJSON();
+                delete obj.password;
+                if (!isRealAdmin) delete obj.nationalCode;
+                return obj;
+            });
 
             res.json({
                 success: true,
                 message: 'اساتید با موفقیت دریافت شدند',
-                data: teachers
+                data: teachersSafe
             });
 
         } catch (error) {
@@ -153,11 +171,26 @@ class TeacherController {
                     message: 'استاد یافت نشد'
                 });
             }
+            // بررسی نقش ادمین واقعی
+            let isRealAdmin = false;
+            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
+                const fs = require('fs');
+                const path = require('path');
+                const adminPath = path.join(__dirname, '../../scripts/admin.json');
+                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
+                if (req.session.admin.username === adminData.admin.username) {
+                    isRealAdmin = true;
+                }
+            }
+            // حذف رمز عبور و کد ملی از خروجی (مگر برای ادمین واقعی)
+            const teacherSafe = teacher.toJSON();
+            delete teacherSafe.password;
+            if (!isRealAdmin) delete teacherSafe.nationalCode;
 
             res.json({
                 success: true,
                 message: 'استاد با موفقیت دریافت شد',
-                data: teacher
+                data: teacherSafe
             });
 
         } catch (error) {

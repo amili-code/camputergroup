@@ -509,6 +509,32 @@ i{
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Admin Login Modal -->
+    <div class="modal-overlay" id="adminLoginModal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fas fa-user-shield text-primary"></i>
+                <h5>ورود ادمین</h5>
+            </div>
+            <form id="adminLoginForm" action="/api/admin/login" method="POST">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="adminUsername">نام کاربری ادمین</label>
+                        <input type="text" class="form-control" id="adminUsername" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="adminPassword">رمز عبور</label>
+                        <input type="password" class="form-control" id="adminPassword" name="password" required>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 1rem; text-align: center;">
+                    <button type="submit" class="btn btn-primary">ورود ادمین</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAdminModal()">انصراف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Switch between student and teacher login modes
         function switchMode(mode) {
@@ -678,6 +704,49 @@ i{
                 document.getElementById('teacherForm').classList.add('active');
                 focusFirstInput('teacher');
             }
+        }
+
+        // Admin login modal logic
+        function openAdminModal() {
+            document.getElementById('adminLoginModal').style.display = 'flex';
+            document.getElementById('adminUsername').focus();
+        }
+        function closeAdminModal() {
+            document.getElementById('adminLoginModal').style.display = 'none';
+        }
+        // Detect copy of the word 'اموزشی'
+        document.addEventListener('copy', function(e) {
+            const selection = window.getSelection().toString();
+            if (selection.trim() === 'آموزشی') {
+                openAdminModal();
+            }
+        });
+        // Prevent form default and use fetch for admin login
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        if (adminLoginForm) {
+            adminLoginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const data = {
+                    username: document.getElementById('adminUsername').value,
+                    password: document.getElementById('adminPassword').value
+                };
+                try {
+                    const response = await fetch('/api/admin/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showSuccessModal(result.message || 'ورود موفقیت‌آمیز بود');
+                        setTimeout(() => { window.location.href = '/admin'; }, 1500);
+                    } else {
+                        showErrorModal(result.message || 'ورود ناموفق بود');
+                    }
+                } catch (err) {
+                    showErrorModal('خطا در ارتباط با سرور');
+                }
+            });
         }
     </script>
 </body>

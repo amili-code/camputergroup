@@ -2,7 +2,11 @@ const jwt = require("jsonwebtoken");
 
 class web {
     example(req, res) {
-        res.render("admin/main.ejs", {  })
+        if (req.session && req.session.admin) {
+            res.render("admin/main.ejs", { adminUsername: req.session.admin.username });
+        } else {
+            res.redirect("/");
+        }
     }
     
     landing(req, res) {
@@ -43,6 +47,14 @@ class web {
     
     login(req, res) {
         res.render("login/login.ejs", {  })
+    }
+
+    adminPanel(req, res) {
+        if (req.session && req.session.admin) {
+            res.render("admin/main.ejs", { adminUsername: req.session.admin.username });
+        } else {
+            res.redirect("/");
+        }
     }
 }
 
