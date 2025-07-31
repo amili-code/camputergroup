@@ -1,4 +1,5 @@
 const { models } = require('../config/models');
+const { logUserAction } = require('../config/loger');
 
 class CommunityController {
     // CREATE - درخواست عضویت جدید
@@ -22,6 +23,8 @@ class CommunityController {
                 return res.status(400).json({ success: false, message: 'درخواست قبلاً ثبت شده است.' });
             }
             const member = await models.Community.create({ studentId: student.id, description });
+            // ثبت لاگ درخواست عضویت
+            await logUserAction(student.id, 'student', `درخواست عضویت در انجمن ثبت شد.`);
             res.status(201).json({ success: true, data: member });
         } catch (error) {
             res.status(500).json({ success: false, message: 'خطا در ثبت درخواست عضویت', error: error.message });
@@ -89,6 +92,9 @@ class CommunityController {
                 return res.status(404).json({ success: false, message: 'عضو یافت نشد.' });
             }
             await member.update({ isAccepted });
+            // ثبت لاگ تایید یا رد عضویت
+            const statusText = isAccepted ? 'تایید' : 'رد';
+            await logUserAction(member.studentId, 'student', `درخواست عضویت شما در انجمن ${statusText} شد.`);
             res.json({ success: true, data: member });
         } catch (error) {
             res.status(500).json({ success: false, message: 'خطا در بروزرسانی وضعیت عضویت', error: error.message });
@@ -115,7 +121,8 @@ class CommunityController {
             const path = require('path');
             const adminPath = path.join(__dirname, '../../scripts/admin.json');
             let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-            adminData.communityAdminName = lastName;
+            adminData.communityAdmin.username = lastName;
+            adminData.communityAdmin.password = '';
             fs.writeFileSync(adminPath, JSON.stringify(adminData, null, 4), 'utf8');
 
             res.json({ success: true, message: 'مدیر گروه با موفقیت تعیین شد.', data: member });

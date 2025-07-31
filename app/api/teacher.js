@@ -162,6 +162,15 @@ class TeacherController {
     async getTeacherById(req, res) {
         try {
             const { id } = req.params;
+            // فقط ادمین یا خود دبیر مجاز است
+            const isAdmin = req.session && req.session.admin && req.session.admin.role === 'admin';
+            const isTeacherSelf = req.session && req.session.user && req.session.user.type === 'teacher' && req.session.user.id == id;
+            if (!isAdmin && !isTeacherSelf) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'شما مجاز به مشاهده این اطلاعات نیستید'
+                });
+            }
 
             const teacher = await models.Teacher.findByPk(id);
 
@@ -208,6 +217,17 @@ class TeacherController {
         try {
             const { id } = req.params;
             const { firstName, lastName, phone, nationalCode, weeklySchedule, teacherId, personalImage, password, teachingSubjects, description } = req.body;
+            
+            // بررسی دسترسی: فقط ادمین یا خود استاد می‌تواند اطلاعات را بروزرسانی کند
+            const isAdmin = req.session && req.session.admin && req.session.admin.role === 'admin';
+            const isTeacherSelf = req.session && req.session.user && req.session.user.type === 'teacher' && req.session.user.id == id;
+            
+            if (!isAdmin && !isTeacherSelf) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'شما مجاز به بروزرسانی این اطلاعات نیستید'
+                });
+            }
 
             // بررسی وجود استاد
             const teacher = await models.Teacher.findByPk(id);
@@ -435,6 +455,15 @@ class TeacherController {
     // دریافت اساتید بر اساس برنامه هفتگی
     async getTeachersBySchedule(req, res) {
         try {
+            // فقط ادمین یا خود دبیر مجاز است
+            const isAdmin = req.session && req.session.admin && req.session.admin.role === 'admin';
+            const isTeacherSelf = req.session && req.session.user && req.session.user.type === 'teacher';
+            if (!isAdmin && !isTeacherSelf) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'شما مجاز به مشاهده این اطلاعات نیستید'
+                });
+            }
             const { day, timeSlot } = req.query; // day: 0-6 (شنبه تا جمعه), timeSlot: 0-5 (6 بازه زمانی)
 
             if (day === undefined || day < 0 || day > 6) {
@@ -478,6 +507,15 @@ class TeacherController {
     // دریافت اساتید بر اساس درس تدریس
     async getTeachersBySubject(req, res) {
         try {
+            // فقط ادمین یا خود دبیر مجاز است
+            const isAdmin = req.session && req.session.admin && req.session.admin.role === 'admin';
+            const isTeacherSelf = req.session && req.session.user && req.session.user.type === 'teacher';
+            if (!isAdmin && !isTeacherSelf) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'شما مجاز به مشاهده این اطلاعات نیستید'
+                });
+            }
             const { subject } = req.query;
 
             if (!subject) {

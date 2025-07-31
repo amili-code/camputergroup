@@ -5,8 +5,8 @@
         "role": "admin"
     },
     "communityAdmin": {
-        "username": "رضایی",
-        "password": "$2b$10$2wFCku1rOuN.8L7BG/2ga.zmiWRYv3nGstMTrXpdSmHUMbYss3g7q",
+        "username": "شماره سه",
+        "password": "$2b$10$zRt0ZhWhF6g9qfyWoTFTY.i5VbWnn8uvKe4RN7AV9iLkL7IJIkHP2",
         "role": "communityAdmin"
     },
     "communityAdminName": "نام خانوادگی مدیر فعلی"

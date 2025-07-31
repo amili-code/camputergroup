@@ -1,5 +1,6 @@
 const { models, sequelize } = require('../config/models');
 const { Op } = require('sequelize');
+const { logUserAction } = require('../config/loger');
 
 class CourseController {
     // CREATE - ایجاد دوره جدید
@@ -545,6 +546,10 @@ class CourseController {
                 requestDate: new Date()
             });
 
+            // ثبت لاگ دانشجو
+            const courseTitle = course ? course.title : `آیدی ${courseId}`;
+            await logUserAction(studentId, 'student', `درخواست ثبت‌نام در دوره ${courseTitle} ثبت شد.`);
+
             res.status(201).json({
                 success: true,
                 message: 'درخواست ثبت نام با موفقیت ارسال شد',
@@ -848,6 +853,8 @@ class CourseController {
                 approvalDate: new Date(),
                 notes: notes || null
             });
+            // ثبت لاگ برای دانشجو
+            await logUserAction(registration.studentId, 'student', `درخواست ثبت‌نام شما در دوره تایید شد.`);
             res.json({
                 success: true,
                 message: 'درخواست با موفقیت تایید شد',
@@ -917,6 +924,8 @@ class CourseController {
                 approvalDate: new Date(),
                 notes: notes
             });
+            // ثبت لاگ برای دانشجو
+            await logUserAction(registration.studentId, 'student', `درخواست ثبت‌نام شما در دوره رد شد.`);
             res.json({
                 success: true,
                 message: 'درخواست با موفقیت رد شد',

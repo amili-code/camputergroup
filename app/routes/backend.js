@@ -195,9 +195,9 @@ router.post('/teacher', isAdmin, teacherImageUpload.single('personalImage'), tea
 
 // READ - دریافت اساتید
 router.get('/teachers',  teacherController.getAllTeachers.bind(teacherController));
-router.get('/teacher/:id', isAdmin, teacherController.getTeacherById.bind(teacherController));
-router.get('/teachers/schedule', isAdmin, teacherController.getTeachersBySchedule.bind(teacherController));
-router.get('/teachers/subject', isAdmin, teacherController.getTeachersBySubject.bind(teacherController));
+router.get('/teacher/:id', teacherController.getTeacherById.bind(teacherController));
+router.get('/teachers/schedule', teacherController.getTeachersBySchedule.bind(teacherController));
+router.get('/teachers/subject', teacherController.getTeachersBySubject.bind(teacherController));
 
 // UPDATE - بروزرسانی استاد
 router.put('/teacher/:id',isUserLoggedIn, teacherImageUpload.single('personalImage'), teacherController.updateTeacher.bind(teacherController));
@@ -258,7 +258,7 @@ router.post('/course-registration', isUserLoggedIn, courseController.createRegis
 router.get('/course-registrations',isCommunityAdmin, courseController.getAllRegistrations.bind(courseController));
 
 // READ - دریافت درخواست‌های یک دانشجو
-router.get('/course-registrations/student/:studentId', isCommunityAdmin,courseController.getStudentRegistrations.bind(courseController));
+router.get('/course-registrations/student/:studentId', isUserLoggedIn,courseController.getStudentRegistrations.bind(courseController));
 
 // READ - دریافت درخواست‌های یک دوره
 router.get('/course-registrations/course/:courseId', isCommunityAdmin ,courseController.getCourseRegistrations.bind(courseController));

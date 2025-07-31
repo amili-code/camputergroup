@@ -1,0 +1,336 @@
+<%- include('./layout/header.ejs') %>
+
+<div class="container py-5">
+    <h2 class="section-title"><i class="bi bi-person-circle me-2"></i>پروفایل استاد</h2>
+    <div id="profile-section"></div>
+    <div id="schedule-section" class="my-4"></div>
+    <div id="edit-section" class="my-4"></div>
+    <div id="reservations-section" class="my-4"></div>
+    <div id="logs-section" class="my-4">
+        <div class="card shadow-sm">
+                <div class="card-body">
+                    <h4 class="fw-bold mb-3"><i class="bi bi-list-task me-2"></i>فعالیت‌های من</h4>
+                    <% if (logs && logs.length) { %>
+                        <ul class="list-group list-group-flush">
+                            <% logs.forEach(log => { %>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-dot text-primary"></i> <%= log.description %></span>
+                                    <span class="text-muted small"><%= log.createdAt.toLocaleString('fa-IR') %></span>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% } else { %>
+                        <div class="alert alert-info mb-0">هیچ فعالیتی ثبت نشده است.</div>
+                    <% } %>
+                </div>
+            </div>
+    </div>
+</div>
+
+<!-- Modal for edit profile -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">ویرایش اطلاعات پروفایل</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+      <div class="modal-body">
+        <form id="edit-profile-form"></form>
+                    </div>
+                </div>
+  </div>
+</div>
+
+<!-- Modal for edit schedule -->
+<div class="modal fade" id="editScheduleModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">ویرایش برنامه هفتگی</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-schedule-form"></form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const days = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+const hours = ['8-10', '10-12', '12-14', '14-16', '16-18', '18-20'];
+let teacherId = null;
+let teacherData = null;
+let isEditable = false;
+
+async function fetchTeacherData() {
+    // گرفتن آیدی دبیر از session یا url یا هر روش مناسب
+    const resAuth = await fetch('/api/auth/me');
+    const authData = await resAuth.json();
+    if (!authData.success || !authData.data || !authData.data.user) {
+        document.getElementById('profile-section').innerHTML = '<div class="alert alert-danger">دسترسی غیرمجاز</div>';
+        return;
+    }
+    const user = authData.data.user;
+    teacherId = user.type === 'teacher' ? user.id : (new URLSearchParams(window.location.search).get('id') || user.id);
+
+    // گرفتن اطلاعات دبیر
+    const res = await fetch(`/api/teacher/${teacherId}`);
+    const data = await res.json();
+    if (!data.success) {
+        document.getElementById('profile-section').innerHTML = '<div class="alert alert-danger">دسترسی غیرمجاز یا خطا در دریافت اطلاعات</div>';
+        return;
+    }
+    teacherData = data.data;
+    // فقط ادمین یا خود دبیر اجازه ویرایش دارد
+    isEditable = (user.type === 'teacher' && user.id == teacherId) || (user.type === 'admin');
+    renderProfile();
+    renderSchedule();
+    if (isEditable) renderEditButtons();
+    if (isEditable) fetchReservations();
+}
+
+function renderProfile() {
+    const t = teacherData;
+    document.getElementById('profile-section').innerHTML = `
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="bi bi-person me-2"></i>اطلاعات شخصی</h4>
+          ${isEditable ? `<button class="btn btn-primary btn-sm" onclick="showEditProfileModal()"><i class="bi bi-pencil"></i> ویرایش</button>` : ''}
+        </div>
+        <div>
+          <div class="row">
+            <div class="col-md-6">
+              <p><strong>نام:</strong> ${t.firstName}</p>
+              <p><strong>نام خانوادگی:</strong> ${t.lastName}</p>
+              <p><strong>شماره تلفن:</strong> ${t.phone}</p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>دروس تدریس:</strong> ${t.teachingSubjects || 'تعریف نشده'}</p>
+              <p><strong>توضیحات:</strong> ${t.description || 'توضیحی ثبت نشده'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderSchedule() {
+    const schedule = teacherData.weeklySchedule;
+    let html = `<div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h4 class="fw-bold mb-0"><i class="bi bi-calendar-week me-2"></i>برنامه هفتگی</h4>
+          ${isEditable ? `<button class="btn btn-primary btn-sm" onclick="showEditScheduleModal()"><i class="bi bi-pencil"></i> ویرایش برنامه</button>` : ''}
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered text-center">
+            <thead class="table-dark">
+              <tr>
+                <th>ساعت</th>
+                <th>شنبه</th>
+                <th>یکشنبه</th>
+                <th>دوشنبه</th>
+                <th>سه‌شنبه</th>
+                <th>چهارشنبه</th>
+                <th>پنج‌شنبه</th>
+                <th>جمعه</th>
+              </tr>
+            </thead>
+            <tbody>`;
+    for (let hour = 0; hour < 6; hour++) {
+        html += `<tr><td class="table-secondary fw-bold">${hours[hour]}</td>`;
+        for (let day = 0; day < 7; day++) {
+            const index = day * 6 + hour;
+            const isAvailable = schedule[index] === '1';
+            const statusClass = isAvailable ? 'available' : 'busy';
+            const statusText = isAvailable ? 'خالی' : 'مشغول';
+            html += `<td class="schedule-cell ${statusClass}">${statusText}</td>`;
+        }
+        html += '</tr>';
+    }
+    html += `</tbody></table></div></div></div>`;
+    document.getElementById('schedule-section').innerHTML = html;
+}
+
+function renderEditButtons() {
+    // دکمه‌های ویرایش در پروفایل و برنامه هفتگی اضافه شده‌اند
+}
+
+function showEditProfileModal() {
+    const t = teacherData;
+    const form = document.getElementById('edit-profile-form');
+    form.innerHTML = `
+      <div class="mb-3">
+        <label class="form-label">نام</label>
+        <input type="text" class="form-control" name="firstName" value="${t.firstName || ''}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">نام خانوادگی</label>
+        <input type="text" class="form-control" name="lastName" value="${t.lastName || ''}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">شماره تلفن</label>
+        <input type="tel" class="form-control" name="phone" value="${t.phone || ''}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">دروس تدریس (با کاما جدا کنید)</label>
+        <input type="text" class="form-control" name="teachingSubjects" value="${t.teachingSubjects || ''}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">توضیحات</label>
+        <textarea class="form-control" name="description" rows="3">${t.description || ''}</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">رمز عبور جدید (اختیاری)</label>
+        <input type="password" class="form-control" name="password">
+      </div>
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> ذخیره تغییرات</button>
+      </div>
+    `;
+    form.onsubmit = async function(e) {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const body = {};
+        for (const [k, v] of fd.entries()) if (v) body[k] = v;
+        const res = await fetch(`/api/teacher/${teacherId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const result = await res.json();
+        if (result.success) {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('editProfileModal')).hide();
+            fetchTeacherData();
+        } else {
+            alert(result.message || 'خطا در بروزرسانی اطلاعات');
+        }
+    };
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('editProfileModal')).show();
+}
+
+function showEditScheduleModal() {
+    const schedule = teacherData.weeklySchedule;
+    const form = document.getElementById('edit-schedule-form');
+    let html = `<div class="table-responsive"><table class="table table-bordered text-center"><thead class="table-dark"><tr><th>ساعت</th>`;
+    for (let d = 0; d < 7; d++) html += `<th>${days[d]}</th>`;
+    html += `</tr></thead><tbody>`;
+    for (let hour = 0; hour < 6; hour++) {
+        html += `<tr><td class="table-secondary fw-bold">${hours[hour]}</td>`;
+        for (let day = 0; day < 7; day++) {
+            const index = day * 6 + hour;
+            const checked = schedule[index] === '1' ? 'checked' : '';
+            html += `<td><input type="checkbox" class="schedule-checkbox" data-day="${day}" data-hour="${hour}" ${checked}></td>`;
+        }
+        html += '</tr>';
+    }
+    html += `</tbody></table></div><div class="d-flex gap-2"><button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> ذخیره برنامه</button></div>`;
+    form.innerHTML = html;
+    form.onsubmit = async function(e) {
+        e.preventDefault();
+        let newSchedule = '';
+        for (let day = 0; day < 7; day++) {
+            for (let hour = 0; hour < 6; hour++) {
+                const checkbox = form.querySelector(`[data-day="${day}"][data-hour="${hour}"]`);
+                newSchedule += checkbox.checked ? '1' : '0';
+            }
+        }
+        const res = await fetch(`/api/teacher/${teacherId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ weeklySchedule: newSchedule })
+        });
+        const result = await res.json();
+        if (result.success) {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('editScheduleModal')).hide();
+            fetchTeacherData();
+        } else {
+            alert(result.message || 'خطا در بروزرسانی برنامه هفتگی');
+        }
+    };
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('editScheduleModal')).show();
+}
+
+async function fetchReservations() {
+    if (!isEditable) return; // فقط دبیر خودش ببیند
+    document.getElementById('reservations-section').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">در حال بارگذاری درخواست‌ها...</div></div>';
+    const res = await fetch(`/api/reservations/teacher/${teacherId}`);
+    const data = await res.json();
+    if (data.success && data.data.length) {
+        let html = '<div class="card shadow-sm mb-4"><div class="card-body"><h4 class="fw-bold mb-3"><i class="bi bi-calendar-check me-2"></i>درخواست‌های رزرو وقت دانشجویان</h4><ul class="list-group">';
+        data.data.forEach(r => {
+                html += `<li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                    <div>
+                        <i class="bi bi-person me-1"></i> <b>${r.Student ? r.Student.firstName + ' ' + r.Student.lastName : ''}</b>
+                        <span class="badge bg-secondary ms-2">${r.status === 'pending' ? 'در انتظار' : r.status === 'approved' ? 'تایید شده' : 'رد شده'}</span><br>
+                    <small class="text-muted">
+                        <i class="bi bi-calendar me-1"></i> ${r.dayName} ${r.hourRange}<br>
+                        <i class="bi bi-clock me-1"></i> ${new Date(r.createdAt).toLocaleString('fa-IR')}
+                    </small>
+                    ${r.description ? `<br><small class="text-info">${r.description}</small>` : ''}
+                    </div>
+                    <div class="mt-2 mt-md-0">
+                        ${r.status === 'pending' ? `
+                        <button class="btn btn-success btn-sm me-2" onclick="approveReservation(${r.id})"><i class="bi bi-check-circle"></i> تایید</button>
+                        <button class="btn btn-danger btn-sm" onclick="rejectReservation(${r.id})"><i class="bi bi-x-circle"></i> رد</button>
+                        ` : ''}
+                    </div>
+                </li>`;
+            });
+        html += '</ul></div></div>';
+        document.getElementById('reservations-section').innerHTML = html;
+        } else {
+        document.getElementById('reservations-section').innerHTML = '<div class="card shadow-sm mb-4"><div class="card-body"><h4 class="fw-bold mb-3"><i class="bi bi-calendar-check me-2"></i>درخواست‌های رزرو وقت دانشجویان</h4><div class="alert alert-info">درخواستی وجود ندارد.</div></div></div>';
+    }
+}
+
+async function approveReservation(id) {
+    if (!confirm('آیا از تایید این درخواست مطمئن هستید؟')) return;
+    const res = await fetch(`/api/reservation/${id}/approve`, { method: 'PATCH' });
+    const result = await res.json();
+        if (result.success) {
+        fetchReservations();
+            alert('درخواست تایید شد.');
+        } else {
+            alert(result.message || 'خطا در تایید درخواست');
+        }
+}
+async function rejectReservation(id) {
+    if (!confirm('آیا از رد این درخواست مطمئن هستید؟')) return;
+    const res = await fetch(`/api/reservation/${id}/reject`, { method: 'PATCH' });
+    const result = await res.json();
+        if (result.success) {
+        fetchReservations();
+            alert('درخواست رد شد.');
+        } else {
+            alert(result.message || 'خطا در رد درخواست');
+        }
+}
+
+document.addEventListener('DOMContentLoaded', fetchTeacherData);
+</script>
+
+<style>
+.schedule-cell { 
+    transition: background-color 0.2s; 
+    min-height: 60px;
+    vertical-align: middle;
+}
+.schedule-cell:hover { 
+    background-color: #e9ecef !important; 
+    transform: scale(1.05);
+}
+.schedule-cell.available { 
+    background-color: #d4edda !important; 
+    border: 2px solid #28a745;
+}
+.schedule-cell.busy { 
+    background-color: #f8d7da !important; 
+    border: 2px solid #dc3545;
+}
+</style>
+
+<%- include('./layout/footer.ejs') %>

@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { models } = require('../config/models');
 
 class web {
     example(req, res) {
@@ -38,11 +39,21 @@ class web {
     }
 
 
-    teacher(req, res) {
-        res.render("profile/teacher.ejs", {  })
+    async teacher(req, res) {
+        if (!req.session || !req.session.user) return res.redirect('/login');
+        const logs = await models.Log.findAll({
+            where: { userId: req.session.user.id, type: 'teacher' },
+            order: [['createdAt', 'DESC']]
+        });
+        res.render("profile/teacher.ejs", { user: req.session.user, logs });
     }
-    student(req, res) {
-        res.render("profile/student.ejs", {  })
+    async student(req, res) {
+        if (!req.session || !req.session.user) return res.redirect('/login');
+        const logs = await models.Log.findAll({
+            where: { userId: req.session.user.id, type: 'student' },
+            order: [['createdAt', 'DESC']]
+        });
+        res.render("profile/student.ejs", { logs });
     }
     
     login(req, res) {

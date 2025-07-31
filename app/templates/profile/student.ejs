@@ -1,0 +1,35 @@
+<%- include('./layout/header.ejs') %>
+
+
+<div class="container py-5">
+    <h2 class="section-title"><i class="bi bi-person-circle me-2"></i>پروفایل دانشجو</h2>
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="fw-bold mb-3"><i class="bi bi-list-task me-2"></i>فعالیت‌های من</h4>
+                    <% if (logs && logs.length) { %>
+                        <ul class="list-group list-group-flush">
+                            <% logs.forEach(log => { 
+                                let logClass = '';
+                                if (/تایید شد|تایید شده/i.test(log.description)) logClass = 'text-success fw-bold';
+                                else if (/رد شد|رد شده|نا موفق/i.test(log.description)) logClass = 'text-danger fw-bold';
+                            %>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-dot text-primary"></i> <span class="<%= logClass %>"><%= log.description %></span></span>
+                                    <span class="text-muted small"><%= log.createdAt.toLocaleString('fa-IR') %></span>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% } else { %>
+                        <div class="alert alert-info mb-0">هیچ فعالیتی ثبت نشده است.</div>
+                    <% } %>
+                </div>
+            </div>
+            <!-- در صورت نیاز: نمایش درخواست‌های دوره و رزرو و انجمن به صورت جداگانه -->
+        </div>
+    </div>
+</div>
+
+<%- include('./layout/footer.ejs') %>
+

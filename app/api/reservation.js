@@ -1,4 +1,6 @@
 const { models } = require('../config/models');
+const { logUserAction } = require('../config/loger');
+const { Op } = require('sequelize');
 
 class ReservationController {
     
@@ -75,6 +77,9 @@ class ReservationController {
                 description,
                 status: 'pending'
             });
+            
+            const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : `آیدی ${teacherId}`;
+            await logUserAction(studentId, 'student', `درخواست رزرو وقت برای استاد ${teacherName} ثبت شد.`);
             
             // دریافت اطلاعات کامل رزرو
             const fullReservation = await models.Reservation.findByPk(reservation.id, {
@@ -241,9 +246,25 @@ class ReservationController {
                 offset: parseInt(offset)
             });
             
+            // اضافه کردن اطلاعات روز و ساعت به هر رزرو
+            const days = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+            const hours = ['8-10', '10-12', '12-14', '14-16', '16-18', '18-20'];
+            
+            const reservationsWithTimeInfo = reservations.rows.map(reservation => {
+                const timeSlot = reservation.requestedTimeSlot;
+                const day = Math.floor(timeSlot / 6);
+                const hour = timeSlot % 6;
+                
+                return {
+                    ...reservation.toJSON(),
+                    dayName: days[day],
+                    hourRange: hours[hour]
+                };
+            });
+            
             res.json({
                 success: true,
-                data: reservations.rows,
+                data: reservationsWithTimeInfo,
                 pagination: {
                     currentPage: parseInt(page),
                     totalPages: Math.ceil(reservations.count / limit),
@@ -297,7 +318,7 @@ class ReservationController {
                     teacherId: reservation.teacherId,
                     requestedTimeSlot: reservation.requestedTimeSlot,
                     status: 'approved',
-                    id: { [models.Sequelize.Op.ne]: id }
+                    id: { [Op.ne]: id }
                 }
             });
             
@@ -316,6 +337,10 @@ class ReservationController {
             const updatedSchedule = weeklySchedule.split('');
             updatedSchedule[reservation.requestedTimeSlot] = '0';
             await teacher.update({ weeklySchedule: updatedSchedule.join('') });
+            
+            // ثبت لاگ برای دانشجو و دبیر
+            await logUserAction(reservation.studentId, 'student', `درخواست رزرو شما توسط استاد تایید شد.`);
+            await logUserAction(reservation.teacherId, 'teacher', `درخواست رزرو جدید تایید شد.`);
             
             const updatedReservation = await models.Reservation.findByPk(id, {
                 include: [
@@ -365,6 +390,10 @@ class ReservationController {
                 status: 'rejected',
                 description: reason ? `${reservation.description}\n\nدلیل رد: ${reason}` : reservation.description
             });
+            
+            // ثبت لاگ برای دانشجو و دبیر
+            await logUserAction(reservation.studentId, 'student', `درخواست رزرو شما توسط استاد رد شد.`);
+            await logUserAction(reservation.teacherId, 'teacher', `درخواست رزرو جدید رد شد.`);
             
             const updatedReservation = await models.Reservation.findByPk(id, {
                 include: [
