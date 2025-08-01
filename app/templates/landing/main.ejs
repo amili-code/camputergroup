@@ -130,22 +130,21 @@
     <footer class="footer mt-5" id="contact">
         <div class="container">
             <div class="row">
-                <div class="col-md-6 mb-3 mb-md-0">
-                    <h5 class="fw-bold mb-2">گروه کامپیوتر</h5>
-                    <p class="mb-1">دانشگاه ... | سال تاسیس: ۱۳۸۰</p>
-                    <p class="mb-1">تلفن: ۰۲۱-۱۲۳۴۵۶۷۸</p>
-                    <p class="mb-0">آدرس: تهران، خیابان ...</p>
+                <div class="col-md-6 mb-3 mb-md-0" id="university-info">
+                    <h5 class="fw-bold mb-2" id="universityName">گروه کامپیوتر</h5>
+                    <p class="mb-1" id="universityDetails">دانشگاه ... | سال تاسیس: ۱۳۸۰</p>
+                    <p class="mb-1" id="universityPhone">تلفن: ۰۲۱-۱۲۳۴۵۶۷۸</p>
+                    <p class="mb-0" id="universityDescription">توضیحات: ...</p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <h6 class="fw-bold mb-2">لینک‌های مفید</h6>
                     <ul class="list-unstyled">
-                        <li><a href="#courses">دوره‌ها و رویدادها</a></li>
-                        <li><a href="#news">اخبار</a></li>
-                        <li><a href="#announcements">اطلاعیه‌ها</a></li>
-                        <li><a href="#edu">آموزشی</a></li>
-                        <li><a href="#community">انجمن</a></li>
-                        <li><a href="#teachers">اساتید</a></li>
-                        <li><a href="#">درباره ما</a></li>
+                        <li><a href="/">خانه</a></li>
+                        <li><a href="/courses">دوره‌ها و رویدادها</a></li>
+                        <li><a href="/news">اخبار و اطلاعیه ها</a></li>
+                        <li><a href="/tranning">آموزشی</a></li>
+                        <li><a href="/community">انجمن</a></li>
+                        <li><a href="/teachers">اساتید</a></li>
                     </ul>
                 </div>
             </div>
@@ -279,6 +278,22 @@
                 }, 3000);
             }
         }
+    </script>
+    <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            const response = await fetch('http://localhost:5000/api/settings');
+            const result = await response.json();
+            if(result.success && result.data) {
+                document.getElementById('universityName').textContent = result.data.universityName || 'گروه کامپیوتر';
+                document.getElementById('universityDetails').textContent = (result.data.universityName ? result.data.universityName + ' | ' : '') + (result.data.establishedYear ? 'سال تاسیس: ' + result.data.establishedYear : '');
+                document.getElementById('universityPhone').textContent = 'تلفن: ' + (result.data.phone || '---');
+                document.getElementById('universityDescription').textContent = result.data.description || result.data.about || '';
+            }
+        } catch (e) {
+            // Silent fail
+        }
+    });
     </script>
 </body>
 </html>
