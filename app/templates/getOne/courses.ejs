@@ -24,7 +24,7 @@
             <div class="col-lg-8">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/">خانه</a></li>
+                        <li class="breadcrumb-item"><a href="/aboutUs">درباره ما</a></li>
                         <li class="breadcrumb-item"><a href="/courses">دوره‌ها</a></li>
                         <li class="breadcrumb-item active" aria-current="page" id="course-title-breadcrumb">جزئیات دوره</li>
                     </ol>
@@ -117,16 +117,6 @@
                     </div>
                 </div>
 
-                <!-- Suitable For -->
-                <div class="card shadow-sm border-0 rounded-3 mb-4">
-                    <div class="card-body p-4">
-                        <h4 class="fw-bold mb-4 text-primary">
-                            <i class="bi bi-mortarboard me-2"></i>
-                            مناسب برای
-                        </h4>
-                        <div id="suitable-terms" class="row g-2"></div>
-                    </div>
-                </div>
 
                 <!-- Unavailability Reason -->
                 <div id="unavailability-reason" class="card shadow-sm border-0 rounded-3 mb-4 d-none">
@@ -457,7 +447,7 @@ function displayCourseData(course) {
     }
     
     // Set suitable terms
-    displaySuitableTerms(course.suitableFor);
+   
     
     // Show/hide register button based on availability
     if (course.isAvailable) {
@@ -481,28 +471,6 @@ function displayCourseData(course) {
     window.currentCourseData = course;
 }
 
-function displaySuitableTerms(suitableFor) {
-    const terms = [
-        'ترم 1', 'ترم 2', 'ترم 3', 'ترم 4', 'ترم 5', 'ترم 6',
-        'ترم 7', 'ترم 8', 'ترم 9', 'ترم 10', 'ترم 11', 'ترم 12'
-    ];
-    
-    const container = document.getElementById('suitable-terms');
-    container.innerHTML = '';
-    
-    for (let i = 0; i < 12; i++) {
-        const isSuitable = suitableFor[i] === '1';
-        const termElement = document.createElement('div');
-        termElement.className = 'col-6 col-md-4 col-lg-3';
-        termElement.innerHTML = `
-            <div class="d-flex align-items-center p-2 rounded ${isSuitable ? 'bg-success bg-opacity-10' : 'bg-light'}">
-                <i class="bi ${isSuitable ? 'bi-check-circle-fill text-success' : 'bi-x-circle text-muted'} me-2"></i>
-                <span class="${isSuitable ? 'fw-bold' : 'text-muted'}">${terms[i]}</span>
-            </div>
-        `;
-        container.appendChild(termElement);
-    }
-}
 
 function getTypeText(type) {
     const typeMap = {

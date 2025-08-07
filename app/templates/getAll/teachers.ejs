@@ -17,12 +17,6 @@
                     <input type="text" id="searchInput" class="form-control" placeholder="نام، نام خانوادگی، شماره تلفن...">
                 </div>
                 <div class="col-md-3">
-                    <label class="filter-label" for="teacherIdInput">
-                        <i class="bi bi-person-badge"></i> کد پرسنلی
-                    </label>
-                    <input type="text" id="teacherIdInput" class="form-control" placeholder="کد پرسنلی...">
-                </div>
-                <div class="col-md-3">
                     <label class="filter-label" for="subjectFilter">
                         <i class="bi bi-book"></i> درس تدریس
                     </label>
@@ -580,7 +574,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Event listeners for filters
     document.getElementById('searchInput').addEventListener('input', renderTeachers);
-    document.getElementById('teacherIdInput').addEventListener('input', renderTeachers);
     document.getElementById('subjectFilter').addEventListener('change', renderTeachers);
     
     // Schedule cell click events
@@ -617,7 +610,6 @@ function populateSubjectFilter() {
 
 function renderTeachers() {
     const search = document.getElementById('searchInput').value.trim();
-    const teacherId = document.getElementById('teacherIdInput').value.trim();
     const selectedSubject = document.getElementById('subjectFilter').value;
     
     let filtered = allTeachers.filter(t => {
@@ -632,10 +624,7 @@ function renderTeachers() {
                  (t.description && t.description.toLowerCase().includes(searchLower));
         }
         
-        // فیلتر کد پرسنلی
-        if (ok && teacherId) {
-            ok = t.teacherId && t.teacherId.includes(teacherId);
-        }
+        
         
 
         
@@ -678,10 +667,6 @@ function renderTeachers() {
                         
                         <div class="teacher-info">
                             <div class="info-item">
-                                <i class="bi bi-person-badge"></i>
-                                <span>کد پرسنلی: ${t.teacherId || '-'}</span>
-                            </div>
-                            <div class="info-item">
                                 <i class="bi bi-telephone"></i>
                                 <span>${t.phone || '-'}</span>
                             </div>
@@ -704,9 +689,12 @@ function renderTeachers() {
                         </div>
                         
                         <div class="mt-3 text-center">
-                            <button class="btn btn-success btn-sm" onclick="showTeacherScheduleModal(${t.id}, '${name}')">
+                            <button class="btn btn-success btn-sm me-2" onclick="showTeacherScheduleModal(${t.id}, '${name}')">
                                 <i class="bi bi-calendar-check"></i> رزرو وقت مشاوره
                             </button>
+                            <a href="/teacher/${t.id}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-person-circle"></i> مشاهده پروفایل
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -729,7 +717,6 @@ function updateFilterStatus(filteredCount) {
 
 function clearAllFilters() {
     document.getElementById('searchInput').value = '';
-    document.getElementById('teacherIdInput').value = '';
     document.getElementById('subjectFilter').value = '';
     renderTeachers();
 }
@@ -837,15 +824,17 @@ function showAvailableTeachers(day, slot) {
                             <img src="${img}" class="rounded-circle me-3" style="width:60px;height:60px;object-fit:cover;" alt="${name}">
                             <div class="flex-grow-1">
                                 <h6 class="mb-1 fw-bold">${name}</h6>
-                                <small class="text-muted d-block mb-2">کد پرسنلی: ${t.teacherId || '-'}</small>
                                 ${subjects.length > 0 ? `
                                     <div class="mb-2">
                                         ${subjects.map(subject => `<span class="subject-badge">${subject}</span>`).join('')}
                                     </div>
                                 ` : '<small class="text-muted mb-2 d-block">دروس تدریس تعریف نشده</small>'}
-                                <button class="btn btn-primary btn-sm" onclick="showReservationModal(${t.id}, '${name}', ${day}, ${slot})">
+                                <button class="btn btn-primary btn-sm me-2" onclick="showReservationModal(${t.id}, '${name}', ${day}, ${slot})">
                                     <i class="bi bi-calendar-plus"></i> رزرو وقت
                                 </button>
+                                <a href="/teacher/${t.id}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-person-circle"></i> پروفایل
+                                </a>
                             </div>
                         </div>
                     </div>

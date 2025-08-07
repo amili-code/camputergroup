@@ -12,12 +12,14 @@
                 <div class="col-md-6 text-md-end">
                     <h6 class="fw-bold mb-2">لینک‌های مفید</h6>
                     <ul class="list-unstyled">
-                        <li><a href="/">خانه</a></li>
+                        <li><a href="/aboutUs">درباره ما</a></li>
                         <li><a href="/courses">دوره‌ها و رویدادها</a></li>
                         <li><a href="/news">اخبار و اطلاعیه ها</a></li>
                         <li><a href="/tranning">آموزشی</a></li>
                         <li><a href="/community">انجمن</a></li>
-                        <li><a href="/teachers">اساتید</a></li>
+                        <li><a href="/teacher">اساتید</a></li>
+                        <li><a href="/finalStudent">دانشجویان فارغ‌التحصیل</a></li>
+                        <li><a href="/groupmanager">مدیران گروه</a></li>
                     </ul>
                 </div>
             </div>
@@ -35,6 +37,7 @@
                 document.getElementById('universityDetails').textContent = (result.data.universityName ? result.data.universityName + ' | ' : '') + (result.data.establishedYear ? 'سال تاسیس: ' + result.data.establishedYear : '');
                 document.getElementById('universityPhone').textContent = 'تلفن: ' + (result.data.phone || '---');
                 document.getElementById('universityDescription').textContent = result.data.description || result.data.about || '';
+                document.getElementById('mainTitlle').textContent = result.data.universityName || 'گروه کامپیوتر';
             }
         } catch (e) {
             // Silent fail

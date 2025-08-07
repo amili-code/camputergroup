@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل ادمین</title>
+    <!-- Bootstrap RTL CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Fetch Wrapper -->
+    <script src="/js/fech-warper.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Tabulator CSS & JS -->
+    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
+    
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    
+</head>
+<body>
+    <!-- Mobile Toggle Button -->
+    <button class="mobile-toggle" onclick="toggleSidebar()">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 col-md-4 sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h4><i class="bi bi-shield-check"></i> پنل ادمین</h4>
+                </div>
+                
+                <nav class="nav flex-column mt-4">
+                    <a class="nav-link active" href="#" onclick="showContent('dashboard')">
+                        <i class="bi bi-speedometer2"></i>
+                        داشبورد
+                    </a>
+                    <a class="nav-link" href="#" onclick="showContent('student')">
+                        <i class="bi bi-people"></i>
+                        مدیریت دانشجویان
+                    </a>
+                    <a class="nav-link" href="#" onclick="showContent('teacher')">
+                        <i class="bi bi-person-workspace"></i>
+                        مدیریت اساتید
+                    </a>
+                    <a class="nav-link" href="#" onclick="showContent('course')">
+                        <i class="bi bi-book"></i>
+                        دوره و رویداد ها
+                    </a>
+                    <a class="nav-link" href="#" onclick="showContent('training')">
+                        <i class="bi bi-diagram-3"></i>
+                        اموزشی
+                    </a>
+                    <a class="nav-link" href="#" onclick="showContent('news')">
+                        <i class="bi bi-newspaper"></i>
+                        اخبار
+                    </a>
+                    <a class="nav-link" href="#" onclick="showContent('community')">
+                        <i class="bi bi-chat"></i>
+                        انجمن
+                    </a>
+                    <a class="nav-link" href="#" onclick="showContent('setting')">
+                        <i class="bi bi-gear"></i>
+                        تنظیمات
+                    </a>
+                    <a class="nav-link" href="#" onclick="showContent('admin')">
+                        <i class="bi bi-gear"></i>
+                        ادمین ها
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9 col-md-8">
+                <div class="main-content">
+                    <!-- Header Section -->
+                    <div class="header-section" style="padding: 1rem 3rem;">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        <i class="bi bi-person"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">خوش آمدید</h6>
+                                        <small class="text-muted"><%= adminUsername ? adminUsername : 'مدیر سیستم' %></small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="logout-btn" onclick="logout()">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    خروج
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content Section -->
+                    <div class="content-section" id="contentArea">
+                        <!-- Dashboard Content (Default) -->
+                        <%- include('./selection/dashboard.ejs')%>
+                        
+
+                        <!-- student Content -->
+                        <%- include('./selection/student.ejs')%>
+                        
+                        <!-- teacher Content -->
+                        <%- include('./selection/teacher.ejs')%>
+                        
+                        
+                        <!-- course Content -->
+                        <%- include('./selection/course.ejs')%>
+                        
+
+                        <!-- training Content -->
+                        <%- include('./selection/training.ejs')%>
+
+                        <!-- news Content -->
+                        <%- include('./selection/news.ejs')%>
+
+                        <!-- community Content -->
+                        <%- include('./selection/community.ejs')%>
+
+                        <!-- setting Content -->
+                        <%- include('./selection/setting.ejs')%>
+                        
+                        <!-- setting Content -->
+                        <%- include('./selection/admin.ejs')%>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="/js/main.js"></script>
+    <script>
+        function logout() {
+            fetch('/api/admin/logout', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/login';
+                } else {
+                    alert(data.message || 'خروج ناموفق بود');
+                }
+            })
+            .catch(() => alert('خطا در ارتباط با سرور'));
+        }
+    </script>
+</body>
+</html>

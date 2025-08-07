@@ -1,0 +1,67 @@
+<%- include('./layout/header.ejs')%>
+<section class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary mb-3">
+            <i class="bi bi-info-circle me-3"></i>
+            درباره ما
+        </h1>
+        <p class="lead text-muted">در این صفحه با دانشگاه و امکانات آن بیشتر آشنا شوید.</p>
+    </div>
+    <div id="about-us-list" class="row justify-content-center g-4"></div>
+</section>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    const container = document.getElementById('about-us-list');
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info" role="status"></div><div class="mt-2">در حال بارگذاری اطلاعات...</div></div>';
+    try {
+        const response = await apiRequest('/settings/about-us', 'GET');
+        if (!response || !response.success || !Array.isArray(response.data) || response.data.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center"><div class="alert alert-info"><i class="bi bi-info-circle"></i> اطلاعاتی برای نمایش وجود ندارد.</div></div>';
+            return;
+        }
+        let html = '';
+        response.data.forEach(section => {
+            let content = '';
+            if (section.type === 'text') {
+                content = `<div class='p-4 bg-light rounded shadow-sm mb-2'><i class='bi bi-file-text me-2'></i>${section.textContent || ''}</div>`;
+            } else if (section.type === 'image') {
+                content = `<div class='text-center mb-2'><img src='${section.imagePath}' alt='تصویر درباره ما' class='img-fluid rounded shadow' style='max-height:320px;'></div>`;
+            } else if (section.type === 'file') {
+                const fileName = section.filePath ? section.filePath.split('/').pop() : 'فایل';
+                content = `<div class='p-4 bg-warning bg-opacity-10 rounded shadow-sm text-center mb-2'><i class='bi bi-file-earmark-arrow-down fs-1 mb-2'></i><br><a href='${section.filePath}' target='_blank' download class='fw-bold text-warning'><i class='bi bi-download me-2'></i>دانلود ${fileName}</a></div>`;
+            }
+            html += `
+                <div class='col-12 col-md-10 col-lg-8'>
+                    <div class='card about-section-card mb-4'>
+                        <div class='card-body'>
+                            ${content}
+                            ${section.description ? `<div class='about-section-description mt-3'>${section.description}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    } catch (e) {
+        container.innerHTML = '<div class="col-12 text-center"><div class="alert alert-danger"><i class="bi bi-x-circle"></i> خطا در دریافت اطلاعات.</div></div>';
+    }
+});
+</script>
+<style>
+.about-section-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+.about-section-description {
+    background: rgba(255,255,255,0.95);
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-style: italic;
+    color: #666;
+    border-left: 3px solid #4caf50;
+}
+</style>
+<%- include('./layout/footer.ejs')%>

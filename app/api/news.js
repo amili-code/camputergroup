@@ -2,6 +2,7 @@ const { models } = require('../config/models');
 const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
+const { logUserAction } = require('../config/loger');
 
 class NewsController {
     
@@ -13,31 +14,42 @@ class NewsController {
             if (req.file) {
                 image = `/pic/news/${req.file.filename}`;
             }
-            // بررسی نقش ادمین واقعی
-            let isRealAdmin = false;
-            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
-                    isRealAdmin = true;
+            // تعیین نویسنده
+            let writer = '';
+            let userType = null;
+            let userLastName = '';
+            let isAdmin = false, isCommunityAdmin = false, isTeacher = false;
+            if (req.session && req.session.admin) {
+                if (req.session.admin.role === 'admin') {
+                    isAdmin = true;
+                    writer = req.session.admin.username;
+                } else if (req.session.admin.role === 'communityAdmin') {
+                    isCommunityAdmin = true;
+                    writer = req.session.admin.username;
                 }
+            } else if (req.session && req.session.user && req.session.user.type === 'teacher') {
+                isTeacher = true;
+                writer = req.session.user.lastName;
+                userLastName = req.session.user.lastName;
             }
-            // بررسی تگ انجمن
+            // تگ انجمن
             let tagsArr = [];
             if (tags) {
                 tagsArr = tags.split(',').map(t => t.trim()).filter(Boolean);
             }
             const hasAnjomanTag = tagsArr.includes('انجمن');
-            if (hasAnjomanTag) {
-                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
-                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند خبر با تگ انجمن ایجاد کند.' });
+            // دسترسی ایجاد خبر
+            if (isAdmin) {
+                // ادمین همه‌چیز مجاز
+            } else if (isCommunityAdmin) {
+                if (!hasAnjomanTag) {
+                    return res.status(403).json({ success: false, message: 'مدیر انجمن فقط می‌تواند خبر با تگ انجمن ایجاد کند.' });
                 }
+            } else if (isTeacher) {
+                // دبیر فقط می‌تواند خبر خودش را ایجاد کند (writer = lastName)
+                // و تگ انجمن اجباری نیست
             } else {
-                if (!isRealAdmin) {
-                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند خبر بدون تگ انجمن ایجاد کند.' });
-                }
+                return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز' });
             }
             const news = await models.News.create({
                 type,
@@ -45,8 +57,13 @@ class NewsController {
                 description,
                 image,
                 isActive: true,
-                tags
+                tags,
+                writer
             });
+
+            // ثبت لاگ
+            await logUserAction(req, `یک پست خبر جدید با عنوان "${title}" ثبت کرد`);
+
             res.status(201).json({
                 success: true,
                 message: 'خبر/اطلاعیه با موفقیت ایجاد شد',
@@ -122,43 +139,45 @@ class NewsController {
                     message: 'خبر/اطلاعیه یافت نشد'
                 });
             }
-            // بررسی نقش ادمین واقعی
-            let isRealAdmin = false;
-            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
-                    isRealAdmin = true;
+            // تعیین نقش کاربر
+            let isAdmin = false, isCommunityAdmin = false, isTeacher = false;
+            let userLastName = '';
+            if (req.session && req.session.admin) {
+                if (req.session.admin.role === 'admin') {
+                    isAdmin = true;
+                } else if (req.session.admin.role === 'communityAdmin') {
+                    isCommunityAdmin = true;
                 }
+            } else if (req.session && req.session.user && req.session.user.type === 'teacher') {
+                isTeacher = true;
+                userLastName = req.session.user.lastName;
             }
-            // بررسی تگ انجمن قبلی
+            // تگ انجمن
             let oldTagsArr = [];
             if (news.tags) {
                 oldTagsArr = news.tags.split(',').map(t => t.trim()).filter(Boolean);
             }
             const hadAnjomanTag = oldTagsArr.includes('انجمن');
-            // بررسی تگ جدید (در صورت تغییر)
             let newTagsArr = oldTagsArr;
             if (tags) {
                 newTagsArr = tags.split(',').map(t => t.trim()).filter(Boolean);
             }
             const hasAnjomanTag = newTagsArr.includes('انجمن');
-            // شرط دسترسی: اگر قبلاً انجمن داشت فقط مدیر انجمن یا ادمین بتواند و اگر نداشت فقط ادمین
-            if (hadAnjomanTag || hasAnjomanTag) {
-                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
-                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند خبر با تگ انجمن را ویرایش کند.' });
+            // دسترسی ویرایش
+            if (isAdmin) {
+                // ادمین همه‌چیز مجاز
+            } else if (isCommunityAdmin) {
+                if (!(hadAnjomanTag || hasAnjomanTag)) {
+                    return res.status(403).json({ success: false, message: 'مدیر انجمن فقط می‌تواند خبر با تگ انجمن را ویرایش کند.' });
+                }
+            } else if (isTeacher) {
+                if (news.writer !== userLastName) {
+                    return res.status(403).json({ success: false, message: 'دسترسی فقط برای نویسنده خبر مجاز است.' });
                 }
             } else {
-                if (!isRealAdmin) {
-                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند خبر بدون تگ انجمن را ویرایش کند.' });
-                }
+                return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز' });
             }
-            // اگر خبر قبلاً تگ انجمن نداشته و مدیر انجمن می‌خواهد تگ انجمن اضافه کند، اجازه نده
-            if (!hadAnjomanTag && hasAnjomanTag && !isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
-                return res.status(403).json({ success: false, message: 'مدیر انجمن نمی‌تواند تگ انجمن را به خبرهایی که قبلاً نداشته‌اند اضافه کند.' });
-            }
+            // ادامه منطق قبلی
             let newImage = news.image;
             if (req.file) {
                 if (news.image) {
@@ -186,6 +205,10 @@ class NewsController {
                 isActive: isActive !== undefined ? isActive : news.isActive,
                 tags: tags || news.tags
             });
+
+            // ثبت لاگ
+            await logUserAction(req, `خبر با عنوان "${news.title}" را ویرایش کرد`);
+
             res.json({
                 success: true,
                 message: 'خبر/اطلاعیه با موفقیت بروزرسانی شد',
@@ -212,32 +235,40 @@ class NewsController {
                     message: 'خبر/اطلاعیه یافت نشد'
                 });
             }
-            // بررسی نقش ادمین واقعی
-            let isRealAdmin = false;
-            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
-                    isRealAdmin = true;
+            // تعیین نقش کاربر
+            let isAdmin = false, isCommunityAdmin = false, isTeacher = false;
+            let userLastName = '';
+            if (req.session && req.session.admin) {
+                if (req.session.admin.role === 'admin') {
+                    isAdmin = true;
+                } else if (req.session.admin.role === 'communityAdmin') {
+                    isCommunityAdmin = true;
                 }
+            } else if (req.session && req.session.user && req.session.user.type === 'teacher') {
+                isTeacher = true;
+                userLastName = req.session.user.lastName;
             }
-            // بررسی تگ انجمن
+            // تگ انجمن
             let tagsArr = [];
             if (news.tags) {
                 tagsArr = news.tags.split(',').map(t => t.trim()).filter(Boolean);
             }
             const hasAnjomanTag = tagsArr.includes('انجمن');
-            if (hasAnjomanTag) {
-                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
-                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند خبر با تگ انجمن را حذف کند.' });
+            // دسترسی حذف
+            if (isAdmin) {
+                // ادمین همه‌چیز مجاز
+            } else if (isCommunityAdmin) {
+                if (!hasAnjomanTag) {
+                    return res.status(403).json({ success: false, message: 'مدیر انجمن فقط می‌تواند خبر با تگ انجمن را حذف کند.' });
+                }
+            } else if (isTeacher) {
+                if (news.writer !== userLastName) {
+                    return res.status(403).json({ success: false, message: 'دسترسی فقط برای نویسنده خبر مجاز است.' });
                 }
             } else {
-                if (!isRealAdmin) {
-                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند خبر بدون تگ انجمن را حذف کند.' });
-                }
+                return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز' });
             }
+            // ادامه منطق قبلی
             if (news.image) {
                 try {
                     const filePath = path.join(__dirname, '../../public', news.image);
@@ -245,6 +276,10 @@ class NewsController {
                 } catch (e) { console.error('خطا در حذف تصویر:', e); }
             }
             await news.destroy();
+
+            // ثبت لاگ
+            await logUserAction(req, `خبر با عنوان "${news.title}" را حذف کرد`);
+
             res.json({
                 success: true,
                 message: 'خبر/اطلاعیه با موفقیت حذف شد'
@@ -311,32 +346,43 @@ class NewsController {
                     message: 'اطلاعیه یافت نشد'
                 });
             }
-            // بررسی نقش ادمین واقعی
-            let isRealAdmin = false;
-            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
-                    isRealAdmin = true;
+            
+            // تعیین نقش کاربر
+            let isAdmin = false, isCommunityAdmin = false, isTeacher = false;
+            let userLastName = '';
+            if (req.session && req.session.admin) {
+                if (req.session.admin.role === 'admin') {
+                    isAdmin = true;
+                } else if (req.session.admin.role === 'communityAdmin') {
+                    isCommunityAdmin = true;
                 }
+            } else if (req.session && req.session.user && req.session.user.type === 'teacher') {
+                isTeacher = true;
+                userLastName = req.session.user.lastName;
             }
+            
             // بررسی تگ انجمن
             let tagsArr = [];
             if (news.tags) {
                 tagsArr = news.tags.split(',').map(t => t.trim()).filter(Boolean);
             }
             const hasAnjomanTag = tagsArr.includes('انجمن');
-            if (hasAnjomanTag) {
-                if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
-                    return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند برای خبر با تگ انجمن نظرسنجی ایجاد کند.' });
+            
+            // دسترسی ایجاد نظرسنجی
+            if (isAdmin) {
+                // ادمین همه‌چیز مجاز
+            } else if (isCommunityAdmin) {
+                if (!hasAnjomanTag) {
+                    return res.status(403).json({ success: false, message: 'مدیر انجمن فقط می‌تواند برای خبر با تگ انجمن نظرسنجی ایجاد کند.' });
+                }
+            } else if (isTeacher) {
+                if (news.writer !== userLastName) {
+                    return res.status(403).json({ success: false, message: 'دسترسی فقط برای نویسنده خبر مجاز است.' });
                 }
             } else {
-                if (!isRealAdmin) {
-                    return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند برای خبر بدون تگ انجمن نظرسنجی ایجاد کند.' });
-                }
+                return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز' });
             }
+            
             // ایجاد سوال
             const pollQuestion = await models.PollQuestion.create({
                 newsId,
@@ -411,35 +457,51 @@ class NewsController {
                     message: 'سوال نظرسنجی یافت نشد'
                 });
             }
-            // بررسی نقش ادمین واقعی
-            let isRealAdmin = false;
-            if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
-                    isRealAdmin = true;
+            
+            // تعیین نقش کاربر
+            let isAdmin = false, isCommunityAdmin = false, isTeacher = false;
+            let userLastName = '';
+            if (req.session && req.session.admin) {
+                if (req.session.admin.role === 'admin') {
+                    isAdmin = true;
+                } else if (req.session.admin.role === 'communityAdmin') {
+                    isCommunityAdmin = true;
                 }
+            } else if (req.session && req.session.user && req.session.user.type === 'teacher') {
+                isTeacher = true;
+                userLastName = req.session.user.lastName;
             }
+            
             // بررسی تگ انجمن خبر مربوطه
             const news = await models.News.findByPk(pollQuestion.newsId);
-            if (news) {
-                let tagsArr = [];
-                if (news.tags) {
-                    tagsArr = news.tags.split(',').map(t => t.trim()).filter(Boolean);
-                }
-                const hasAnjomanTag = tagsArr.includes('انجمن');
-                if (hasAnjomanTag) {
-                    if (!(isRealAdmin || (req.session && req.session.admin && req.session.admin.role === 'communityAdmin'))) {
-                        return res.status(403).json({ success: false, message: 'فقط مدیر انجمن یا ادمین می‌تواند نظرسنجی خبر با تگ انجمن را حذف کند.' });
-                    }
-                } else {
-                    if (!isRealAdmin) {
-                        return res.status(403).json({ success: false, message: 'فقط ادمین می‌تواند نظرسنجی خبر بدون تگ انجمن را حذف کند.' });
-                    }
-                }
+            if (!news) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'خبر مربوطه یافت نشد'
+                });
             }
+            
+            let tagsArr = [];
+            if (news.tags) {
+                tagsArr = news.tags.split(',').map(t => t.trim()).filter(Boolean);
+            }
+            const hasAnjomanTag = tagsArr.includes('انجمن');
+            
+            // دسترسی حذف نظرسنجی
+            if (isAdmin) {
+                // ادمین همه‌چیز مجاز
+            } else if (isCommunityAdmin) {
+                if (!hasAnjomanTag) {
+                    return res.status(403).json({ success: false, message: 'مدیر انجمن فقط می‌تواند نظرسنجی خبر با تگ انجمن را حذف کند.' });
+                }
+            } else if (isTeacher) {
+                if (news.writer !== userLastName) {
+                    return res.status(403).json({ success: false, message: 'دسترسی فقط برای نویسنده خبر مجاز است.' });
+                }
+            } else {
+                return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز' });
+            }
+            
             // حذف همه گزینه‌های این سوال
             await models.PollOption.destroy({ where: { pollQuestionId } });
             // حذف خود سوال

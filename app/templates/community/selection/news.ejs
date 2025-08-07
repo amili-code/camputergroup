@@ -1,0 +1,534 @@
+<!-- ===================================== custom css ========================================= -->
+<link rel="stylesheet" href="/css/admin/student.css">
+
+<div id="news-content" class="content-panel" style="display: none;">
+    <h3 class="mb-4"><i class="bi bi-newspaper"></i> مدیریت اخبار و اطلاعیه‌ها</h3>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">لیست اخبار و اطلاعیه‌ها</h4>
+            <div class="d-flex align-items-center gap-2">
+               <button class="btn btn-primary ms-2" onclick="showAddNewsModal()">
+                    <i class="bi bi-plus-circle"></i> افزودن خبر/اطلاعیه
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="newsTable"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit News Modal -->
+<div class="modal fade" id="newsModal" tabindex="-1" aria-labelledby="newsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newsModalLabel">افزودن خبر/اطلاعیه</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newsForm">
+                    <input type="hidden" id="newsId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="newsType" class="form-label">نوع *</label>
+                            <select class="form-select" id="newsType" required>
+                                <option value="news">خبر</option>
+                                <option value="announcement">اطلاعیه</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="newsIsActive" class="form-label">وضعیت *</label>
+                            <select class="form-select" id="newsIsActive" required>
+                                <option value="true">فعال</option>
+                                <option value="false">غیرفعال</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newsTitle" class="form-label">عنوان *</label>
+                        <input type="text" class="form-control" id="newsTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newsDescription" class="form-label">توضیحات *</label>
+                        <textarea class="form-control" id="newsDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newsTags" class="form-label">تگ‌ها (حداکثر ۳ مورد، هر کدام جداگانه)</label>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="newsTag1" maxlength="30" placeholder="تگ اول" value="انجمن" disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="newsTag2" maxlength="30" placeholder="تگ دوم" >
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="newsTag3" maxlength="30" placeholder="تگ سوم" disabled>
+                            </div>
+                        </div>
+                        <div class="form-text">هر تگ را جداگانه وارد کنید. تگ دوم پس از پر شدن اول فعال می‌شود و تگ سوم پس از پر شدن دوم.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="newsImage" class="form-label">تصویر خبر/اطلاعیه</label>
+                        <input type="file" class="form-control" id="newsImage" accept="image/*">
+                        <div id="currentNewsImageDiv" class="mt-2 text-center" style="display:none;">
+                            <img id="previewNewsImage" src="" alt="تصویر فعلی" style="max-width: 100px; max-height: 100px;" class="img-thumbnail">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="removeNewsImage">
+                                <label class="form-check-label" for="removeNewsImage">حذف تصویر فعلی</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pollSection" class="mb-3" style="display:none;">
+                        <label class="form-label">ثبت نظرسنجی (اختیاری)</label>
+                        <div id="pollQuestionsContainer"></div>
+                        <button type="button" class="btn btn-outline-success btn-sm mt-2" onclick="addPollQuestion()">
+                            <i class="bi bi-plus-circle"></i> افزودن سوال جدید
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="saveNews()">
+                    ذخیره
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let newsTable;
+let editingNewsId = null;
+let removeNewsImageFlag = false;
+
+// بارگذاری اخبار
+async function loadAllNews() {
+    try {
+        const response = await apiRequest('/news', 'GET');
+        if (response && response.success) {
+            currentNews = response.data.filter(news => news.tags && news.tags.includes("انجمن"));
+            return currentNews;
+        } else {
+            showErrorAlert('خطا در دریافت اخبار');
+            return [];
+        }
+    } catch (error) {
+        showErrorAlert('خطا در دریافت اخبار');
+        return [];
+    }
+}
+
+// Initialize Tabulator
+function initializeNewsTable() {
+    newsTable = new Tabulator("#newsTable", {
+        data: [],
+        layout: "fitDataFill",
+        pagination: "local",
+        paginationSize: 10,
+        paginationSizeSelector: [5, 10, 25, 50],
+        columns: [
+            {
+                title: "تصویر",
+                field: "image",
+                width: 80,
+                headerFilter: false,
+                formatter: function(cell) {
+                    const val = cell.getValue();
+                    if (val && val !== '-' && val !== 'null') {
+                        return `<img src="${val}" alt="تصویر" class="news-thumb" style="width:40px;height:40px;object-fit:cover;cursor:pointer;border-radius:6px;" onclick="showNewsImageModal('${val}')">`;
+                    } else {
+                        return '<span style="font-size:1.5em;">-</span>';
+                    }
+                }
+            },
+            { title: "عنوان", field: "title", sorter: "string", headerFilter: "input" },
+            { title: "نوع", field: "type", width: 90, headerFilter: "input", formatter: function(cell) {
+                return cell.getValue() === 'news' ? 'خبر' : 'اطلاعیه';
+            }},
+            { title: "توضیحات", field: "description", headerFilter: "input", width: 200, formatter: function(cell) {
+                return cell.getValue().length > 60 ? cell.getValue().slice(0, 60) + '...' : cell.getValue();
+            }},
+            { title: "تگ‌ها", field: "tags", headerFilter: "input", formatter: function(cell) {
+                return cell.getValue().split(',').map(tag => `<span class='badge bg-info ms-1'>${tag}</span>`).join(' ');
+            }},
+            { title: "وضعیت", field: "isActive", width: 80, headerFilter: "input", formatter: function(cell) {
+                return cell.getValue() ? '<span class="badge bg-success">فعال</span>' : '<span class="badge bg-danger">غیرفعال</span>';
+            }},
+            { title: "عملیات", headerFilter: false, formatter: function(cell) {
+                const news = cell.getRow().getData();
+                return `
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="editNews(${news.id})" title="ویرایش">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteNews(${news.id})" title="حذف">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }}
+        ]
+    });
+    refreshNewsTable();
+}
+
+// Refresh table data
+async function refreshNewsTable() {
+    try {
+        const news = await loadAllNews();
+        newsTable.setData(news);
+    } catch (error) {
+        newsTable.setData([]);
+    }
+}
+
+// Add new news
+function showAddNewsModal() {
+    editingNewsId = null;
+    removeNewsImageFlag = false;
+    document.getElementById('newsModalLabel').textContent = 'افزودن خبر/اطلاعیه';
+    document.getElementById('newsForm').reset();
+    document.getElementById('newsId').value = '';
+    document.getElementById('currentNewsImageDiv').style.display = 'none';
+    document.getElementById('previewNewsImage').src = '';
+    document.getElementById('removeNewsImage').checked = false;
+    document.getElementById('newsIsActive').value = 'true';
+    document.getElementById('pollSection').style.display = 'none'; // Ensure it's hidden
+    const modal = new bootstrap.Modal(document.getElementById('newsModal'));
+    modal.show();
+}
+
+// Edit news
+async function editNews(id) {
+    try {
+        const response = await apiRequest(`/news/${id}`, 'GET');
+        if (response && response.success) {
+            const news = response.data;
+            editingNewsId = news.id;
+            removeNewsImageFlag = false;
+            document.getElementById('newsModalLabel').textContent = 'ویرایش خبر/اطلاعیه';
+            document.getElementById('newsForm').reset();
+            document.getElementById('newsId').value = news.id;
+            document.getElementById('newsType').value = news.type;
+            document.getElementById('newsTitle').value = news.title;
+            document.getElementById('newsDescription').value = news.description;
+            document.getElementById('newsIsActive').value = news.isActive ? 'true' : 'false';
+            if (news.image) {
+                document.getElementById('previewNewsImage').src = news.image;
+                document.getElementById('currentNewsImageDiv').style.display = 'block';
+                document.getElementById('removeNewsImage').checked = false;
+            } else {
+                document.getElementById('currentNewsImageDiv').style.display = 'none';
+                document.getElementById('previewNewsImage').src = '';
+                document.getElementById('removeNewsImage').checked = false;
+            }
+            document.getElementById('removeNewsImage').onclick = function() {
+                removeNewsImageFlag = this.checked;
+            };
+            document.getElementById('pollSection').style.display = news.type === 'announcement' ? 'block' : 'none';
+            if (news.type === 'announcement') {
+                // واکشی سوالات و گزینه‌های نظرسنجی
+                try {
+                    const pollRes = await apiRequest(`/news/${id}/poll`, 'GET');
+                    if (pollRes && pollRes.success && Array.isArray(pollRes.data)) {
+                        pollQuestions = pollRes.data.map(q => ({
+                            question: q.question,
+                            options: q.options.map(o => o.optionText),
+                            pollQuestionId: q.id
+                        }));
+                        renderAllPollQuestions();
+                    }
+                } catch (e) {}
+            }
+            // مقداردهی اولیه تگ‌ها
+            if (news.tags) {
+                const tagsArr = news.tags.split(',');
+                document.getElementById('newsTag1').value = tagsArr[0] || '';
+                document.getElementById('newsTag2').value = tagsArr[1] || '';
+                document.getElementById('newsTag2').disabled = !tagsArr[0];
+                document.getElementById('newsTag3').value = tagsArr[2] || '';
+                document.getElementById('newsTag3').disabled = !tagsArr[1];
+            } else {
+                document.getElementById('newsTag1').value = '';
+                document.getElementById('newsTag2').value = '';
+                document.getElementById('newsTag3').value = '';
+                document.getElementById('newsTag3').disabled = true;
+            }
+            const modal = new bootstrap.Modal(document.getElementById('newsModal'));
+            modal.show();
+        } else {
+            showErrorAlert('خطا در دریافت اطلاعات خبر/اطلاعیه');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در دریافت اطلاعات خبر/اطلاعیه');
+    }
+}
+
+// ذخیره خبر/اطلاعیه
+async function saveNews() {
+    const form = document.getElementById('newsForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    const id = document.getElementById('newsId').value;
+    const type = document.getElementById('newsType').value;
+    const title = document.getElementById('newsTitle').value.trim();
+    const description = document.getElementById('newsDescription').value.trim();
+    const isActive = document.getElementById('newsIsActive').value === 'true';
+    const imageInput = document.getElementById('newsImage');
+    const imageFile = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+    const formData = new FormData();
+    formData.append('type', type);
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('isActive', isActive);
+
+    // --- Tag fields ---
+    const tag1 = document.getElementById('newsTag1').value.trim();
+    const tag2 = document.getElementById('newsTag2').value.trim();
+    const tag3 = document.getElementById('newsTag3').value.trim();
+    let tags = '';
+    if (tag1) tags = tag1;
+    if (tag2) tags += (tags ? ',' : '') + tag2;
+    if (tag3) tags += (tags ? ',' : '') + tag3;
+    formData.append('tags', tags);
+    // --- End Tag fields ---
+
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+    if (removeNewsImageFlag) {
+        formData.append('image', '');
+    }
+
+    // اگر نوع اطلاعیه و نظرسنجی وجود دارد، ارسال کن
+    if (type === 'announcement' && pollQuestions.length > 0) {
+        // فقط سوالات معتبر (متن سوال و حداقل یک گزینه غیرخالی)
+        for (const q of pollQuestions) {
+            if (!q.question.trim() || !q.options.length || q.options.some(opt => !opt.trim())) {
+                showErrorAlert('همه سوالات و گزینه‌های نظرسنجی باید پر شوند');
+                return;
+            }
+        }
+        // ذخیره اطلاعیه و سپس ذخیره نظرسنجی
+        let response;
+        if (id) {
+            response = await apiRequest(`/news/${id}`, 'PUT', formData, true);
+        } else {
+            response = await apiRequest('/news', 'POST', formData, true);
+        }
+        if (response && response.success) {
+            // ذخیره نظرسنجی (برای هر سوال)
+            for (const q of pollQuestions) {
+                await apiRequest('/news/poll', 'POST', {
+                    newsId: response.data.id || id,
+                    question: q.question,
+                    options: q.options
+                });
+            }
+            showSuccessAlert(id ? 'خبر/اطلاعیه با موفقیت ویرایش شد' : 'خبر/اطلاعیه با موفقیت اضافه شد');
+            bootstrap.Modal.getInstance(document.getElementById('newsModal')).hide();
+            refreshNewsTable();
+        } else {
+            showErrorAlert(response?.message || 'خطا در ذخیره اطلاعات');
+        }
+        return;
+    }
+
+    try {
+        let response;
+        if (id) {
+            response = await apiRequest(`/news/${id}`, 'PUT', formData, true);
+        } else {
+            response = await apiRequest('/news', 'POST', formData, true);
+        }
+        if (response && response.success) {
+            showSuccessAlert(id ? 'خبر/اطلاعیه با موفقیت ویرایش شد' : 'خبر/اطلاعیه با موفقیت اضافه شد');
+            bootstrap.Modal.getInstance(document.getElementById('newsModal')).hide();
+            refreshNewsTable();
+        } else {
+            showErrorAlert(response?.message || 'خطا در ذخیره اطلاعات');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در ذخیره اطلاعات');
+    }
+}
+
+// حذف خبر/اطلاعیه
+async function deleteNews(id) {
+    const result = await Swal.fire({
+        title: 'آیا مطمئن هستید؟',
+        text: "این عملیات قابل بازگشت نیست!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'بله، حذف کن!',
+        cancelButtonText: 'انصراف'
+    });
+    if (result.isConfirmed) {
+        try {
+            const response = await apiRequest(`/news/${id}`, 'DELETE');
+            if (response && response.success) {
+                showSuccessAlert('خبر/اطلاعیه با موفقیت حذف شد');
+                refreshNewsTable();
+            } else {
+                showErrorAlert(response?.message || 'خطا در حذف خبر/اطلاعیه');
+            }
+        } catch (error) {
+            showErrorAlert('خطا در حذف خبر/اطلاعیه');
+        }
+    }
+}
+
+// نمایش تصویر بزرگ خبر
+function showNewsImageModal(imgSrc) {
+    Swal.fire({
+        title: 'تصویر خبر/اطلاعیه',
+        html: `<img src="${imgSrc}" alt="تصویر خبر" style="max-width:100%;max-height:70vh;border-radius:12px;">`,
+        showCloseButton: true,
+        confirmButtonText: 'بستن',
+        customClass: {popup: 'text-center'}
+    });
+}
+
+// نمایش پیام موفقیت
+function showSuccessAlert(message) {
+    Swal.fire({
+        title: 'موفق!',
+        text: message,
+        icon: 'success',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#28a745'
+    });
+}
+
+// نمایش پیام خطا
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'خطا!',
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#dc3545'
+    });
+}
+
+// نمایش یا مخفی کردن بخش نظرسنجی بر اساس نوع اطلاعیه
+const newsTypeSelect = document.getElementById('newsType');
+if (newsTypeSelect) {
+    newsTypeSelect.addEventListener('change', function() {
+        document.getElementById('pollSection').style.display = this.value === 'announcement' ? 'block' : 'none';
+    });
+}
+
+// مدیریت سوالات و گزینه‌های نظرسنجی
+let pollQuestions = [];
+function addPollQuestion(questionText = '', optionsArr = [], pollQuestionId = null) {
+    pollQuestions.push({ question: questionText, options: optionsArr.length ? optionsArr : [''], pollQuestionId });
+    renderAllPollQuestions();
+}
+function updatePollQuestionText(qIndex, value) {
+    pollQuestions[qIndex].question = value;
+}
+function removePollQuestion(qIndex) {
+    pollQuestions.splice(qIndex, 1);
+    renderAllPollQuestions();
+}
+async function deletePollQuestionFromServer(qIndex) {
+    const pollQ = pollQuestions[qIndex];
+    if (!pollQ.pollQuestionId) {
+        // فقط از لیست حذف کن (هنوز در دیتابیس ثبت نشده)
+        removePollQuestion(qIndex);
+        return;
+    }
+    const result = await Swal.fire({
+        title: 'حذف سوال نظرسنجی',
+        text: 'آیا مطمئن هستید که می‌خواهید این سوال و گزینه‌هایش را حذف کنید؟',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'بله، حذف کن',
+        cancelButtonText: 'انصراف'
+    });
+    if (result.isConfirmed) {
+        try {
+            const res = await apiRequest(`/news/poll/${pollQ.pollQuestionId}`, 'DELETE');
+            if (res && res.success) {
+                showSuccessAlert('سوال نظرسنجی حذف شد');
+                removePollQuestion(qIndex);
+            } else {
+                showErrorAlert(res?.message || 'خطا در حذف سوال');
+            }
+        } catch (e) {
+            showErrorAlert('خطا در حذف سوال');
+        }
+    }
+}
+function addPollOption(qIndex) {
+    pollQuestions[qIndex].options.push('');
+    renderPollOptions(qIndex);
+}
+function updatePollOptionText(qIndex, oIndex, value) {
+    pollQuestions[qIndex].options[oIndex] = value;
+}
+function removePollOption(qIndex, oIndex) {
+    pollQuestions[qIndex].options.splice(oIndex, 1);
+    renderPollOptions(qIndex);
+}
+function renderPollOptions(qIndex) {
+    const optionsDiv = document.getElementById(`poll-options-${qIndex}`);
+    optionsDiv.innerHTML = '';
+    pollQuestions[qIndex].options.forEach((opt, oIndex) => {
+        const optDiv = document.createElement('div');
+        optDiv.className = 'input-group mb-1';
+        optDiv.innerHTML = `
+            <input type="text" class="form-control form-control-sm" placeholder="گزینه ${oIndex + 1}" value="${opt}" onchange="updatePollOptionText(${qIndex}, ${oIndex}, this.value)">
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removePollOption(${qIndex}, ${oIndex})"><i class="bi bi-x"></i></button>
+        `;
+        optionsDiv.appendChild(optDiv);
+    });
+}
+function renderAllPollQuestions() {
+    document.getElementById('pollQuestionsContainer').innerHTML = '';
+    pollQuestions.forEach((q, idx) => {
+        // فقط نمایش در DOM، نه اضافه به pollQuestions
+        const container = document.getElementById('pollQuestionsContainer');
+        const qDiv = document.createElement('div');
+        qDiv.className = 'card mb-2';
+        qDiv.innerHTML = `
+            <div class="card-body">
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <input type="text" class="form-control form-control-sm" placeholder="متن سوال" value="${q.question}" onchange="updatePollQuestionText(${idx}, this.value)">
+                    <button type="button" class="btn btn-danger btn-sm ms-2" onclick="removePollQuestion(${idx})"><i class="bi bi-x"></i></button>
+                    <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="deletePollQuestionFromServer(${idx})"><i class="bi bi-trash"></i> حذف کامل</button>
+                </div>
+                <div id="poll-options-${idx}"></div>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-1" onclick="addPollOption(${idx})"><i class="bi bi-plus"></i> افزودن گزینه</button>
+            </div>
+        `;
+        container.appendChild(qDiv);
+        renderPollOptions(idx);
+    });
+}
+
+// بارگذاری اولیه
+if (document.getElementById('news-content')) {
+    document.addEventListener('DOMContentLoaded', initializeNewsTable);
+}
+
+// --- Tag input logic ---
+document.getElementById('newsTag2').addEventListener('input', function() {
+    document.getElementById('newsTag3').disabled = !this.value.trim();
+    if (!this.value.trim()) {
+        document.getElementById('newsTag3').value = '';
+        document.getElementById('newsTag3').disabled = true;
+    }
+});
+document.getElementById('newsTag3').addEventListener('input', function() {
+    // فقط برای فعال/غیرفعال کردن نیازی نیست
+});
+// --- End Tag input logic ---
+</script>

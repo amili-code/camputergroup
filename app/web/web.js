@@ -4,7 +4,13 @@ const { models } = require('../config/models');
 class web {
     example(req, res) {
         if (req.session && req.session.admin) {
-            res.render("admin/main.ejs", { adminUsername: req.session.admin.username });
+            if (req.session.admin.role === 'admin')
+                if (req.session.admin.username == "mainAdmin")
+                    res.render("superAdmin/main.ejs", { adminUsername: "ادمین تمام سیستم" })
+                else    
+                    res.render("admin/main.ejs", { adminUsername: req.session.admin.username });
+            else
+                res.render("community/main.ejs", { adminUsername: req.session.admin.username })
         } else {
             res.redirect("/");
         }
@@ -20,6 +26,10 @@ class web {
     newsOne(req, res) {
         res.render("getOne/news.ejs", {  })
     }
+    teacherOne(req, res) {
+        res.render("getOne/teacher.ejs", {  })
+    }
+    
     
     
     courses(req, res) {
@@ -37,7 +47,15 @@ class web {
     teachers(req, res) {
         res.render("getAll/teachers.ejs", {  })
     }
-
+    aboutUs(req, res) {
+        res.render("getAll/aboutUs.ejs", {  })
+    }
+    finalStudent(req, res) {
+        res.render("getAll/finalStudent.ejs", {  })
+    }
+    groupmanager(req, res) {
+        res.render("getAll/groupmanager.ejs", {  })
+    }
 
     async teacher(req, res) {
         if (!req.session || !req.session.user) return res.redirect('/login');
@@ -49,11 +67,43 @@ class web {
     }
     async student(req, res) {
         if (!req.session || !req.session.user) return res.redirect('/login');
-        const logs = await models.Log.findAll({
-            where: { userId: req.session.user.id, type: 'student' },
-            order: [['createdAt', 'DESC']]
-        });
-        res.render("profile/student.ejs", { logs });
+        
+        try {
+            // دریافت اطلاعات دانشجو
+            const student = await models.Student.findByPk(req.session.user.id);
+            if (!student) {
+                return res.redirect('/login');
+            }
+
+            // دریافت لاگ‌ها
+            const logs = await models.Log.findAll({
+                where: { userId: req.session.user.id, type: 'student' },
+                order: [['createdAt', 'DESC']]
+            });
+
+            // اگر دانشجو فارغ التحصیل است، اطلاعات متا را دریافت کن
+            let studentMeta = null;
+            if (student.isGraduated) {
+                studentMeta = await models.StudentMeta.findOne({
+                    where: { studentId: student.id },
+                    include: [{
+                        model: models.Student,
+                        as: 'Student',
+                        attributes: ['id', 'firstName', 'lastName', 'studentId', 'isGraduated']
+                    }]
+                });
+            }
+
+            res.render("profile/student.ejs", { 
+                logs, 
+                student, 
+                studentMeta,
+                isGraduated: student.isGraduated 
+            });
+        } catch (error) {
+            console.error('خطا در بارگذاری پروفایل دانشجو:', error);
+            res.redirect('/login');
+        }
     }
     
     login(req, res) {

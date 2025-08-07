@@ -37,6 +37,11 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING(100), // ذخیره به صورت "tag1,tag2,tag3"
             allowNull: false,
             comment: 'حداکثر ۳ تگ استاتیک برای هر خبر یا اطلاعیه (با کاما جدا شود)'
+        },
+        writer: {
+            type: DataTypes.STRING(100),
+            allowNull: false,
+            comment: 'نام خانوادگی دبیر یا username ادمین نویسنده خبر'
         }
     }, {
         tableName: 'news',

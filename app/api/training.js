@@ -2,6 +2,7 @@ const { models } = require('../config/models');
 const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
+const { logUserAction } = require('../config/loger');
 
 class TrainingController {
     // CREATE - ایجاد شاخه یا زیرشاخه
@@ -18,6 +19,10 @@ class TrainingController {
                 filePath,
                 description
             });
+
+            // ثبت لاگ
+            await logUserAction(req, `شاخه آموزشی جدید با عنوان "${title}" ثبت کرد`);
+
             res.status(201).json({
                 success: true,
                 message: 'شاخه/زیرشاخه با موفقیت ایجاد شد',
@@ -127,10 +132,14 @@ class TrainingController {
             }
             await category.update({
                 title: title || category.title,
-                parentId: parentId !== undefined ? parentId : category.parentId,
+                parentId: parentId != undefined ? parentId : category.parentId,
                 description: description !== undefined ? description : category.description,
                 filePath: req.file || filePath === '' ? newFilePath : category.filePath
             });
+
+            // ثبت لاگ
+            await logUserAction(req, `شاخه آموزشی با عنوان "${category.title}" را ویرایش کرد`);
+
             res.json({
                 success: true,
                 message: 'شاخه با موفقیت بروزرسانی شد',
@@ -165,6 +174,10 @@ class TrainingController {
                 } catch (e) { console.error('خطا در حذف فایل:', e); }
             }
             await category.destroy();
+
+            // ثبت لاگ
+            await logUserAction(req, `شاخه آموزشی با عنوان "${category.title}" را حذف کرد`);
+
             res.json({
                 success: true,
                 message: 'شاخه با موفقیت حذف شد'

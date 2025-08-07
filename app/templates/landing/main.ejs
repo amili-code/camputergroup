@@ -39,18 +39,27 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="/">گروه کامپیوتر</a>
+            <a class="navbar-brand" href="/" id="mainTitlle"></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="تغییر منو">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link active" href="/">خانه</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/aboutUs">درباره ما</a></li>
                     <li class="nav-item"><a class="nav-link" href="/courses">دوره‌ها و رویدادها</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/news">اخباراطلاعیه ها</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/news">اخبار و اطلاعیه ها</a></li>
                     <li class="nav-item dropdown"><a class="nav-link" href="/tranning">آموزشی</a></li>
                     <li class="nav-item"><a class="nav-link" href="/community">انجمن</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/teachers">اساتید</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            اعضای هیئت علمی
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/teachers">اساتید</a></li>
+                            <li><a class="dropdown-item" href="/finalStudent">دانشجویان فارغ‌التحصیل</a></li>
+                            <li><a class="dropdown-item" href="/groupmanager">مدیران گروه</a></li>
+                        </ul>
+                    </li>
                 </ul>
                 <div id="auth-section" class="d-none d-lg-inline">
                     <!-- Login button (shown when not logged in) -->
@@ -80,7 +89,7 @@
                             <div>
                                 <i class="bi bi-person-circle me-2"></i>
                                 <span id="user-name-mobile">کاربر</span>
-                                <small class="text-muted d-block" id="user-type-mobile">نوع کاربر</small>
+                                <a href="/" class="text-muted d-block" id="user-type-mobile">نوع کاربر</a>
                             </div>
                             <button class="btn btn-sm btn-outline-danger" onclick="logout()">
                                 <i class="bi bi-box-arrow-right"></i>
@@ -139,7 +148,7 @@
                 <div class="col-md-6 text-md-end">
                     <h6 class="fw-bold mb-2">لینک‌های مفید</h6>
                     <ul class="list-unstyled">
-                        <li><a href="/">خانه</a></li>
+                        <li><a href="/aboutUs">درباره ما</a></li>
                         <li><a href="/courses">دوره‌ها و رویدادها</a></li>
                         <li><a href="/news">اخبار و اطلاعیه ها</a></li>
                         <li><a href="/tranning">آموزشی</a></li>
@@ -195,10 +204,19 @@
                 const userNameEl = document.getElementById('user-name');
                 const userTypeEl = document.getElementById('user-type');
                 
+                
                 if (loginBtn) loginBtn.style.display = 'none';
                 if (userInfo) userInfo.style.display = 'block';
                 if (userNameEl) userNameEl.textContent = userName;
                 if (userTypeEl) userTypeEl.textContent = userType;
+                
+                // Desktop version - add link to user type
+                if (userTypeEl) {
+                    userTypeEl.style.cursor = 'pointer';
+                    userTypeEl.onclick = function() {
+                        window.location.href = user.type === 'teacher' ? '/teacher' : '/student';
+                    };
+                }
                 
                 // Mobile version
                 const loginBtnMobile = document.getElementById('login-btn-mobile');
@@ -209,7 +227,13 @@
                 if (loginBtnMobile) loginBtnMobile.style.display = 'none';
                 if (userInfoMobile) userInfoMobile.style.display = 'block';
                 if (userNameMobile) userNameMobile.textContent = userName;
-                if (userTypeMobile) userTypeMobile.textContent = userType;
+                if (userTypeMobile) {
+                    userTypeMobile.textContent = userType;
+                    userTypeMobile.style.cursor = 'pointer';
+                    userTypeMobile.onclick = function() {
+                        window.location.href = user.type === 'teacher' ? '/teacher' : '/student';
+                    };
+                }
             }
 
             // Show login button
@@ -289,6 +313,7 @@
                 document.getElementById('universityDetails').textContent = (result.data.universityName ? result.data.universityName + ' | ' : '') + (result.data.establishedYear ? 'سال تاسیس: ' + result.data.establishedYear : '');
                 document.getElementById('universityPhone').textContent = 'تلفن: ' + (result.data.phone || '---');
                 document.getElementById('universityDescription').textContent = result.data.description || result.data.about || '';
+                document.getElementById('mainTitlle').textContent = result.data.universityName || 'گروه کامپیوتر';
             }
         } catch (e) {
             // Silent fail

@@ -1,0 +1,541 @@
+<link rel="stylesheet" href="/css/admin/student.css">
+<div id="setting-content" class="content-panel" style="display: none;">
+    <h3 class="mb-4"><i class="bi bi-gear"></i> تنظیمات سایت</h3>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">اطلاعات کلی دانشگاه</h4>
+            <button class="btn btn-success" onclick="saveSettings()"><i class="bi bi-save"></i> ذخیره تغییرات</button>
+        </div>
+        <div class="card-body">
+            <form id="settingsForm">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">نام دانشگاه</label>
+                        <input type="text" class="form-control" id="universityName" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">سال تاسیس</label>
+                        <input type="number" class="form-control" id="establishedYear" min="1300" max="1500" required>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label">شماره تماس</label>
+                        <input type="text" class="form-control" id="phone" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">درباره دانشگاه</label>
+                        <input type="text" class="form-control" id="about" required>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label">توضیحات تکمیلی</label>
+                    <textarea class="form-control" id="description" rows="2"></textarea>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">بخش‌های درباره ما</h4>
+            <button class="btn btn-primary" onclick="showAddAboutUsModal()"><i class="bi bi-plus-circle"></i> افزودن بخش</button>
+        </div>
+        <div class="card-body">
+            <div class="row" id="aboutUsGrid"></div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">گالری تصاویر دانشگاه</h4>
+            <button class="btn btn-primary" onclick="showAddGalleryModal()"><i class="bi bi-plus-circle"></i> افزودن تصویر</button>
+        </div>
+        <div class="card-body">
+            <div class="row" id="galleryGrid"></div>
+        </div>
+    </div>
+</div>
+
+<!-- About Us Add/Edit Modal -->
+<div class="modal fade" id="aboutUsModal" tabindex="-1" aria-labelledby="aboutUsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="aboutUsModalLabel">افزودن/ویرایش بخش درباره ما</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="aboutUsForm">
+          <input type="hidden" id="aboutUsId">
+          <div class="mb-3">
+            <label class="form-label">نوع محتوا</label>
+            <select class="form-control" id="aboutUsType" required onchange="toggleAboutUsFields()">
+              <option value="">انتخاب کنید</option>
+              <option value="text">متن</option>
+              <option value="image">تصویر</option>
+              <option value="file">فایل</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">توضیحات (اختیاری)</label>
+            <textarea class="form-control" id="aboutUsDescription" rows="2"></textarea>
+          </div>
+          <div class="mb-3" id="aboutUsTextDiv" style="display: none;">
+            <label class="form-label">محتوای متنی</label>
+            <textarea class="form-control" id="aboutUsTextContent" rows="4"></textarea>
+          </div>
+          <div class="mb-3" id="aboutUsFileDiv" style="display: none;">
+            <label class="form-label">انتخاب فایل</label>
+            <input type="file" class="form-control" id="aboutUsFile">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+        <button type="button" class="btn btn-primary" onclick="submitAboutUsForm()">ذخیره</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gallery Add/Edit Modal -->
+<div class="modal fade" id="galleryModal" tabindex="-1" aria-labelledby="galleryModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="galleryModalLabel">افزودن/ویرایش تصویر گالری</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="galleryForm">
+          <input type="hidden" id="galleryIndex">
+          <div class="mb-3">
+            <label class="form-label">عنوان تصویر</label>
+            <input type="text" class="form-control" id="galleryTitle" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">توضیحات تصویر</label>
+            <textarea class="form-control" id="galleryDescription" rows="2"></textarea>
+          </div>
+          <div class="mb-3" id="galleryImageInputDiv">
+            <label class="form-label">انتخاب تصویر</label>
+            <input type="file" class="form-control" id="galleryImage" accept="image/*">
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+        <button type="button" class="btn btn-primary" onclick="submitGalleryForm()">ذخیره</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let settingsData = null;
+
+// بارگذاری تنظیمات و گالری
+async function loadSettings() {
+    try {
+        const response = await apiRequest('/settings', 'GET');
+        if (response && response.success) {
+            settingsData = response.data;
+            document.getElementById('universityName').value = settingsData.universityName || '';
+            document.getElementById('about').value = settingsData.about || '';
+            document.getElementById('establishedYear').value = settingsData.establishedYear || '';
+            document.getElementById('description').value = settingsData.description || '';
+            document.getElementById('phone').value = settingsData.phone || '';
+            renderGallery(settingsData.gallery || []);
+            renderAboutUs(settingsData.aboutUs || []);
+        }
+    } catch (e) {
+    }
+}
+
+// ذخیره تنظیمات
+async function saveSettings() {
+    const form = document.getElementById('settingsForm');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    const newSettings = {
+        universityName: document.getElementById('universityName').value.trim(),
+        about: document.getElementById('about').value.trim(),
+        establishedYear: parseInt(document.getElementById('establishedYear').value, 10),
+        description: document.getElementById('description').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        gallery: settingsData.gallery || []
+    };
+    try {
+        const response = await apiRequest('/settings', 'PUT', newSettings);
+        if (response && response.success) {
+            showSuccessAlert('تنظیمات با موفقیت ذخیره شد');
+        } else {
+            showErrorAlert(response?.message || 'خطا در ذخیره تنظیمات');
+        }
+    } catch (e) {
+        showErrorAlert('خطا در ذخیره تنظیمات');
+    }
+}
+
+// نمایش گالری
+function renderGallery(gallery) {
+    const grid = document.getElementById('galleryGrid');
+    grid.innerHTML = '';
+    if (!gallery.length) {
+        grid.innerHTML = '<div class="text-center text-muted">تصویری ثبت نشده است.</div>';
+        return;
+    }
+    gallery.forEach((img, idx) => {
+        const col = document.createElement('div');
+        col.className = 'col-md-4 mb-4';
+        col.innerHTML = `
+            <div class="card h-100 shadow-sm">
+                <img src="${img.imagePath}" class="card-img-top" alt="${img.title}" style="object-fit:cover;max-height:180px;">
+                <div class="card-body">
+                    <h5 class="card-title">${img.title || '-'}</h5>
+                    <p class="card-text text-muted" style="min-height:40px;">${img.description || ''}</p>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button class="btn btn-outline-primary btn-sm" onclick="showEditGalleryModal(${idx})"><i class="bi bi-pencil"></i> ویرایش</button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteGalleryImage(${idx})"><i class="bi bi-trash"></i> حذف</button>
+                </div>
+            </div>
+        `;
+        grid.appendChild(col);
+    });
+}
+
+// افزودن تصویر جدید
+function showAddGalleryModal() {
+    document.getElementById('galleryModalLabel').textContent = 'افزودن تصویر جدید';
+    document.getElementById('galleryForm').reset();
+    document.getElementById('galleryIndex').value = '';
+    document.getElementById('galleryImageInputDiv').style.display = '';
+    new bootstrap.Modal(document.getElementById('galleryModal')).show();
+}
+// ویرایش تصویر
+function showEditGalleryModal(idx) {
+    const img = settingsData.gallery[idx];
+    document.getElementById('galleryModalLabel').textContent = 'ویرایش تصویر';
+    document.getElementById('galleryForm').reset();
+    document.getElementById('galleryIndex').value = idx;
+    document.getElementById('galleryTitle').value = img.title || '';
+    document.getElementById('galleryDescription').value = img.description || '';
+    document.getElementById('galleryImageInputDiv').style.display = 'none'; // فقط ویرایش متن
+    new bootstrap.Modal(document.getElementById('galleryModal')).show();
+}
+
+// ثبت فرم گالری (افزودن یا ویرایش)
+async function submitGalleryForm() {
+    const idx = document.getElementById('galleryIndex').value;
+    const title = document.getElementById('galleryTitle').value.trim();
+    const description = document.getElementById('galleryDescription').value.trim();
+    const imageInput = document.getElementById('galleryImage');
+    if (!title) {
+        showErrorAlert('عنوان تصویر الزامی است');
+        return;
+    }
+    if (idx) {
+        // ویرایش
+        try {
+            const response = await apiRequest(`/settings/gallery/${idx}`, 'PUT', { title, description });
+            if (response && response.success) {
+                showSuccessAlert('تصویر بروزرسانی شد');
+                bootstrap.Modal.getInstance(document.getElementById('galleryModal')).hide();
+                loadSettings();
+            } else {
+                showErrorAlert(response?.message || 'خطا در ویرایش تصویر');
+            }
+        } catch (e) {
+            showErrorAlert('خطا در ویرایش تصویر');
+        }
+    } else {
+        // افزودن
+        if (!imageInput.files[0]) {
+            showErrorAlert('انتخاب تصویر الزامی است');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('image', imageInput.files[0]);
+        try {
+            const response = await apiRequest('/settings/gallery/upload', 'POST', formData, true);
+            if (response && response.success) {
+                showSuccessAlert('تصویر با موفقیت افزوده شد');
+                bootstrap.Modal.getInstance(document.getElementById('galleryModal')).hide();
+                loadSettings();
+            } else {
+                showErrorAlert(response?.message || 'خطا در افزودن تصویر');
+            }
+        } catch (e) {
+            showErrorAlert('خطا در افزودن تصویر');
+        }
+    }
+}
+
+// حذف تصویر
+async function deleteGalleryImage(idx) {
+    const result = await Swal.fire({
+        title: 'حذف تصویر',
+        text: 'آیا از حذف این تصویر مطمئن هستید؟',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'بله، حذف کن',
+        cancelButtonText: 'انصراف'
+    });
+    if (!result.isConfirmed) return;
+    try {
+        const response = await apiRequest(`/settings/gallery/${idx}`, 'DELETE');
+        if (response && response.success) {
+            showSuccessAlert('تصویر حذف شد');
+            loadSettings();
+        } else {
+            showErrorAlert(response?.message || 'خطا در حذف تصویر');
+        }
+    } catch (e) {
+        showErrorAlert('خطا در حذف تصویر');
+    }
+}
+
+// نمایش پیام موفقیت
+function showSuccessAlert(message) {
+    Swal.fire({
+        title: 'موفق!',
+        text: message,
+        icon: 'success',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#28a745'
+    });
+}
+// نمایش پیام خطا
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'خطا!',
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#dc3545'
+    });
+}
+
+// ==================== ABOUT US FUNCTIONS ====================
+
+// نمایش بخش‌های درباره ما
+function renderAboutUs(aboutUs) {
+    const grid = document.getElementById('aboutUsGrid');
+    grid.innerHTML = '';
+    if (!aboutUs.length) {
+        grid.innerHTML = '<div class="text-center text-muted">بخشی ثبت نشده است.</div>';
+        return;
+    }
+    aboutUs.forEach((section, idx) => {
+        const col = document.createElement('div');
+        col.className = 'col-md-6 mb-4';
+        
+        let contentPreview = '';
+        let typeBadge = '';
+        
+        switch(section.type) {
+            case 'text':
+                contentPreview = section.textContent ? section.textContent.substring(0, 100) + '...' : 'متن خالی';
+                typeBadge = '<span class="badge bg-info">متن</span>';
+                break;
+            case 'image':
+                contentPreview = section.imagePath ? `<img src="${section.imagePath}" class="img-fluid" style="max-height:100px;">` : 'تصویر ندارد';
+                typeBadge = '<span class="badge bg-success">تصویر</span>';
+                break;
+            case 'file':
+                const fileName = section.filePath ? section.filePath.split('/').pop() : 'فایل';
+                contentPreview = `<i class="bi bi-file-earmark"></i> ${fileName}`;
+                typeBadge = '<span class="badge bg-warning">فایل</span>';
+                break;
+        }
+        
+        col.innerHTML = `
+            <div class="card h-100 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">${section.type === 'text' ? 'متن' : section.type === 'image' ? 'تصویر' : 'فایل'}</h6>
+                    ${typeBadge}
+                </div>
+                <div class="card-body">
+                    ${section.description ? `<p class="text-muted small mb-2">${section.description}</p>` : ''}
+                    <div class="mb-2">
+                        ${contentPreview}
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button class="btn btn-outline-primary btn-sm" onclick="showEditAboutUsModal(${section.id})"><i class="bi bi-pencil"></i> ویرایش</button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteAboutUsSection(${section.id})"><i class="bi bi-trash"></i> حذف</button>
+                </div>
+            </div>
+        `;
+        grid.appendChild(col);
+    });
+    initializeAboutUsSortable();
+}
+
+// بعد از تعریف renderAboutUs
+function initializeAboutUsSortable() {
+    const grid = document.getElementById('aboutUsGrid');
+    if (window.aboutUsSortableInstance) {
+        window.aboutUsSortableInstance.destroy();
+    }
+    window.aboutUsSortableInstance = new Sortable(grid, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        onEnd: async function(evt) {
+            // بعد از جابجایی، ترتیب جدید را ذخیره کن
+            const items = Array.from(grid.children);
+            const newOrder = items.map((item, idx) => {
+                const id = item.querySelector('button.btn-outline-primary').getAttribute('onclick').match(/showEditAboutUsModal\((\d+)\)/)[1];
+                return { id: Number(id), order: idx + 1 };
+            });
+            try {
+                const response = await apiRequest('/settings/about-us/reorder', 'PATCH', { sections: newOrder });
+                if (response && response.success) {
+                    showSuccessAlert('ترتیب با موفقیت ذخیره شد');
+                    loadSettings();
+                }
+            } catch (e) {
+                showErrorAlert('خطا در ذخیره ترتیب');
+            }
+        }
+    });
+}
+
+// نمایش/مخفی کردن فیلدها بر اساس نوع
+function toggleAboutUsFields() {
+    const type = document.getElementById('aboutUsType').value;
+    const textDiv = document.getElementById('aboutUsTextDiv');
+    const fileDiv = document.getElementById('aboutUsFileDiv');
+    
+    textDiv.style.display = 'none';
+    fileDiv.style.display = 'none';
+    
+    if (type === 'text') {
+        textDiv.style.display = 'block';
+    } else if (type === 'image' || type === 'file') {
+        fileDiv.style.display = 'block';
+    }
+}
+
+// نمایش مودال افزودن بخش جدید
+function showAddAboutUsModal() {
+    document.getElementById('aboutUsModalLabel').textContent = 'افزودن بخش جدید';
+    document.getElementById('aboutUsForm').reset();
+    document.getElementById('aboutUsId').value = '';
+    document.getElementById('aboutUsTextDiv').style.display = 'none';
+    document.getElementById('aboutUsFileDiv').style.display = 'none';
+    new bootstrap.Modal(document.getElementById('aboutUsModal')).show();
+}
+
+// نمایش مودال ویرایش بخش
+function showEditAboutUsModal(id) {
+    const section = settingsData.aboutUs.find(s => s.id == id);
+    if (!section) return;
+    
+    document.getElementById('aboutUsModalLabel').textContent = 'ویرایش بخش';
+    document.getElementById('aboutUsForm').reset();
+    document.getElementById('aboutUsId').value = section.id;
+    document.getElementById('aboutUsType').value = section.type;
+    document.getElementById('aboutUsDescription').value = section.description || '';
+    document.getElementById('aboutUsTextContent').value = section.textContent || '';
+    
+    toggleAboutUsFields();
+    new bootstrap.Modal(document.getElementById('aboutUsModal')).show();
+}
+
+// ثبت فرم بخش درباره ما
+async function submitAboutUsForm() {
+    const id = document.getElementById('aboutUsId').value;
+    const type = document.getElementById('aboutUsType').value;
+    const description = document.getElementById('aboutUsDescription').value.trim();
+    const textContent = document.getElementById('aboutUsTextContent').value.trim();
+    const fileInput = document.getElementById('aboutUsFile');
+    
+    if (!type) {
+        showErrorAlert('نوع محتوا الزامی است');
+        return;
+    }
+    
+    if (type === 'text' && !textContent) {
+        showErrorAlert('محتوای متنی الزامی است');
+        return;
+    }
+    
+    if ((type === 'image' || type === 'file') && !fileInput.files[0] && !id) {
+        showErrorAlert('انتخاب فایل الزامی است');
+        return;
+    }
+    
+    // ترتیب خودکار - آخرین ترتیب + 1
+    const currentOrder = settingsData.aboutUs ? settingsData.aboutUs.length + 1 : 1;
+    
+    const formData = new FormData();
+    formData.append('type', type);
+    formData.append('order', currentOrder);
+    formData.append('description', description);
+    if (type === 'text') {
+        formData.append('textContent', textContent);
+    }
+    if (fileInput.files[0]) {
+        formData.append('file', fileInput.files[0]);
+    }
+    
+    try {
+        let response;
+        if (id) {
+            // ویرایش - ترتیب قبلی حفظ می‌شود
+            const section = settingsData.aboutUs.find(s => s.id == id);
+            formData.set('order', section ? section.order : currentOrder);
+            response = await apiRequest(`/settings/about-us/${id}`, 'PUT', formData, true);
+        } else {
+            // افزودن
+            response = await apiRequest('/settings/about-us', 'POST', formData, true);
+        }
+        
+        if (response && response.success) {
+            showSuccessAlert(id ? 'بخش بروزرسانی شد' : 'بخش با موفقیت افزوده شد');
+            bootstrap.Modal.getInstance(document.getElementById('aboutUsModal')).hide();
+            loadSettings();
+        } else {
+            showErrorAlert(response?.message || 'خطا در ذخیره بخش');
+        }
+    } catch (e) {
+        showErrorAlert('خطا در ذخیره بخش');
+    }
+}
+
+// حذف بخش
+async function deleteAboutUsSection(id) {
+    const result = await Swal.fire({
+        title: 'حذف بخش',
+        text: 'آیا از حذف این بخش مطمئن هستید؟',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'بله، حذف کن',
+        cancelButtonText: 'انصراف'
+    });
+    if (!result.isConfirmed) return;
+    
+    try {
+        const response = await apiRequest(`/settings/about-us/${id}`, 'DELETE');
+        if (response && response.success) {
+            showSuccessAlert('بخش حذف شد');
+            loadSettings();
+        } else {
+            showErrorAlert(response?.message || 'خطا در حذف بخش');
+        }
+    } catch (e) {
+        showErrorAlert('خطا در حذف بخش');
+    }
+}
+
+// مقداردهی اولیه
+if (document.getElementById('setting-content')) {
+    document.addEventListener('DOMContentLoaded', loadSettings);
+}
+</script>

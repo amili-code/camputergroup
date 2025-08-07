@@ -1,0 +1,507 @@
+<%- include('./layout/header.ejs')%>
+
+<style>
+.section-title {
+    font-weight: bold;
+    margin-bottom: 2rem;
+    color: #2d3a4b;
+    border-bottom: 3px solid #007bff;
+    padding-bottom: 0.5rem;
+}
+
+.graduated-student-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+}
+
+.graduated-student-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.graduated-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 2;
+}
+
+.student-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #007bff;
+    margin-bottom: 1rem;
+}
+
+.student-avatar.initials {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #007bff;
+}
+
+.student-info {
+    text-align: center;
+}
+
+.student-name {
+    font-weight: bold;
+    color: #2d3a4b;
+    margin-bottom: 0.5rem;
+}
+
+.student-id {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.graduation-date {
+    color: #28a745;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Modal Styles */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    border: none;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.detail-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #007bff;
+}
+
+.detail-title {
+    font-weight: bold;
+    color: #2d3a4b;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.detail-title i {
+    margin-left: 0.5rem;
+    color: #007bff;
+}
+
+.social-links-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.social-link {
+    background: #007bff;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.social-link:hover {
+    background: #0056b3;
+    color: white;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.skill-badge {
+    background: linear-gradient(45deg, #17a2b8, #138496);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.introduction-text {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+    font-style: italic;
+    line-height: 1.6;
+    color: #495057;
+}
+
+.no-data {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+    background: rgba(108, 117, 125, 0.1);
+    border-radius: 8px;
+}
+
+.loading-spinner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .graduated-student-card {
+        margin-bottom: 1rem;
+    }
+    
+    .student-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.2rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+}
+</style>
+
+<div class="container py-5">
+    <h2 class="section-title text-center">
+        <i class="bi bi-mortarboard-fill me-3"></i>
+        دانشجویان فارغ التحصیل
+    </h2>
+    
+
+    <!-- Loading -->
+    <div id="loading" class="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">در حال بارگذاری...</span>
+        </div>
+        <div class="ms-3">در حال بارگذاری دانشجویان فارغ التحصیل...</div>
+    </div>
+
+    <!-- لیست دانشجویان -->
+    <div id="studentsList" class="row g-4" style="display: none;">
+        <!-- دانشجویان اینجا نمایش داده می‌شوند -->
+    </div>
+
+    <!-- پیام عدم وجود دانشجو -->
+    <div id="noStudents" class="text-center py-5" style="display: none;">
+        <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
+        <h4 class="text-muted mt-3">هنوز دانشجوی فارغ التحصیلی وجود ندارد</h4>
+        <p class="text-muted">به محض فارغ التحصیل شدن دانشجویان، آن‌ها در اینجا نمایش داده خواهند شد.</p>
+    </div>
+</div>
+
+<!-- Modal جزئیات دانشجو -->
+<div class="modal fade" id="studentDetailModal" tabindex="-1" aria-labelledby="studentDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="studentDetailModalLabel">
+                    <i class="bi bi-person-circle me-2"></i>
+                    جزئیات دانشجو
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalContent">
+                <!-- محتوای مودال اینجا لود می‌شود -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let graduatedStudents = [];
+let studentMetaData = [];
+
+// بارگذاری دانشجویان فارغ التحصیل
+async function loadGraduatedStudents() {
+    try {
+        const response = await apiRequest('/students/graduated', 'GET');
+        if (response && response.success) {
+            graduatedStudents = response.data;
+            renderStudents();
+        } else {
+            showNoStudents();
+        }
+    } catch (error) {
+        console.error('خطا در بارگذاری دانشجویان:', error);
+        showNoStudents();
+    }
+}
+
+// بارگذاری اطلاعات متا
+async function loadStudentMeta() {
+    try {
+        const response = await apiRequest('/student-meta', 'GET');
+        if (response && response.success) {
+            studentMetaData = response.data;
+        }
+    } catch (error) {
+        console.error('خطا در بارگذاری اطلاعات متا:', error);
+    }
+}
+
+
+
+// نمایش دانشجویان
+function renderStudents() {
+    const container = document.getElementById('studentsList');
+    const loading = document.getElementById('loading');
+    
+    loading.style.display = 'none';
+    
+    if (graduatedStudents.length === 0) {
+        showNoStudents();
+        return;
+    }
+    
+    container.style.display = 'flex';
+    
+    let html = '';
+    graduatedStudents.forEach(student => {
+        const meta = studentMetaData.find(m => m.studentId === student.id);
+        const hasMeta = meta && (meta.socialLinks || meta.introduction || meta.skills);
+        
+        const fullName = `${student.firstName} ${student.lastName}`;
+        const initials = `${student.firstName?.charAt(0) || ''}${student.lastName?.charAt(0) || ''}`.toUpperCase();
+        
+        // تاریخ فارغ التحصیلی (تقریبی)
+        const graduationDate = new Date(student.updatedAt).toLocaleDateString('fa-IR');
+        
+        html += `
+            <div class="col-lg-4 col-md-6">
+                <div class="card graduated-student-card h-100" onclick="showStudentDetail(${student.id})">
+                    
+                    
+                    <div class="card-body text-center p-4">
+                        ${student.profileImage && student.profileImage !== '-' && student.profileImage !== 'null' 
+                            ? `<img src="${student.profileImage}" alt="عکس پروفایل" class="student-avatar">`
+                            : `<div class="student-avatar initials">${initials}</div>`
+                        }
+                        
+                        <div class="student-info">
+                            <h5 class="student-name">${fullName}</h5>
+                            <p class="student-id">شماره دانشجویی: ${student.studentId}</p>
+                            <p class="graduation-date">
+                                <i class="bi bi-calendar-check me-1"></i>
+                                تاریخ فارغ التحصیلی: ${graduationDate}
+                            </p>
+                            
+                            ${hasMeta ? 
+                                '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>دارای اطلاعات تکمیلی</span>' :
+                                '<span class="badge bg-warning"><i class="bi bi-exclamation-triangle me-1"></i>بدون اطلاعات تکمیلی</span>'
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// نمایش جزئیات دانشجو
+async function showStudentDetail(studentId) {
+    try {
+        const student = graduatedStudents.find(s => s.id === studentId);
+        const meta = studentMetaData.find(m => m.studentId === studentId);
+        
+        if (!student) return;
+        
+        const fullName = `${student.firstName} ${student.lastName}`;
+        const initials = `${student.firstName?.charAt(0) || ''}${student.lastName?.charAt(0) || ''}`.toUpperCase();
+        const graduationDate = new Date(student.updatedAt).toLocaleDateString('fa-IR');
+        
+        let modalContent = `
+            <div class="row">
+                <div class="col-md-4 text-center mb-4">
+                    ${student.profileImage && student.profileImage !== '-' && student.profileImage !== 'null' 
+                        ? `<img src="${student.profileImage}" alt="عکس پروفایل" class="student-avatar">`
+                        : `<div class="student-avatar initials">${initials}</div>`
+                    }
+                    <h4 class="mt-3">${fullName}</h4>
+                    <p class="text-muted">شماره دانشجویی: ${student.studentId}</p>
+                    <p class="text-success fw-bold">
+                        <i class="bi bi-calendar-check me-1"></i>
+                        تاریخ فارغ التحصیلی: ${graduationDate}
+                    </p>
+                </div>
+                
+                <div class="col-md-8">
+        `;
+        
+        if (meta) {
+            // لینک‌های اجتماعی
+            modalContent += `
+                <div class="detail-section">
+                    <h6 class="detail-title">
+                        <i class="bi bi-link-45deg"></i>
+                        لینک‌های شبکه‌های اجتماعی
+                    </h6>
+            `;
+            
+            if (meta.socialLinks) {
+                const links = meta.socialLinks.split(',').map(link => link.trim()).filter(link => link.length > 0);
+                if (links.length > 0) {
+                    modalContent += '<div class="social-links-container">';
+                    links.forEach(link => {
+                        modalContent += `
+                            <a href="${link}" target="_blank" class="social-link">
+                                <i class="bi bi-link-45deg me-1"></i>
+                                ${link}
+                            </a>
+                        `;
+                    });
+                    modalContent += '</div>';
+                } else {
+                    modalContent += '<div class="no-data">لینک‌ای ثبت نشده است</div>';
+                }
+            } else {
+                modalContent += '<div class="no-data">لینک‌ای ثبت نشده است</div>';
+            }
+            modalContent += '</div>';
+            
+            // مهارت‌ها
+            modalContent += `
+                <div class="detail-section">
+                    <h6 class="detail-title">
+                        <i class="bi bi-tools"></i>
+                        مهارت‌ها
+                    </h6>
+            `;
+            
+            if (meta.skills) {
+                const skills = meta.skills.split(',').map(skill => skill.trim()).filter(skill => skill.length > 0);
+                if (skills.length > 0) {
+                    modalContent += '<div class="skills-container">';
+                    skills.forEach(skill => {
+                        modalContent += `<span class="skill-badge">${skill}</span>`;
+                    });
+                    modalContent += '</div>';
+                } else {
+                    modalContent += '<div class="no-data">مهارتی ثبت نشده است</div>';
+                }
+            } else {
+                modalContent += '<div class="no-data">مهارتی ثبت نشده است</div>';
+            }
+            modalContent += '</div>';
+            
+            // معرفی
+            modalContent += `
+                <div class="detail-section">
+                    <h6 class="detail-title">
+                        <i class="bi bi-chat-text"></i>
+                        معرفی و توضیحات
+                    </h6>
+            `;
+            
+            if (meta.introduction) {
+                modalContent += `<div class="introduction-text">${meta.introduction}</div>`;
+            } else {
+                modalContent += '<div class="no-data">معرفی‌ای ثبت نشده است</div>';
+            }
+            modalContent += '</div>';
+            
+        } else {
+            modalContent += `
+                <div class="detail-section">
+                    <div class="no-data">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        این دانشجو هنوز اطلاعات تکمیلی خود را ثبت نکرده است.
+                    </div>
+                </div>
+            `;
+        }
+        
+        modalContent += `
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('modalContent').innerHTML = modalContent;
+        document.getElementById('studentDetailModalLabel').textContent = `جزئیات ${fullName}`;
+        
+        new bootstrap.Modal(document.getElementById('studentDetailModal')).show();
+        
+    } catch (error) {
+        console.error('خطا در نمایش جزئیات دانشجو:', error);
+        alert('خطا در بارگذاری جزئیات دانشجو');
+    }
+}
+
+// نمایش پیام عدم وجود دانشجو
+function showNoStudents() {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('noStudents').style.display = 'block';
+}
+
+// بارگذاری اولیه
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadStudentMeta();
+    await loadGraduatedStudents();
+});
+</script>
+
+<%- include('./layout/footer.ejs')%>

@@ -3,6 +3,8 @@ const { Op } = require('sequelize');
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const { logUserAction } = require('../config/loger');
+
 class TeacherController {
     // CREATE - ایجاد استاد جدید
     async createTeacher(req, res) {
@@ -95,6 +97,9 @@ class TeacherController {
                 weeklySchedule: weeklySchedule || '000000000000000000000000000000000000000000'
             });
 
+            // ثبت لاگ
+            await logUserAction(req, `استاد جدید با نام "${firstName} ${lastName}" و کد پرسنلی "${teacherId}" ثبت کرد`);
+
             res.status(201).json({
                 success: true,
                 message: 'استاد با موفقیت ایجاد شد',
@@ -126,11 +131,8 @@ class TeacherController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -139,6 +141,7 @@ class TeacherController {
                 const obj = t.toJSON();
                 delete obj.password;
                 if (!isRealAdmin) delete obj.nationalCode;
+                if (!isRealAdmin) delete obj.teacherId;
                 return obj;
             });
 
@@ -183,11 +186,8 @@ class TeacherController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -347,6 +347,9 @@ class TeacherController {
             // بروزرسانی استاد
             await teacher.update(updateData);
 
+            // ثبت لاگ
+            await logUserAction(req, `اطلاعات استاد "${teacher.firstName} ${teacher.lastName}" را ویرایش کرد`);
+
             res.json({
                 success: true,
                 message: 'استاد با موفقیت بروزرسانی شد',
@@ -391,6 +394,9 @@ class TeacherController {
 
             // حذف استاد
             await teacher.destroy();
+
+            // ثبت لاگ
+            await logUserAction(req, `استاد "${teacher.firstName} ${teacher.lastName}" را حذف کرد`);
 
             res.json({
                 success: true,

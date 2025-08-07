@@ -1,4 +1,5 @@
 const { models } = require('../config/models');
+const { logUserAction } = require('../config/loger');
 
 class PollVoteController {
     
@@ -84,7 +85,11 @@ class PollVoteController {
                 ipAddress: req.ip,
                 userAgent: req.get('User-Agent')
             });
-            
+
+            // ثبت لاگ
+            const userName = user ? `${user.firstName} ${user.lastName}` : 'کاربر';
+            await logUserAction(req, `رای جدید برای نظرسنجی "${question.question}" ثبت کرد`);
+
             res.status(201).json({
                 success: true,
                 message: 'رای شما با موفقیت ثبت شد',

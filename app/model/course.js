@@ -12,12 +12,6 @@ module.exports = (sequelize) => {
         allowNull: false,
         comment: 'نام یا عنوان دوره'
     },
-    suitableFor: {
-        type: DataTypes.STRING(12),
-        allowNull: false,
-        defaultValue: '111111111111',
-        comment: 'رشته ۱۲ رقمی فقط شامل ۰ و ۱ برای تعیین مناسب بودن برای ترم‌های مختلف'
-    },
     endDate: {
         type: DataTypes.STRING(20), // تاریخ شمسی به صورت رشته
         allowNull: true,
@@ -70,7 +64,7 @@ module.exports = (sequelize) => {
         type: DataTypes.STRING(100), // ذخیره به صورت "tag1,tag2,tag3"
         allowNull: true,
         comment: 'حداکثر ۳ تگ استاتیک برای هر دوره/رویداد/مسابقه (با کاما جدا شود)'
-    }
+    },
 }, {
     tableName: 'courses',
     timestamps: true,

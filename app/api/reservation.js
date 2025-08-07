@@ -78,8 +78,14 @@ class ReservationController {
                 status: 'pending'
             });
             
+            // ثبت لاگ
             const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : `آیدی ${teacherId}`;
-            await logUserAction(studentId, 'student', `درخواست رزرو وقت برای استاد ${teacherName} ثبت شد.`);
+            await logUserAction(req, `درخواست رزرو وقت برای استاد ${teacherName} ثبت کرد`);
+            
+            // ثبت لاگ برای دانشجو (اگر دانشجو لاگین کرده باشد)
+            if (req.session && req.session.user && req.session.user.type === 'student' && req.session.user.id == studentId) {
+                await logUserAction(req, `درخواست رزروت برای استاد ${teacherName} ثبت شد`);
+            }
             
             // دریافت اطلاعات کامل رزرو
             const fullReservation = await models.Reservation.findByPk(reservation.id, {
@@ -338,9 +344,29 @@ class ReservationController {
             updatedSchedule[reservation.requestedTimeSlot] = '0';
             await teacher.update({ weeklySchedule: updatedSchedule.join('') });
             
-            // ثبت لاگ برای دانشجو و دبیر
-            await logUserAction(reservation.studentId, 'student', `درخواست رزرو شما توسط استاد تایید شد.`);
-            await logUserAction(reservation.teacherId, 'teacher', `درخواست رزرو جدید تایید شد.`);
+            // دریافت اطلاعات دانشجو و استاد برای لاگ
+            const student = await models.Student.findByPk(reservation.studentId);
+            const studentName = student ? `${student.firstName} ${student.lastName}` : 'دانشجو';
+            const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : 'استاد';
+            
+            // ثبت لاگ برای ادمین
+            await logUserAction(req, `درخواست رزرو دانشجو "${studentName}" برای استاد "${teacherName}" را تایید کرد`);
+            
+            // ثبت لاگ برای دانشجو
+            if (student) {
+                // ایجاد یک req موقت برای دانشجو
+                const studentReq = {
+                    session: {
+                        user: {
+                            id: student.id,
+                            firstName: student.firstName,
+                            lastName: student.lastName,
+                            type: 'student'
+                        }
+                    }
+                };
+                await logUserAction(studentReq, `درخواست رزروت برای استاد "${teacherName}" تایید شد`);
+            }
             
             const updatedReservation = await models.Reservation.findByPk(id, {
                 include: [
@@ -391,9 +417,30 @@ class ReservationController {
                 description: reason ? `${reservation.description}\n\nدلیل رد: ${reason}` : reservation.description
             });
             
-            // ثبت لاگ برای دانشجو و دبیر
-            await logUserAction(reservation.studentId, 'student', `درخواست رزرو شما توسط استاد رد شد.`);
-            await logUserAction(reservation.teacherId, 'teacher', `درخواست رزرو جدید رد شد.`);
+            // دریافت اطلاعات دانشجو و استاد برای لاگ
+            const student = await models.Student.findByPk(reservation.studentId);
+            const teacher = await models.Teacher.findByPk(reservation.teacherId);
+            const studentName = student ? `${student.firstName} ${student.lastName}` : 'دانشجو';
+            const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : 'استاد';
+            
+            // ثبت لاگ برای ادمین
+            await logUserAction(req, `درخواست رزرو دانشجو "${studentName}" برای استاد "${teacherName}" را رد کرد`);
+            
+            // ثبت لاگ برای دانشجو
+            if (student) {
+                // ایجاد یک req موقت برای دانشجو
+                const studentReq = {
+                    session: {
+                        user: {
+                            id: student.id,
+                            firstName: student.firstName,
+                            lastName: student.lastName,
+                            type: 'student'
+                        }
+                    }
+                };
+                await logUserAction(studentReq, `درخواست رزروت برای استاد "${teacherName}" رد شد`);
+            }
             
             const updatedReservation = await models.Reservation.findByPk(id, {
                 include: [

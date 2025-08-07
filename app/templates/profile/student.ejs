@@ -1,8 +1,191 @@
-<%- include('./layout/header.ejs') %>
+<%- include('../getAll/layout/header.ejs') %>
 
+
+<style>
+.section-title {
+    font-weight: bold;
+    margin-bottom: 2rem;
+    color: #2d3a4b;
+    border-bottom: 3px solid #007bff;
+    padding-bottom: 0.5rem;
+}
+
+.graduated-badge {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.meta-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 2px solid #007bff;
+}
+
+.social-links-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.social-link {
+    background: #007bff;
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.social-link:hover {
+    background: #0056b3;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.skill-badge {
+    background: linear-gradient(45deg, #17a2b8, #138496);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.9rem;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #0056b3, #004085);
+    transform: translateY(-2px);
+}
+</style>
 
 <div class="container py-5">
     <h2 class="section-title"><i class="bi bi-person-circle me-2"></i>پروفایل دانشجو</h2>
+    
+    <!-- اطلاعات دانشجو -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <% if (student.profileImage && student.profileImage !== '-' && student.profileImage !== 'null') { %>
+                            <img src="<%= student.profileImage %>" alt="عکس پروفایل" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                        <% } else { %>
+                            <div class="rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background: linear-gradient(45deg, #007bff, #0056b3); color: white; font-weight: bold; font-size: 1.2rem;">
+                                <%= student.firstName?.charAt(0) || '' %><%= student.lastName?.charAt(0) || '' %>
+                            </div>
+                        <% } %>
+                        <div>
+                            <h4 class="fw-bold mb-1"><%= student.firstName %> <%= student.lastName %></h4>
+                            <p class="text-muted mb-0">شماره دانشجویی: <%= student.studentId %></p>
+                        </div>
+                    </div>
+                    
+                    <% if (isGraduated) { %>
+                        <div class="graduated-badge">
+                            <i class="bi bi-mortarboard-fill me-2"></i>
+                            فارغ التحصیل
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <% if (isGraduated) { %>
+        <!-- بخش اطلاعات متا برای دانشجویان فارغ التحصیل -->
+        <div class="row mb-4">
+            <div class="col-lg-8 mx-auto">
+                <div class="meta-section">
+                    <h4 class="fw-bold mb-4">
+                        <i class="bi bi-gear-fill me-2"></i>
+                        اطلاعات تکمیلی فارغ التحصیل
+                    </h4>
+                    
+                    <% if (studentMeta) { %>
+                        <!-- نمایش اطلاعات فعلی -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <h6 class="fw-bold text-primary">لینک‌های شبکه‌های اجتماعی:</h6>
+                                <% if (studentMeta.socialLinks) { %>
+                                    <div class="social-links-container">
+                                        <% studentMeta.socialLinks.split(',').forEach(link => { %>
+                                            <% if (link.trim()) { %>
+                                                <a href="<%= link.trim() %>" target="_blank" class="social-link">
+                                                    <i class="bi bi-link-45deg me-1"></i>
+                                                    <%= link.trim() %>
+                                                </a>
+                                            <% } %>
+                                        <% }) %>
+                                    </div>
+                                <% } else { %>
+                                    <p class="text-muted">لینک‌ای ثبت نشده است.</p>
+                                <% } %>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <h6 class="fw-bold text-primary">مهارت‌ها:</h6>
+                                <% if (studentMeta.skills) { %>
+                                    <div class="skills-container">
+                                        <% studentMeta.skills.split(',').forEach(skill => { %>
+                                            <% if (skill.trim()) { %>
+                                                <span class="skill-badge"><%= skill.trim() %></span>
+                                            <% } %>
+                                        <% }) %>
+                                    </div>
+                                <% } else { %>
+                                    <p class="text-muted">مهارتی ثبت نشده است.</p>
+                                <% } %>
+                            </div>
+                        </div>
+                        
+                        <% if (studentMeta.introduction) { %>
+                            <div class="mb-4">
+                                <h6 class="fw-bold text-primary">معرفی:</h6>
+                                <p class="text-justify"><%= studentMeta.introduction %></p>
+                            </div>
+                        <% } %>
+                        
+                        <button class="btn btn-primary" onclick="showEditMetaModal()">
+                            <i class="bi bi-pencil me-2"></i>
+                            ویرایش اطلاعات
+                        </button>
+                    <% } else { %>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            اطلاعات تکمیلی شما هنوز ایجاد نشده است. لطفاً با ادمین تماس بگیرید.
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    <% } %>
+
+    <!-- بخش فعالیت‌ها -->
     <div class="row">
         <div class="col-lg-8 mx-auto">
             <div class="card shadow-sm mb-4">
@@ -26,10 +209,129 @@
                     <% } %>
                 </div>
             </div>
-            <!-- در صورت نیاز: نمایش درخواست‌های دوره و رزرو و انجمن به صورت جداگانه -->
         </div>
     </div>
 </div>
 
-<%- include('./layout/footer.ejs') %>
+<!-- Modal ویرایش اطلاعات متا -->
+<% if (isGraduated && studentMeta) { %>
+<div class="modal fade" id="editMetaModal" tabindex="-1" aria-labelledby="editMetaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMetaModalLabel">
+                    <i class="bi bi-pencil me-2"></i>
+                    ویرایش اطلاعات تکمیلی
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editMetaForm">
+                    <div class="mb-3">
+                        <label for="socialLinks" class="form-label fw-bold">
+                            <i class="bi bi-link-45deg me-1"></i>
+                            لینک‌های شبکه‌های اجتماعی (حداکثر 3 تا با کاما جدا)
+                        </label>
+                        <input type="text" class="form-control" id="socialLinks" 
+                               placeholder="مثال: https://linkedin.com/user,https://github.com/user,https://twitter.com/user"
+                               value="<%= studentMeta.socialLinks || '' %>">
+                        <div class="form-text">لینک‌ها را با کاما جدا کنید (حداکثر 3 لینک)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="introduction" class="form-label fw-bold">
+                            <i class="bi bi-chat-text me-1"></i>
+                            معرفی و توضیحات
+                        </label>
+                        <textarea class="form-control" id="introduction" rows="4" 
+                                  placeholder="درباره خودتان و تجربیاتتان بنویسید..."><%= studentMeta.introduction || '' %></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="skills" class="form-label fw-bold">
+                            <i class="bi bi-tools me-1"></i>
+                            مهارت‌ها (حداکثر 3 تا با کاما جدا)
+                        </label>
+                        <input type="text" class="form-control" id="skills" 
+                               placeholder="مثال: JavaScript,React,Node.js"
+                               value="<%= studentMeta.skills || '' %>">
+                        <div class="form-text">مهارت‌ها را با کاما جدا کنید (حداکثر 3 مهارت)</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="saveMetaData()" id="saveMetaBtn">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    ذخیره تغییرات
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<% } %>
+
+<script>
+let isMetaLoading = false;
+
+function showEditMetaModal() {
+    new bootstrap.Modal(document.getElementById('editMetaModal')).show();
+}
+
+async function saveMetaData() {
+    if (isMetaLoading) return;
+    
+    const socialLinks = document.getElementById('socialLinks').value.trim();
+    const introduction = document.getElementById('introduction').value.trim();
+    const skills = document.getElementById('skills').value.trim();
+    
+    // اعتبارسنجی
+    if (socialLinks) {
+        const links = socialLinks.split(',').map(link => link.trim()).filter(link => link.length > 0);
+        if (links.length > 3) {
+            alert('حداکثر 3 لینک شبکه اجتماعی مجاز است');
+            return;
+        }
+    }
+    
+    if (skills) {
+        const skillsList = skills.split(',').map(skill => skill.trim()).filter(skill => skill.length > 0);
+        if (skillsList.length > 3) {
+            alert('حداکثر 3 مهارت مجاز است');
+            return;
+        }
+    }
+    
+    // نمایش loading
+    isMetaLoading = true;
+    const saveBtn = document.getElementById('saveMetaBtn');
+    const spinner = saveBtn.querySelector('.spinner-border');
+    saveBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    
+    try {
+        const response = await apiRequest(`/student-meta/<%= studentMeta ? studentMeta.id : '' %>`, 'PUT', {
+            socialLinks,
+            introduction,
+            skills
+        });
+        
+        if (response && response.success) {
+            alert('اطلاعات با موفقیت بروزرسانی شد');
+            location.reload(); // بروزرسانی صفحه
+        } else {
+            alert(response?.message || 'خطا در بروزرسانی اطلاعات');
+        }
+    } catch (error) {
+        alert('خطا در بروزرسانی اطلاعات');
+    } finally {
+        // حذف loading
+        isMetaLoading = false;
+        saveBtn.disabled = false;
+        spinner.classList.add('d-none');
+    }
+}
+</script>
+
+<%- include('../getAll/layout/footer.ejs') %>
 

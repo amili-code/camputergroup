@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node server.js",
     "test": "nodemon --ignore ./public/ server.js",
-    "sync-db": "node scripts/sync-db.js"
+    "sync-db": "node scripts/sync-db.js",
+    "admin-config": "node scripts/createSuperAdmin.js"
   },
   "author": "",
   "license": "ISC",
@@ -27,8 +28,11 @@
     "socket.io-client": "^4.7.5"
   },
   "dependencies": {
+    "axios": "^1.11.0",
     "bcrypt": "^5.1.1",
-    "jalaali-js": "^1.2.7",
+    "express-session": "^1.18.2",
+    "jalaali-js": "^1.2.8",
+    "node-cron": "^4.2.1",
     "sequelize": "^6.37.7"
   }
 }

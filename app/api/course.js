@@ -25,17 +25,8 @@ class CourseController {
             // اطمینان از اینتیجر بودن قیمت
             courseData.price = parseInt(courseData.price, 10) || 0;
 
-            // suitableFor: اگر نبود، همه ۱ باشد
-            if (!courseData.suitableFor) {
-                courseData.suitableFor = '111111111111';
-            }
-            // اعتبارسنجی suitableFor
-            if (!/^[01]{12}$/.test(courseData.suitableFor)) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'فیلد suitableFor باید دقیقا ۱۲ رقم ۰ یا ۱ باشد'
-                });
-            }
+           
+            
 
             // اعتبارسنجی تگ‌ها (حداکثر ۳ تگ، جدا شده با کاما)
             let tagsArr = [];
@@ -54,11 +45,8 @@ class CourseController {
             const hasAnjomanTag = tagsArr.includes('انجمن');
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let admin = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+                if (req.session.admin.username === admin.username) {
                     isRealAdmin = true;
                 }
             }
@@ -91,7 +79,10 @@ class CourseController {
             }
 
             const course = await models.Course.create(courseData);
-            
+
+            // ثبت لاگ
+            await logUserAction(req, `دوره جدید با عنوان "${courseData.title}" ثبت کرد`);
+
             res.status(201).json({
                 success: true,
                 message: 'دوره با موفقیت ایجاد شد',
@@ -113,7 +104,7 @@ class CourseController {
             const courses = await models.Course.findAll({
                 order: [['createdAt', 'DESC']]
             });
-            
+
             res.json({
                 success: true,
                 data: courses
@@ -133,14 +124,14 @@ class CourseController {
         try {
             const { id } = req.params;
             const course = await models.Course.findByPk(id);
-            
+
             if (!course) {
                 return res.status(404).json({
                     success: false,
                     message: 'دوره مورد نظر یافت نشد'
                 });
             }
-            
+
             res.json({
                 success: true,
                 data: course
@@ -162,7 +153,7 @@ class CourseController {
                 where: { isAvailable: true },
                 order: [['createdAt', 'DESC']]
             });
-            
+
             res.json({
                 success: true,
                 data: courses
@@ -184,7 +175,7 @@ class CourseController {
                 where: { isAvailable: false },
                 order: [['createdAt', 'DESC']]
             });
-            
+
             res.json({
                 success: true,
                 data: courses
@@ -214,11 +205,8 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -255,17 +243,7 @@ class CourseController {
             if (!hadAnjomanTag && hasAnjomanTag && !isRealAdmin && req.session && req.session.admin && req.session.admin.role === 'communityAdmin') {
                 return res.status(403).json({ success: false, message: 'مدیر انجمن نمی‌تواند تگ انجمن را به دوره‌هایی که قبلاً نداشته‌اند اضافه کند.' });
             }
-            // suitableFor: اگر نبود، همه ۱ باشد
-            if (!updateData.suitableFor) {
-                updateData.suitableFor = '111111111111';
-            }
-            // اعتبارسنجی suitableFor
-            if (!/^[01]{12}$/.test(updateData.suitableFor)) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'فیلد suitableFor باید دقیقا ۱۲ رقم ۰ یا ۱ باشد'
-                });
-            }
+           
             // اعتبارسنجی نوع
             if (updateData.type && !['course', 'event', 'competition'].includes(updateData.type)) {
                 return res.status(400).json({
@@ -295,7 +273,10 @@ class CourseController {
                 updateData.location = null;
             }
             await course.update(updateData);
-            
+
+            // ثبت لاگ
+            await logUserAction(req, `دوره با عنوان "${course.title}" را ویرایش کرد`);
+
             res.json({
                 success: true,
                 message: 'دوره با موفقیت بروزرسانی شد',
@@ -316,7 +297,7 @@ class CourseController {
         try {
             const { id } = req.params;
             const { isAvailable, unavailabilityReason } = req.body;
-            
+
             const course = await models.Course.findByPk(id);
             if (!course) {
                 return res.status(404).json({
@@ -327,11 +308,9 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -363,7 +342,7 @@ class CourseController {
                 isAvailable,
                 unavailabilityReason: isAvailable ? null : unavailabilityReason
             });
-            
+
             res.json({
                 success: true,
                 message: `وضعیت دسترسی دوره ${isAvailable ? 'فعال' : 'غیرفعال'} شد`,
@@ -384,7 +363,7 @@ class CourseController {
         try {
             const { id } = req.params;
             const course = await models.Course.findByPk(id);
-            
+
             if (!course) {
                 return res.status(404).json({
                     success: false,
@@ -395,11 +374,9 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -419,7 +396,10 @@ class CourseController {
                 }
             }
             await course.destroy();
-            
+
+            // ثبت لاگ
+            await logUserAction(req, `دوره با عنوان "${course.title}" را حذف کرد`);
+
             res.json({
                 success: true,
                 message: 'دوره با موفقیت حذف شد'
@@ -438,9 +418,9 @@ class CourseController {
     async searchCourses(req, res) {
         try {
             const { query, type, isAvailable, minPrice, maxPrice } = req.query;
-            
+
             let whereClause = {};
-            
+
             // جستجو در عنوان و توضیحات
             if (query) {
                 whereClause[Op.or] = [
@@ -448,29 +428,29 @@ class CourseController {
                     { description: { [Op.like]: `%${query}%` } }
                 ];
             }
-            
+
             // فیلتر بر اساس نوع دوره
             if (type) {
                 whereClause.type = type;
             }
-            
+
             // فیلتر بر اساس وضعیت دسترسی
             if (isAvailable !== undefined) {
                 whereClause.isAvailable = isAvailable === 'true';
             }
-            
+
             // فیلتر بر اساس قیمت
             if (minPrice || maxPrice) {
                 whereClause.price = {};
                 if (minPrice) whereClause.price[Op.gte] = parseInt(minPrice, 10) || 0;
                 if (maxPrice) whereClause.price[Op.lte] = parseInt(maxPrice, 10) || 0;
             }
-            
+
             const courses = await models.Course.findAll({
                 where: whereClause,
                 order: [['createdAt', 'DESC']]
             });
-            
+
             res.json({
                 success: true,
                 data: courses
@@ -546,9 +526,14 @@ class CourseController {
                 requestDate: new Date()
             });
 
-            // ثبت لاگ دانشجو
-            const courseTitle = course ? course.title : `آیدی ${courseId}`;
-            await logUserAction(studentId, 'student', `درخواست ثبت‌نام در دوره ${courseTitle} ثبت شد.`);
+            // ثبت لاگ برای ادمین
+            await logUserAction(req, `درخواست ثبت‌نام دانشجو برای دوره "${course.title}" ثبت کرد`);
+
+            // ثبت لاگ برای دانشجو (اگر دانشجو لاگین کرده باشد)
+            if (req.session && req.session.user && req.session.user.type === 'student' && req.session.user.id == studentId) {
+                // این لاگ برای دانشجو ثبت می‌شود
+                await logUserAction(req, `درخواستت برای دوره "${course.title}" ثبت شد`);
+            }
 
             res.status(201).json({
                 success: true,
@@ -570,7 +555,7 @@ class CourseController {
     async getAllRegistrations(req, res) {
         try {
             const { status, page = 1, limit = 10 } = req.query;
-            
+
             let whereClause = {};
             // فیلتر بر اساس وضعیت
             if (status && ['pending', 'approved', 'rejected'].includes(status)) {
@@ -581,11 +566,9 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -652,11 +635,9 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -708,11 +689,9 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -776,11 +755,9 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -815,7 +792,7 @@ class CourseController {
                 include: [
                     {
                         model: models.Course,
-                        attributes: ['id', 'tags']
+                        attributes: ['id', 'tags', 'capacity', 'isAvailable']
                     }
                 ]
             });
@@ -828,11 +805,9 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -848,13 +823,44 @@ class CourseController {
                     message: 'این درخواست قبلاً تایید یا رد شده است'
                 });
             }
+            // --- ظرفیت دوره ---
+            const course = registration.Course;
+            if (course && typeof course.capacity === 'number') {
+                if (course.capacity > 0) {
+                    course.capacity -= 1;
+                    // اگر ظرفیت به ۰ رسید، دوره غیرفعال شود
+                    if (course.capacity === 0) {
+                        course.isAvailable = false;
+                    }
+                    await course.save();
+                }
+            }
             await registration.update({
                 status: 'approved',
                 approvalDate: new Date(),
                 notes: notes || null
             });
+
+            // ثبت لاگ برای ادمین
+            await logUserAction(req, `درخواست ثبت‌نام دانشجو در دوره "${registration.Course.title}" را تایید کرد`);
+
             // ثبت لاگ برای دانشجو
-            await logUserAction(registration.studentId, 'student', `درخواست ثبت‌نام شما در دوره تایید شد.`);
+            const student = await models.Student.findByPk(registration.studentId);
+            if (student) {
+                // ایجاد یک req موقت برای دانشجو
+                const studentReq = {
+                    session: {
+                        user: {
+                            id: student.id,
+                            firstName: student.firstName,
+                            lastName: student.lastName,
+                            type: 'student'
+                        }
+                    }
+                };
+                await logUserAction(studentReq, `درخواستت برای دوره "${registration.Course.title}" تایید شد`);
+            }
+
             res.json({
                 success: true,
                 message: 'درخواست با موفقیت تایید شد',
@@ -899,11 +905,9 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }
@@ -924,8 +928,27 @@ class CourseController {
                 approvalDate: new Date(),
                 notes: notes
             });
+
+            // ثبت لاگ برای ادمین
+            await logUserAction(req, `درخواست ثبت‌نام دانشجو در دوره "${registration.Course.title}" را رد کرد`);
+
             // ثبت لاگ برای دانشجو
-            await logUserAction(registration.studentId, 'student', `درخواست ثبت‌نام شما در دوره رد شد.`);
+            const student = await models.Student.findByPk(registration.studentId);
+            if (student) {
+                // ایجاد یک req موقت برای دانشجو
+                const studentReq = {
+                    session: {
+                        user: {
+                            id: student.id,
+                            firstName: student.firstName,
+                            lastName: student.lastName,
+                            type: 'student'
+                        }
+                    }
+                };
+                await logUserAction(studentReq, `درخواستت برای دوره "${registration.Course.title}" رد شد`);
+            }
+
             res.json({
                 success: true,
                 message: 'درخواست با موفقیت رد شد',
@@ -963,11 +986,8 @@ class CourseController {
             // بررسی نقش ادمین واقعی
             let isRealAdmin = false;
             if (req.session && req.session.admin && req.session.admin.role === 'admin') {
-                const fs = require('fs');
-                const path = require('path');
-                const adminPath = path.join(__dirname, '../../scripts/admin.json');
-                let adminData = JSON.parse(fs.readFileSync(adminPath, 'utf8'));
-                if (req.session.admin.username === adminData.admin.username) {
+                let adminData = await models.Admin.findOne({ where: { username: req.session.admin.username } });
+                if (req.session.admin.username === adminData.username) {
                     isRealAdmin = true;
                 }
             }

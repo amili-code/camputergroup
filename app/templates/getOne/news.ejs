@@ -24,7 +24,7 @@
             <div class="col-lg-6">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/">خانه</a></li>
+                        <li class="breadcrumb-item"><a href="/aboutUs">درباره ما</a></li>
                         <li class="breadcrumb-item"><a href="/news">اخبار و اطلاعیه‌ها</a></li>
                         <li class="breadcrumb-item active" aria-current="page" id="news-title-breadcrumb">جزئیات خبر</li>
                     </ol>
@@ -52,10 +52,6 @@
                             <button id="poll-btn" class="btn btn-warning btn-lg fw-bold d-none">
                                 <i class="bi bi-clipboard-check me-2"></i>
                                 شرکت در نظرسنجی
-                            </button>
-                            <button id="no-poll-btn" class="btn btn-secondary btn-lg fw-bold d-none" disabled>
-                                <i class="bi bi-info-circle me-2"></i>
-                                نظرسنجی موجود نیست
                             </button>
                         </div>
                     </div>
@@ -267,11 +263,11 @@ async function fetchPollData(newsId) {
                 });
             }
         } else {
-            document.getElementById('no-poll-btn').classList.remove('d-none');
+          
         }
     } catch (error) {
         console.error('Error fetching poll data:', error);
-        document.getElementById('no-poll-btn').classList.remove('d-none');
+       
     }
 }
 

@@ -2,6 +2,7 @@ const { sequelize } = require('./database');
 
 // Import مدل‌ها
 const Student = require('../model/Student')(sequelize);
+const StudentMeta = require('../model/StudentMeta')(sequelize);
 const Teacher = require('../model/Teacher')(sequelize);
 const Course = require('../model/Course')(sequelize);
 const CourseRegistration = require('../model/CourseRegistration')(sequelize);
@@ -13,10 +14,14 @@ const PollVote = require('../model/Poll/PollVote')(sequelize);
 const Community = require('../model/Community')(sequelize);
 const Reservation = require('../model/Reservation')(sequelize);
 const Log = require('../model/Log')(sequelize);
+const { Admin, CommunityAdminMeta } = require('../model/Admin')(sequelize);
+const AboutUsCommunity = require('../model/CommunityMeta')(sequelize);
+const AboutUsTeacher = require('../model/TeacherMeta')(sequelize);
 
 // ثبت مدل‌ها در Sequelize
 const models = {
     Student,
+    StudentMeta,
     Teacher,
     Course,
     CourseRegistration,
@@ -27,7 +32,11 @@ const models = {
     PollVote,
     Community,
     Reservation,
-    Log
+    Log,
+    Admin,
+    CommunityAdminMeta,
+    AboutUsCommunity,
+    AboutUsTeacher
 };
 
 // تعریف روابط بین مدل‌ها (cascade delete)
@@ -53,5 +62,11 @@ Student.hasMany(Reservation, { foreignKey: 'studentId', onDelete: 'CASCADE' });
 Reservation.belongsTo(Student, { foreignKey: 'studentId' });
 Teacher.hasMany(Reservation, { foreignKey: 'teacherId', onDelete: 'CASCADE' });
 Reservation.belongsTo(Teacher, { foreignKey: 'teacherId' });
+Teacher.hasMany(AboutUsTeacher, { foreignKey: 'teacherId', as: 'metas' });
+AboutUsTeacher.belongsTo(Teacher, { foreignKey: 'teacherId', as: 'teacher' });
+
+// روابط مربوط به StudentMeta
+Student.hasOne(StudentMeta, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+StudentMeta.belongsTo(Student, { foreignKey: 'studentId', as: 'Student' });
 
 module.exports = { models, sequelize }; 

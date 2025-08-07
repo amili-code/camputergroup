@@ -66,6 +66,13 @@ module.exports = (sequelize) => {
                 isNumeric: true
             }
         },
+        // عکس پروفایل
+        profileImage: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            field: 'profile_image',
+            comment: 'مسیر عکس پروفایل دانشجو'
+        },
         // وضعیت فارغ التحصیلی
         isGraduated: {
             type: DataTypes.BOOLEAN,
@@ -85,6 +92,14 @@ module.exports = (sequelize) => {
         hooks: {
         }
     });
+
+    // تعریف رابطه با مدل StudentMeta
+    Student.associate = (models) => {
+        Student.hasOne(models.StudentMeta, {
+            foreignKey: 'studentId',
+            as: 'StudentMeta'
+        });
+    };
 
     return Student;
 };

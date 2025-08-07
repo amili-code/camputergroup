@@ -1,96 +1,263 @@
-<%- include('./layout/header.ejs') %>
+ <%- include('../getAll/layout/header.ejs') %>
 
 <div class="container py-5">
-    <h2 class="section-title"><i class="bi bi-person-circle me-2"></i>پروفایل استاد</h2>
-    <div id="profile-section"></div>
-    <div id="schedule-section" class="my-4"></div>
-    <div id="edit-section" class="my-4"></div>
-    <div id="reservations-section" class="my-4"></div>
-    <div id="logs-section" class="my-4">
-        <div class="card shadow-sm">
-                <div class="card-body">
-                    <h4 class="fw-bold mb-3"><i class="bi bi-list-task me-2"></i>فعالیت‌های من</h4>
-                    <% if (logs && logs.length) { %>
-                        <ul class="list-group list-group-flush">
-                            <% logs.forEach(log => { %>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span><i class="bi bi-dot text-primary"></i> <%= log.description %></span>
-                                    <span class="text-muted small"><%= log.createdAt.toLocaleString('fa-IR') %></span>
-                                </li>
-                            <% }) %>
-                        </ul>
-                    <% } else { %>
-                        <div class="alert alert-info mb-0">هیچ فعالیتی ثبت نشده است.</div>
-                    <% } %>
-                </div>
-            </div>
-    </div>
-</div>
-
-<!-- Modal for edit profile -->
-<div class="modal fade" id="editProfileModal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">ویرایش اطلاعات پروفایل</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-      <div class="modal-body">
-        <form id="edit-profile-form"></form>
-                    </div>
-                </div>
-  </div>
-</div>
-
-<!-- Modal for edit schedule -->
-<div class="modal fade" id="editScheduleModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">ویرایش برنامه هفتگی</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <form id="edit-schedule-form"></form>
-            </div>
+    <h2 class="section-title"><i class="bi bi-person-circle me-2"></i>پنل استاد</h2>
+    <ul class="nav nav-tabs mb-4" id="teacherTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">پروفایل</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab">برنامه هفتگی</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="requests-tab" data-bs-toggle="tab" data-bs-target="#requests" type="button" role="tab">درخواست‌ها</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">فعالیت‌ها</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="blog-tab" data-bs-toggle="tab" data-bs-target="#blog" type="button" role="tab">وبلاگ من</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="addnews-tab" data-bs-toggle="tab" data-bs-target="#addnews" type="button" role="tab">افزودن اخبار</button>
+        </li>
+    </ul>
+    <div class="tab-content" id="teacherTabContent">
+        <!-- Profile Tab -->
+        <div class="tab-pane fade show active" id="profile" role="tabpanel">
+            <div id="profile-section"></div>
+        </div>
+        <!-- Schedule Tab -->
+        <div class="tab-pane fade" id="schedule" role="tabpanel">
+            <div id="schedule-section"></div>
+        </div>
+        <!-- Requests Tab -->
+        <div class="tab-pane fade" id="requests" role="tabpanel">
+            <div id="reservations-section"></div>
+        </div>
+        <!-- Logs Tab -->
+        <div class="tab-pane fade" id="logs" role="tabpanel">
+            <div id="logs-section"></div>
+        </div>
+        <!-- Blog Tab -->
+        <div class="tab-pane fade" id="blog" role="tabpanel">
+            <div id="blog-section"></div>
+        </div>
+        <!-- Add News Tab -->
+        <div class="tab-pane fade" id="addnews" role="tabpanel">
+            <div id="addnews-section"></div>
         </div>
     </div>
 </div>
 
+<!-- Modals for profile/schedule (reused) -->
+<div class="modal fade" id="editProfileModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">ویرایش اطلاعات پروفایل</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="edit-profile-form"></form></div></div></div></div>
+<div class="modal fade" id="editScheduleModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">ویرایش برنامه هفتگی</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="edit-schedule-form"></form></div></div></div></div>
+
+<!-- Modal for Blog CRUD -->
+<div class="modal fade" id="blogModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="blogModalLabel"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="blog-form"></form></div></div></div></div>
+<div class="modal fade" id="deleteBlogModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">تایید حذف</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>آیا از حذف این بخش اطمینان دارید؟</p><p class="text-danger"><small>این عملیات قابل بازگشت نیست.</small></p></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button><button type="button" class="btn btn-danger" id="confirmDeleteBlog">حذف</button></div></div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
 <script>
+// --- Shared State ---
 const days = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
 const hours = ['8-10', '10-12', '12-14', '14-16', '16-18', '18-20'];
 let teacherId = null;
 let teacherData = null;
 let isEditable = false;
+let blogSections = [];
+let currentBlogId = null;
+let sortableInstance = null;
 
+// --- Poll Management Functions ---
+let pollQuestions = [];
+
+function togglePollSection() {
+    const newsType = document.getElementById('newsType')?.value;
+    const pollSection = document.getElementById('pollSection');
+    if (pollSection) {
+        if (newsType === 'announcement') {
+            pollSection.style.display = 'block';
+        } else {
+            pollSection.style.display = 'none';
+            // پاک کردن نظرسنجی‌ها اگر نوع خبر است
+            pollQuestions = [];
+            renderPollQuestions();
+        }
+    }
+}
+
+async function loadPollQuestions(newsId) {
+    try {
+        const response = await apiRequest(`/news/${newsId}/poll`, 'GET');
+        if (response && response.success && Array.isArray(response.data)) {
+            pollQuestions = response.data.map(q => ({
+                question: q.question,
+                options: q.options.map(o => o.optionText),
+                pollQuestionId: q.id
+            }));
+        } else {
+            pollQuestions = [];
+        }
+        renderPollQuestions();
+    } catch (error) {
+        pollQuestions = [];
+        renderPollQuestions();
+    }
+}
+
+function addPollQuestion() {
+    pollQuestions.push({
+        question: '',
+        options: [''],
+        pollQuestionId: null
+    });
+    renderPollQuestions();
+}
+
+function removePollQuestion(index) {
+    // بررسی اینکه آیا سوال در دیتابیس ذخیره شده یا نه
+    const question = pollQuestions[index];
+    if (question && question.pollQuestionId) {
+        // اگر سوال در دیتابیس ذخیره شده، ابتدا از سرور حذف کن
+        apiRequest(`/news/poll/${question.pollQuestionId}`, 'DELETE')
+            .then(response => {
+                if (response && response.success) {
+                    // حذف از آرایه محلی
+                    pollQuestions.splice(index, 1);
+                    renderPollQuestions();
+                } else {
+                    alert('خطا در حذف سوال از سرور');
+                }
+            })
+            .catch(error => {
+                console.error('خطا در حذف سوال:', error);
+                alert('خطا در حذف سوال');
+            });
+    } else {
+        // اگر سوال فقط در حافظه محلی است، مستقیماً حذف کن
+        pollQuestions.splice(index, 1);
+        renderPollQuestions();
+    }
+}
+
+function updatePollQuestion(index, value) {
+    pollQuestions[index].question = value;
+}
+
+function addPollOption(questionIndex) {
+    pollQuestions[questionIndex].options.push('');
+    renderPollQuestions();
+}
+
+function removePollOption(questionIndex, optionIndex) {
+    // بررسی اینکه آیا حداقل یک گزینه باقی می‌ماند
+    if (pollQuestions[questionIndex].options.length <= 1) {
+        alert('حداقل یک گزینه باید وجود داشته باشد');
+        return;
+    }
+    
+    pollQuestions[questionIndex].options.splice(optionIndex, 1);
+    renderPollQuestions();
+}
+
+function updatePollOption(questionIndex, optionIndex, value) {
+    pollQuestions[questionIndex].options[optionIndex] = value;
+}
+
+function renderPollQuestions() {
+    const container = document.getElementById('pollQuestionsContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (pollQuestions.length === 0) {
+        container.innerHTML = '<div class="text-muted text-center py-3">هیچ سوال نظرسنجی‌ای اضافه نشده است</div>';
+        return;
+    }
+    
+    pollQuestions.forEach((question, qIndex) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'card mb-3';
+        questionDiv.innerHTML = `
+            <div class='card-body'>
+                <div class='d-flex justify-content-between align-items-center mb-2'>
+                    <h6 class='mb-0'>سوال ${qIndex + 1}</h6>
+                    <button type='button' class='btn btn-danger btn-sm' onclick='removePollQuestion(${qIndex})'>
+                        <i class='bi bi-trash'></i> حذف سوال
+                    </button>
+                </div>
+                <div class='mb-3'>
+                    <input type='text' class='form-control' placeholder='متن سوال' 
+                           value='${question.question || ''}' 
+                           onchange='updatePollQuestion(${qIndex}, this.value)'>
+                </div>
+                <div class='mb-2'>
+                    <label class='form-label'>گزینه‌ها:</label>
+                    <div id='poll-options-${qIndex}'>
+                        ${(question.options || ['']).map((option, oIndex) => `
+                            <div class='input-group mb-1'>
+                                <input type='text' class='form-control' placeholder='گزینه ${oIndex + 1}' 
+                                       value='${option || ''}' 
+                                       onchange='updatePollOption(${qIndex}, ${oIndex}, this.value)'>
+                                <button type='button' class='btn btn-outline-danger' 
+                                        onclick='removePollOption(${qIndex}, ${oIndex})' 
+                                        ${(question.options || []).length <= 1 ? 'disabled' : ''}>
+                                    <i class='bi bi-x'></i>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button type='button' class='btn btn-outline-primary btn-sm' 
+                            onclick='addPollOption(${qIndex})'>
+                        <i class='bi bi-plus'></i> افزودن گزینه
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(questionDiv);
+    });
+}
+
+// --- End Poll Management Functions ---
+
+// --- Tab Logic ---
+document.addEventListener('DOMContentLoaded', function() {
+    fetchTeacherData();
+    // Blog tab: load when shown
+    document.getElementById('blog-tab').addEventListener('shown.bs.tab', loadBlogSections);
+    // Requests tab: load when shown
+    document.getElementById('requests-tab').addEventListener('shown.bs.tab', fetchReservations);
+    // Logs tab: load when shown
+    document.getElementById('logs-tab').addEventListener('shown.bs.tab', renderLogs);
+    // Add News tab: load when shown
+    document.getElementById('addnews-tab').addEventListener('shown.bs.tab', loadAddNewsTab);
+});
+
+// --- Profile ---
 async function fetchTeacherData() {
-    // گرفتن آیدی دبیر از session یا url یا هر روش مناسب
-    const resAuth = await fetch('/api/auth/me');
-    const authData = await resAuth.json();
-    if (!authData.success || !authData.data || !authData.data.user) {
+    const resAuth = await apiRequest('/auth/me');
+    if (!resAuth || !resAuth.success || !resAuth.data || !resAuth.data.user) {
         document.getElementById('profile-section').innerHTML = '<div class="alert alert-danger">دسترسی غیرمجاز</div>';
         return;
     }
-    const user = authData.data.user;
+    const user = resAuth.data.user;
     teacherId = user.type === 'teacher' ? user.id : (new URLSearchParams(window.location.search).get('id') || user.id);
-
-    // گرفتن اطلاعات دبیر
-    const res = await fetch(`/api/teacher/${teacherId}`);
-    const data = await res.json();
-    if (!data.success) {
+    // Get teacher info
+    const res = await apiRequest(`/teacher/${teacherId}`);
+    if (!res || !res.success) {
         document.getElementById('profile-section').innerHTML = '<div class="alert alert-danger">دسترسی غیرمجاز یا خطا در دریافت اطلاعات</div>';
         return;
     }
-    teacherData = data.data;
-    // فقط ادمین یا خود دبیر اجازه ویرایش دارد
+    teacherData = res.data;
     isEditable = (user.type === 'teacher' && user.id == teacherId) || (user.type === 'admin');
     renderProfile();
     renderSchedule();
-    if (isEditable) renderEditButtons();
+    renderLogs();
     if (isEditable) fetchReservations();
 }
-
 function renderProfile() {
     const t = teacherData;
     document.getElementById('profile-section').innerHTML = `
@@ -100,46 +267,44 @@ function renderProfile() {
           <h4 class="fw-bold mb-0"><i class="bi bi-person me-2"></i>اطلاعات شخصی</h4>
           ${isEditable ? `<button class="btn btn-primary btn-sm" onclick="showEditProfileModal()"><i class="bi bi-pencil"></i> ویرایش</button>` : ''}
         </div>
-        <div>
-          <div class="row">
-            <div class="col-md-6">
-              <p><strong>نام:</strong> ${t.firstName}</p>
-              <p><strong>نام خانوادگی:</strong> ${t.lastName}</p>
-              <p><strong>شماره تلفن:</strong> ${t.phone}</p>
-            </div>
-            <div class="col-md-6">
-              <p><strong>دروس تدریس:</strong> ${t.teachingSubjects || 'تعریف نشده'}</p>
-              <p><strong>توضیحات:</strong> ${t.description || 'توضیحی ثبت نشده'}</p>
-            </div>
-          </div>
-        </div>
+        <div><div class="row"><div class="col-md-6"><p><strong>نام:</strong> ${t.firstName}</p><p><strong>نام خانوادگی:</strong> ${t.lastName}</p><p><strong>شماره تلفن:</strong> ${t.phone}</p></div><div class="col-md-6"><p><strong>دروس تدریس:</strong> ${t.teachingSubjects || 'تعریف نشده'}</p><p><strong>توضیحات:</strong> ${t.description || 'توضیحی ثبت نشده'}</p></div></div></div>
       </div>
     </div>`;
 }
+function showEditProfileModal() {
+    const t = teacherData;
+    const form = document.getElementById('edit-profile-form');
+    form.innerHTML = `
+      <div class="mb-3"><label class="form-label">نام</label><input type="text" class="form-control" name="firstName" value="${t.firstName || ''}" required></div>
+      <div class="mb-3"><label class="form-label">نام خانوادگی</label><input type="text" class="form-control" name="lastName" value="${t.lastName || ''}" required disabled></div>
+      <div class="mb-3"><label class="form-label">شماره تلفن</label><input type="tel" class="form-control" name="phone" value="${t.phone || ''}" required></div>
+      <div class="mb-3"><label class="form-label">دروس تدریس (با کاما جدا کنید)</label><input type="text" class="form-control" name="teachingSubjects" value="${t.teachingSubjects || ''}"></div>
+      <div class="mb-3"><label class="form-label">توضیحات</label><textarea class="form-control" name="description" rows="3">${t.description || ''}</textarea></div>
+      <div class="mb-3"><label class="form-label">رمز عبور جدید (اختیاری)</label><input type="password" class="form-control" name="password"></div>
+      <div class="d-flex gap-2"><button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> ذخیره تغییرات</button></div>
+    `;
+    form.onsubmit = async function(e) {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const body = {};
+        for (const [k, v] of fd.entries()) if (v) body[k] = v;
+        const res = await apiRequest(`/teacher/${teacherId}`, 'PUT', body);
+        if (res && res.success) {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('editProfileModal')).hide();
+            fetchTeacherData();
+        } else {
+            alert(res?.message || 'خطا در بروزرسانی اطلاعات');
+        }
+    };
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('editProfileModal')).show();
+}
 
+// --- Schedule ---
 function renderSchedule() {
     const schedule = teacherData.weeklySchedule;
-    let html = `<div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h4 class="fw-bold mb-0"><i class="bi bi-calendar-week me-2"></i>برنامه هفتگی</h4>
-          ${isEditable ? `<button class="btn btn-primary btn-sm" onclick="showEditScheduleModal()"><i class="bi bi-pencil"></i> ویرایش برنامه</button>` : ''}
-        </div>
-        <div class="table-responsive">
-          <table class="table table-bordered text-center">
-            <thead class="table-dark">
-              <tr>
-                <th>ساعت</th>
-                <th>شنبه</th>
-                <th>یکشنبه</th>
-                <th>دوشنبه</th>
-                <th>سه‌شنبه</th>
-                <th>چهارشنبه</th>
-                <th>پنج‌شنبه</th>
-                <th>جمعه</th>
-              </tr>
-            </thead>
-            <tbody>`;
+    let html = `<div class="card shadow-sm mb-4"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-3"><h4 class="fw-bold mb-0"><i class="bi bi-calendar-week me-2"></i>برنامه هفتگی</h4>${isEditable ? `<button class="btn btn-primary btn-sm" onclick="showEditScheduleModal()"><i class="bi bi-pencil"></i> ویرایش برنامه</button>` : ''}</div><div class="table-responsive"><table class="table table-bordered text-center"><thead class="table-dark"><tr><th>ساعت</th>`;
+    for (let d = 0; d < 7; d++) html += `<th>${days[d]}</th>`;
+    html += `</tr></thead><tbody>`;
     for (let hour = 0; hour < 6; hour++) {
         html += `<tr><td class="table-secondary fw-bold">${hours[hour]}</td>`;
         for (let day = 0; day < 7; day++) {
@@ -154,64 +319,6 @@ function renderSchedule() {
     html += `</tbody></table></div></div></div>`;
     document.getElementById('schedule-section').innerHTML = html;
 }
-
-function renderEditButtons() {
-    // دکمه‌های ویرایش در پروفایل و برنامه هفتگی اضافه شده‌اند
-}
-
-function showEditProfileModal() {
-    const t = teacherData;
-    const form = document.getElementById('edit-profile-form');
-    form.innerHTML = `
-      <div class="mb-3">
-        <label class="form-label">نام</label>
-        <input type="text" class="form-control" name="firstName" value="${t.firstName || ''}" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">نام خانوادگی</label>
-        <input type="text" class="form-control" name="lastName" value="${t.lastName || ''}" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">شماره تلفن</label>
-        <input type="tel" class="form-control" name="phone" value="${t.phone || ''}" required>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">دروس تدریس (با کاما جدا کنید)</label>
-        <input type="text" class="form-control" name="teachingSubjects" value="${t.teachingSubjects || ''}">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">توضیحات</label>
-        <textarea class="form-control" name="description" rows="3">${t.description || ''}</textarea>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">رمز عبور جدید (اختیاری)</label>
-        <input type="password" class="form-control" name="password">
-      </div>
-      <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> ذخیره تغییرات</button>
-      </div>
-    `;
-    form.onsubmit = async function(e) {
-        e.preventDefault();
-        const fd = new FormData(form);
-        const body = {};
-        for (const [k, v] of fd.entries()) if (v) body[k] = v;
-        const res = await fetch(`/api/teacher/${teacherId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        const result = await res.json();
-        if (result.success) {
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('editProfileModal')).hide();
-            fetchTeacherData();
-        } else {
-            alert(result.message || 'خطا در بروزرسانی اطلاعات');
-        }
-    };
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('editProfileModal')).show();
-}
-
 function showEditScheduleModal() {
     const schedule = teacherData.weeklySchedule;
     const form = document.getElementById('edit-schedule-form');
@@ -238,99 +345,459 @@ function showEditScheduleModal() {
                 newSchedule += checkbox.checked ? '1' : '0';
             }
         }
-        const res = await fetch(`/api/teacher/${teacherId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ weeklySchedule: newSchedule })
-        });
-        const result = await res.json();
-        if (result.success) {
+        const res = await apiRequest(`/teacher/${teacherId}`, 'PUT', { weeklySchedule: newSchedule });
+        if (res && res.success) {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('editScheduleModal')).hide();
             fetchTeacherData();
         } else {
-            alert(result.message || 'خطا در بروزرسانی برنامه هفتگی');
+            alert(res?.message || 'خطا در بروزرسانی برنامه هفتگی');
         }
     };
     bootstrap.Modal.getOrCreateInstance(document.getElementById('editScheduleModal')).show();
 }
 
+// --- Requests ---
 async function fetchReservations() {
-    if (!isEditable) return; // فقط دبیر خودش ببیند
+    if (!isEditable) return;
     document.getElementById('reservations-section').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">در حال بارگذاری درخواست‌ها...</div></div>';
-    const res = await fetch(`/api/reservations/teacher/${teacherId}`);
-    const data = await res.json();
-    if (data.success && data.data.length) {
+    const res = await apiRequest(`/reservations/teacher/${teacherId}`);
+    if (res && res.success && res.data.length) {
         let html = '<div class="card shadow-sm mb-4"><div class="card-body"><h4 class="fw-bold mb-3"><i class="bi bi-calendar-check me-2"></i>درخواست‌های رزرو وقت دانشجویان</h4><ul class="list-group">';
-        data.data.forEach(r => {
-                html += `<li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center">
-                    <div>
-                        <i class="bi bi-person me-1"></i> <b>${r.Student ? r.Student.firstName + ' ' + r.Student.lastName : ''}</b>
-                        <span class="badge bg-secondary ms-2">${r.status === 'pending' ? 'در انتظار' : r.status === 'approved' ? 'تایید شده' : 'رد شده'}</span><br>
-                    <small class="text-muted">
-                        <i class="bi bi-calendar me-1"></i> ${r.dayName} ${r.hourRange}<br>
-                        <i class="bi bi-clock me-1"></i> ${new Date(r.createdAt).toLocaleString('fa-IR')}
-                    </small>
-                    ${r.description ? `<br><small class="text-info">${r.description}</small>` : ''}
-                    </div>
-                    <div class="mt-2 mt-md-0">
-                        ${r.status === 'pending' ? `
-                        <button class="btn btn-success btn-sm me-2" onclick="approveReservation(${r.id})"><i class="bi bi-check-circle"></i> تایید</button>
-                        <button class="btn btn-danger btn-sm" onclick="rejectReservation(${r.id})"><i class="bi bi-x-circle"></i> رد</button>
-                        ` : ''}
-                    </div>
-                </li>`;
-            });
+        res.data.forEach(r => {
+            html += `<li class="list-group-item d-flex flex-column flex-md-row justify-content-between align-items-md-center"><div><i class="bi bi-person me-1"></i> <b>${r.Student ? r.Student.firstName + ' ' + r.Student.lastName : ''}</b><span class="badge bg-secondary ms-2">${r.status === 'pending' ? 'در انتظار' : r.status === 'approved' ? 'تایید شده' : 'رد شده'}</span><br><small class="text-muted"><i class="bi bi-calendar me-1"></i> ${r.dayName} ${r.hourRange}<br><i class="bi bi-clock me-1"></i> ${new Date(r.createdAt).toLocaleString('fa-IR')}</small>${r.description ? `<br><small class="text-info">${r.description}</small>` : ''}</div><div class="mt-2 mt-md-0">${r.status === 'pending' ? `<button class="btn btn-success btn-sm me-2" onclick="approveReservation(${r.id})"><i class="bi bi-check-circle"></i> تایید</button><button class="btn btn-danger btn-sm" onclick="rejectReservation(${r.id})"><i class="bi bi-x-circle"></i> رد</button>` : ''}</div></li>`;
+        });
         html += '</ul></div></div>';
         document.getElementById('reservations-section').innerHTML = html;
-        } else {
+    } else {
         document.getElementById('reservations-section').innerHTML = '<div class="card shadow-sm mb-4"><div class="card-body"><h4 class="fw-bold mb-3"><i class="bi bi-calendar-check me-2"></i>درخواست‌های رزرو وقت دانشجویان</h4><div class="alert alert-info">درخواستی وجود ندارد.</div></div></div>';
     }
 }
-
 async function approveReservation(id) {
     if (!confirm('آیا از تایید این درخواست مطمئن هستید؟')) return;
-    const res = await fetch(`/api/reservation/${id}/approve`, { method: 'PATCH' });
-    const result = await res.json();
-        if (result.success) {
+    const res = await apiRequest(`/reservation/${id}/approve`, 'PATCH');
+    if (res && res.success) {
         fetchReservations();
-            alert('درخواست تایید شد.');
-        } else {
-            alert(result.message || 'خطا در تایید درخواست');
-        }
+        alert('درخواست تایید شد.');
+    } else {
+        alert(res?.message || 'خطا در تایید درخواست');
+    }
 }
 async function rejectReservation(id) {
     if (!confirm('آیا از رد این درخواست مطمئن هستید؟')) return;
-    const res = await fetch(`/api/reservation/${id}/reject`, { method: 'PATCH' });
-    const result = await res.json();
-        if (result.success) {
+    const res = await apiRequest(`/reservation/${id}/reject`, 'PATCH');
+    if (res && res.success) {
         fetchReservations();
-            alert('درخواست رد شد.');
-        } else {
-            alert(result.message || 'خطا در رد درخواست');
-        }
+        alert('درخواست رد شد.');
+    } else {
+        alert(res?.message || 'خطا در رد درخواست');
+    }
 }
 
-document.addEventListener('DOMContentLoaded', fetchTeacherData);
+// --- Logs ---
+async function renderLogs() {
+    try {
+        const res = await apiRequest(`/logs/teacher/${teacherId}`);
+        let html = '<div class="card shadow-sm"><div class="card-body"><h4 class="fw-bold mb-3"><i class="bi bi-list-task me-2"></i>فعالیت‌های من</h4>';
+        if (res && res.success && res.data.length) {
+            html += '<ul class="list-group list-group-flush">';
+            res.data.forEach(log => {
+                html += `<li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="bi bi-dot text-primary"></i> ${log.description}</span><span class="text-muted small">${new Date(log.createdAt).toLocaleString('fa-IR')}</span></li>`;
+            });
+            html += '</ul>';
+        } else {
+            html += '<div class="alert alert-info mb-0">هیچ فعالیتی ثبت نشده است.</div>';
+        }
+        html += '</div></div>';
+        document.getElementById('logs-section').innerHTML = html;
+    } catch (error) {
+        document.getElementById('logs-section').innerHTML = '<div class="card shadow-sm"><div class="card-body"><h4 class="fw-bold mb-3"><i class="bi bi-list-task me-2"></i>فعالیت‌های من</h4><div class="alert alert-danger mb-0">خطا در دریافت فعالیت‌ها</div></div></div>';
+    }
+}
+
+// --- Blog (Personal About) ---
+async function loadBlogSections() {
+    document.getElementById('blog-section').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info" role="status"></div><div class="mt-2">در حال بارگذاری اطلاعات...</div></div>';
+    try {
+        const response = await apiRequest(`/teacher-meta/${teacherId}`);
+        if (!response || !response.success || !Array.isArray(response.data) || response.data.length === 0) {
+            document.getElementById('blog-section').innerHTML = "<div class='mb-4 text-end'><button class='btn btn-success' onclick='showAddBlogModal()'><i class='bi bi-plus-circle me-2'></i>افزودن بخش جدید</button></div>";
+            blogSections = [];
+            return;
+        }
+        blogSections = response.data;
+        renderBlogSections();
+        if (isEditable) initializeSortable();
+    } catch (e) {
+        document.getElementById('blog-section').innerHTML = '<div class="col-12 text-center"><div class="alert alert-danger"><i class="bi bi-x-circle"></i> خطا در دریافت اطلاعات.</div></div>';
+    }
+}
+function renderBlogSections() {
+    let html = '';
+    if (isEditable) {
+        html += `<div class='mb-4 text-end'><button class='btn btn-success' onclick='showAddBlogModal()'><i class='bi bi-plus-circle me-2'></i>افزودن بخش جدید</button></div>`;
+    }
+    html += `<div id="blog-sections-container">`;
+    if (blogSections.length === 0) {
+        html += `<div class='mb-4 text-end'><button class='btn btn-success' onclick='showAddBlogModal()'><i class='bi bi-plus-circle me-2'></i>افزودن بخش جدید</button></div>`;
+    }
+    blogSections.forEach(section => {
+        let content = '';
+        if (section.type === 'text') {
+            content = `<div class='p-4 bg-light rounded shadow-sm mb-2'><i class='bi bi-file-text me-2'></i>${section.textContent || ''}</div>`;
+        } else if (section.type === 'image') {
+            content = `<div class='text-center mb-2'><img src='${section.imagePath}' alt='تصویر' class='img-fluid rounded shadow' style='max-height:320px;'></div>`;
+        } else if (section.type === 'file') {
+            const fileName = section.filePath ? section.filePath.split('/').pop() : 'فایل';
+            content = `<div class='p-4 bg-warning bg-opacity-10 rounded shadow-sm text-center mb-2'><i class='bi bi-file-earmark-arrow-down fs-1 mb-2'></i><br><a href='${section.filePath}' target='_blank' download class='fw-bold text-warning'><i class='bi bi-download me-2'></i>دانلود ${fileName}</a></div>`;
+        }
+        html += `<div class='col-12 col-md-10 col-lg-8 mx-auto blog-section-item' data-id="${section.id}"><div class='card about-section-card mb-4'><div class='card-body'>${content}${section.description ? `<div class='about-section-description mt-3'>${section.description}</div>` : ''}${isEditable ? `<div class='mt-3 d-flex gap-2'><button class='btn btn-outline-primary btn-sm' onclick='showEditBlogModal(${section.id})'><i class='bi bi-pencil'></i> ویرایش</button><button class='btn btn-outline-danger btn-sm' onclick='showDeleteBlogModal(${section.id})'><i class='bi bi-trash'></i> حذف</button><button class='btn btn-outline-${section.isPublished ? 'warning' : 'success'} btn-sm' onclick='togglePublishBlog(${section.id})'><i class='bi bi-${section.isPublished ? 'eye-slash' : 'eye'}'></i> ${section.isPublished ? 'عدم انتشار' : 'انتشار'}</button></div>` : ''}</div></div></div>`;
+    });
+    html += `</div>`;
+    document.getElementById('blog-section').innerHTML = html;
+}
+function initializeSortable() {
+    const container = document.getElementById('blog-sections-container');
+    if (sortableInstance) {
+        sortableInstance.destroy();
+    }
+    
+    sortableInstance = new Sortable(container, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        onEnd: function(evt) {
+            updateBlogOrder();
+        }
+    });
+}
+async function updateBlogOrder() {
+    const items = document.querySelectorAll('.blog-section-item');
+    const newOrder = [];
+    
+    items.forEach((item, index) => {
+        const id = parseInt(item.dataset.id);
+        newOrder.push({ id, order: index });
+    });
+    
+    try {
+        const response = await apiRequest(`/teacher-meta/${teacherId}/reorder`, 'PATCH', { sections: newOrder });
+        if (response && response.success) {
+            showSuccessAlert('ترتیب با موفقیت تغییر کرد');
+            loadBlogSections();
+        }
+    } catch (error) {
+        showErrorAlert('خطا در تغییر ترتیب');
+    }
+}
+async function togglePublishBlog(id) {
+    try {
+        const response = await apiRequest(`/teacher-meta/${id}/toggle-publish`, 'PATCH');
+        if (response && response.success) {
+            showSuccessAlert(response.message);
+            loadBlogSections();
+        } else {
+            showErrorAlert(response?.message || 'خطا در تغییر وضعیت انتشار');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در تغییر وضعیت انتشار');
+    }
+}
+function showAddBlogModal() {
+    currentBlogId = null;
+    showBlogModal('افزودن بخش جدید', {});
+}
+function showEditBlogModal(id) {
+    const section = blogSections.find(s => s.id === id);
+    currentBlogId = id;
+    showBlogModal('ویرایش بخش', section);
+}
+function showBlogModal(title, section) {
+    document.getElementById('blogModalLabel').innerHTML = title;
+    const form = document.getElementById('blog-form');
+    form.innerHTML = `
+        <div class='mb-3'><label class='form-label'>نوع محتوا</label><select class='form-select' id='blogType' name='type' required onchange='toggleBlogContentFields()'><option value=''>انتخاب کنید</option><option value='text' ${section.type === 'text' ? 'selected' : ''}>متن</option><option value='image' ${section.type === 'image' ? 'selected' : ''}>تصویر</option><option value='file' ${section.type === 'file' ? 'selected' : ''}>فایل</option></select></div>
+        <div class='mb-3'><label class='form-label'>توضیحات (اختیاری)</label><textarea class='form-control' id='blogDescription' name='description' rows='2'>${section.description || ''}</textarea></div>
+        <div id='blogTextContentField' class='mb-3' style='display:${section.type === 'text' ? 'block' : 'none'}'><label class='form-label'>محتوای متنی</label><textarea class='form-control' id='blogTextContent' name='textContent' rows='6'>${section.textContent || ''}</textarea></div>
+        <div id='blogFileUploadField' class='mb-3' style='display:${section.type === 'image' || section.type === 'file' ? 'block' : 'none'}'><label class='form-label'>انتخاب فایل</label><input type='file' class='form-control' id='blogFile' name='file'></div>
+        <div class='d-flex gap-2 justify-content-end mt-4'>
+            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>انصراف</button>
+            <button type='submit' class='btn btn-success'><i class='bi bi-check-circle me-2'></i>ذخیره</button>
+        </div>
+    `;
+    form.onsubmit = async function(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        const type = document.getElementById('blogType').value;
+        const description = document.getElementById('blogDescription').value;
+        const textContent = document.getElementById('blogTextContent') ? document.getElementById('blogTextContent').value : '';
+        const file = document.getElementById('blogFile') ? document.getElementById('blogFile').files[0] : null;
+        if (!type) { alert('لطفاً نوع محتوا را انتخاب کنید'); return; }
+        if (type === 'text' && !textContent.trim()) { alert('لطفاً محتوای متنی را وارد کنید'); return; }
+        if ((type === 'image' || type === 'file') && !file && !currentBlogId) { alert('لطفاً فایل را انتخاب کنید'); return; }
+        formData.append('type', type);
+        formData.append('description', description);
+        if (type === 'text') formData.append('textContent', textContent);
+        if (file) formData.append('file', file);
+        let url = currentBlogId ? `/teacher-meta/${currentBlogId}` : '/teacher-meta';
+        let method = currentBlogId ? 'PUT' : 'POST';
+        const res = await apiRequest(url, method, formData, true);
+        if (res && res.success) {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('blogModal')).hide();
+            loadBlogSections();
+        } else {
+            alert(res?.message || 'خطا در ذخیره بخش');
+        }
+    };
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('blogModal')).show();
+}
+function toggleBlogContentFields() {
+    const type = document.getElementById('blogType').value;
+    document.getElementById('blogTextContentField').style.display = type === 'text' ? 'block' : 'none';
+    document.getElementById('blogFileUploadField').style.display = (type === 'image' || type === 'file') ? 'block' : 'none';
+}
+function showDeleteBlogModal(id) {
+    currentBlogId = id;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteBlogModal')).show();
+    document.getElementById('confirmDeleteBlog').onclick = async function() {
+        const res = await apiRequest(`/teacher-meta/${currentBlogId}`, 'DELETE');
+        if (res && res.success) {
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteBlogModal')).hide();
+            loadBlogSections();
+        } else {
+            alert(res?.message || 'خطا در حذف بخش');
+        }
+    };
+}
+
+// --- Add News Tab ---
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('addnews-tab').addEventListener('shown.bs.tab', loadAddNewsTab);
+});
+async function loadAddNewsTab() {
+    document.getElementById('addnews-section').innerHTML = '<div class="text-center py-5"><div class="spinner-border text-info" role="status"></div><div class="mt-2">در حال بارگذاری اخبار...</div></div>';
+    const resAuth = await apiRequest('/auth/me');
+    if (!resAuth || !resAuth.success || !resAuth.data || !resAuth.data.user) {
+        document.getElementById('addnews-section').innerHTML = '<div class="alert alert-danger">دسترسی غیرمجاز</div>';
+        return;
+    }
+    const user = resAuth.data.user;
+    let writer = user.type === 'teacher' ? user.lastName : user.username;
+    const res = await apiRequest('/news', 'GET');
+    if (!res || !res.success) {
+        document.getElementById('addnews-section').innerHTML = '<div class="alert alert-danger">خطا در دریافت اخبار</div>';
+        return;
+    }
+    const myNews = (res.data || []).filter(n => n.writer === writer);
+    let html = `<div class='mb-4 text-end'><button class='btn btn-success' onclick='showAddNewsForm()'><i class='bi bi-plus-circle me-2'></i>افزودن خبر جدید</button></div>`;
+    html += `<div id='news-form-container' style='display:none;'></div>`;
+    if (myNews.length === 0) {
+        html += '<div class="alert alert-info">خبری ثبت نشده است.</div>';
+    } else {
+        html += `<div class="table-responsive"><table class="table table-bordered text-center"><thead class="table-dark"><tr><th>عنوان</th><th>نوع</th><th>توضیحات</th><th>تگ‌ها</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>`;
+        myNews.forEach(news => {
+            html += `<tr><td>${news.title}</td><td>${news.type === 'news' ? 'خبر' : 'اطلاعیه'}</td><td>${news.description.length > 60 ? news.description.slice(0,60)+'...' : news.description}</td><td>${news.tags.split(',').map(tag => `<span class='badge bg-info ms-1'>${tag}</span>`).join(' ')}</td><td>${news.isActive ? '<span class=\"badge bg-success\">فعال</span>' : '<span class=\"badge bg-danger\">غیرفعال</span>'}</td><td><button class='btn btn-sm btn-outline-primary' onclick='showEditNewsForm(${JSON.stringify(news)})'><i class='bi bi-pencil'></i></button> <button class='btn btn-sm btn-outline-danger' onclick='deleteNews(${news.id})'><i class='bi bi-trash'></i></button></td></tr>`;
+        });
+        html += '</tbody></table></div>';
+    }
+    document.getElementById('addnews-section').innerHTML = html;
+}
+function showAddNewsForm() {
+    renderNewsForm();
+}
+function showEditNewsForm(news) {
+    renderNewsForm(news);
+    // اگر نوع اطلاعیه است، نظرسنجی‌ها را بارگذاری کن
+    if (news.type === 'announcement') {
+        loadPollQuestions(news.id);
+    }
+}
+function renderNewsForm(news = null) {
+    const container = document.getElementById('news-form-container');
+    container.style.display = 'block';
+    const isEdit = !!news;
+    container.innerHTML = `
+        <form id='newsForm' enctype='multipart/form-data'>
+            <input type='hidden' id='newsId' value='${isEdit ? news.id : ''}'>
+            <div class='mb-3'>
+                <label class='form-label'>عنوان *</label>
+                <input type='text' class='form-control' id='newsTitle' value='${isEdit ? news.title : ''}' required>
+            </div>
+            <div class='mb-3'>
+                <label class='form-label'>نوع *</label>
+                <select class='form-select' id='newsType' required onchange='togglePollSection()'>
+                    <option value='news' ${isEdit && news.type === 'news' ? 'selected' : ''}>خبر</option>
+                    <option value='announcement' ${isEdit && news.type === 'announcement' ? 'selected' : ''}>اطلاعیه</option>
+                </select>
+            </div>
+            <div class='mb-3'>
+                <label class='form-label'>توضیحات *</label>
+                <textarea class='form-control' id='newsDescription' rows='3' required>${isEdit ? news.description : ''}</textarea>
+            </div>
+            <div class='mb-3'>
+                <label class='form-label'>تگ‌ها (با کاما جدا کنید)</label>
+                <input type='text' class='form-control' id='newsTags' value='${isEdit ? news.tags : ''}'>
+            </div>
+            <div class='mb-3'>
+                <label class='form-label'>تصویر</label>
+                <input type='file' class='form-control' id='newsImage' accept='image/*'>
+                ${isEdit && news.image ? `<img src='${news.image}' alt='تصویر خبر' style='max-width:100px;max-height:100px;margin-top:10px;'>` : ''}
+            </div>
+            <div class='mb-3'>
+                <label class='form-label'>وضعیت *</label>
+                <select class='form-select' id='newsIsActive' required>
+                    <option value='true' ${!isEdit || news.isActive ? 'selected' : ''}>فعال</option>
+                    <option value='false' ${isEdit && !news.isActive ? 'selected' : ''}>غیرفعال</option>
+                </select>
+            </div>
+            
+            <!-- بخش نظرسنجی (فقط برای اطلاعیه‌ها) -->
+            <div id='pollSection' class='mb-3' style='display:${isEdit && news.type === 'announcement' ? 'block' : 'none'};'>
+                <label class='form-label'>نظرسنجی (اختیاری)</label>
+                <div id='pollQuestionsContainer'></div>
+                <button type='button' class='btn btn-outline-success btn-sm mt-2' onclick='addPollQuestion()'>
+                    <i class='bi bi-plus-circle'></i> افزودن سوال جدید
+                </button>
+            </div>
+            
+            <div class='d-flex gap-2'>
+                <button type='submit' class='btn btn-success'>${isEdit ? 'ذخیره تغییرات' : 'ثبت خبر'}</button>
+                <button type='button' class='btn btn-secondary' onclick='closeNewsForm()'>انصراف</button>
+            </div>
+        </form>
+    `;
+    
+    // اگر در حالت ویرایش است و نوع اطلاعیه است، نظرسنجی‌ها را بارگذاری کن
+    if (isEdit && news.type === 'announcement') {
+        loadPollQuestions(news.id);
+    }
+    
+    document.getElementById('newsForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const id = document.getElementById('newsId').value;
+        const type = document.getElementById('newsType').value;
+        const title = document.getElementById('newsTitle').value.trim();
+        const description = document.getElementById('newsDescription').value.trim();
+        const tags = document.getElementById('newsTags').value.trim();
+        const isActive = document.getElementById('newsIsActive').value === 'true';
+        const imageInput = document.getElementById('newsImage');
+        const imageFile = imageInput && imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+        const formData = new FormData();
+        formData.append('type', type);
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('tags', tags);
+        formData.append('isActive', isActive);
+        if (imageFile) formData.append('image', imageFile);
+        
+        let response;
+        if (id) {
+            response = await apiRequest(`/news/${id}`, 'PUT', formData, true);
+        } else {
+            response = await apiRequest('/news', 'POST', formData, true);
+        }
+        
+        if (response && response.success) {
+            // اگر نوع اطلاعیه و نظرسنجی وجود دارد، ذخیره کن
+            if (type === 'announcement' && pollQuestions.length > 0) {
+                const newsId = response.data.id || id;
+                for (const question of pollQuestions) {
+                    if (question.question.trim() && question.options.length > 0 && question.options.some(opt => opt.trim())) {
+                        await apiRequest('/news/poll', 'POST', {
+                            newsId: newsId,
+                            question: question.question,
+                            options: question.options.filter(opt => opt.trim())
+                        });
+                    }
+                }
+            }
+            showSuccessAlert(id ? 'خبر با موفقیت ویرایش شد' : 'خبر با موفقیت ثبت شد');
+            closeNewsForm();
+            loadAddNewsTab();
+        } else {
+            showErrorAlert(response?.message || 'خطا در ذخیره خبر');
+        }
+    };
+}
+function closeNewsForm() {
+    const container = document.getElementById('news-form-container');
+    container.style.display = 'none';
+    container.innerHTML = '';
+    // پاک کردن نظرسنجی‌ها
+    pollQuestions = [];
+}
+async function deleteNews(id) {
+    Swal.fire({
+        title: 'تایید حذف',
+        text: 'آیا از حذف این خبر مطمئن هستید؟',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'حذف',
+        cancelButtonText: 'انصراف'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                // ابتدا نظرسنجی‌های مربوطه را حذف کن
+                try {
+                    const pollResponse = await apiRequest(`/news/${id}/poll`, 'GET');
+                    if (pollResponse && pollResponse.success && Array.isArray(pollResponse.data)) {
+                        for (const question of pollResponse.data) {
+                            await apiRequest(`/news/poll/${question.id}`, 'DELETE');
+                        }
+                    }
+                } catch (e) {
+                    // اگر خطا در حذف نظرسنجی‌ها بود، ادامه بده
+                }
+                
+                const res = await apiRequest(`/news/${id}`, 'DELETE');
+                if (res && res.success) {
+                    Swal.fire('حذف شد!', 'خبر با موفقیت حذف شد.', 'success');
+                    loadAddNewsTab();
+                } else {
+                    Swal.fire('خطا!', res?.message || 'خطا در حذف خبر', 'error');
+                }
+            } catch (error) {
+                Swal.fire('خطا!', 'خطا در حذف خبر', 'error');
+            }
+        }
+    });
+}
+// --- End Add News Tab ---
+
+// --- Alert Functions ---
+function showSuccessAlert(message) {
+    Swal.fire({
+        title: 'موفق!',
+        text: message,
+        icon: 'success',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#28a745'
+    });
+}
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'خطا!',
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#dc3545'
+    });
+}
 </script>
 
 <style>
-.schedule-cell { 
-    transition: background-color 0.2s; 
-    min-height: 60px;
-    vertical-align: middle;
-}
-.schedule-cell:hover { 
-    background-color: #e9ecef !important; 
-    transform: scale(1.05);
-}
-.schedule-cell.available { 
-    background-color: #d4edda !important; 
-    border: 2px solid #28a745;
-}
-.schedule-cell.busy { 
-    background-color: #f8d7da !important; 
-    border: 2px solid #dc3545;
-}
+.section-title { font-weight: bold; margin-bottom: 2rem; color: #2d3a4b; }
+.schedule-cell { transition: background-color 0.2s; min-height: 60px; vertical-align: middle; }
+.schedule-cell:hover { background-color: #e9ecef !important; transform: scale(1.05); }
+.schedule-cell.available { background-color: #d4edda !important; border: 2px solid #28a745; }
+.schedule-cell.busy { background-color: #f8d7da !important; border: 2px solid #dc3545; }
+.about-section-card { border: none; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); }
+.about-section-description { background: rgba(255,255,255,0.95); padding: 10px 15px; border-radius: 8px; margin-top: 10px; font-style: italic; color: #666; border-left: 3px solid #4caf50; }
+.blog-section-item { cursor: move; transition: all 0.3s ease; }
+.blog-section-item:hover { transform: translateY(-2px); }
+.sortable-ghost { opacity: 0.3; background: #f8f9fa; }
+.sortable-chosen { background: #e3f2fd; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
 </style>
 
-<%- include('./layout/footer.ejs') %>
+<%- include('../getAll/layout/footer.ejs') %>

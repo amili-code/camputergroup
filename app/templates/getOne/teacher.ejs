@@ -1,0 +1,477 @@
+<%- include('../getAll/layout/header.ejs')%>
+
+<section class="container py-5">
+    <!-- Loading State -->
+    <div id="loading-section" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="mt-3">در حال بارگذاری اطلاعات استاد...</div>
+    </div>
+
+    <!-- Teacher Profile Section -->
+    <div id="teacher-profile" style="display: none;">
+        <div class="row">
+            <div class="col-lg-4 col-md-5">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body text-center p-4">
+                        <div class="position-relative mb-4">
+                            <img id="teacher-image" src="" class="rounded-circle teacher-profile-image" alt="تصویر استاد">
+                            <div class="teacher-status-badge">
+                                <i class="bi bi-check-circle-fill text-success"></i>
+                            </div>
+                        </div>
+                        <h3 id="teacher-name" class="fw-bold text-primary mb-2"></h3>
+                        <p id="teacher-subjects" class="text-muted mb-3"></p>
+                        
+                        <div class="teacher-contact-info">
+                            <div class="info-item mb-2">
+                                <i class="bi bi-telephone text-primary"></i>
+                                <span id="teacher-phone"></span>
+                            </div>
+                            <div class="info-item mb-2">
+                                <i class="bi bi-person-badge text-primary"></i>
+                                <span id="teacher-id"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-8 col-md-7">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold text-primary mb-3">
+                            <i class="bi bi-info-circle me-2"></i>اطلاعات استاد
+                        </h4>
+                        
+                        <div id="teacher-description" class="teacher-description mb-4"></div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-secondary mb-2">
+                                    <i class="bi bi-book me-2"></i>دروس تدریس
+                                </h6>
+                                <div id="teaching-subjects-list" class="subjects-container"></div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-secondary mb-2">
+                                    <i class="bi bi-calendar-check me-2"></i>رزرو مشاوره
+                                </h6>
+                                <button class="btn btn-success btn-sm" onclick="showReservationModal()">
+                                    <i class="bi bi-calendar-plus me-2"></i>رزرو وقت مشاوره
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blog Sections -->
+    <div id="blog-sections" class="mt-5" style="display: none;">
+        <div class="text-center mb-4">
+            <h2 class="section-title">
+                <i class="bi bi-journal-text me-2"></i>وبلاگ شخصی استاد
+            </h2>
+            <p class="text-muted">مطالب و مقالات شخصی استاد</p>
+        </div>
+        
+        <div id="blog-content" class="row justify-content-center g-4">
+            <!-- Blog sections will be loaded here -->
+        </div>
+    </div>
+
+    <!-- No Blog Content Message -->
+    <div id="no-blog-message" class="text-center mt-5" style="display: none;">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle fs-1 mb-3 d-block"></i>
+            <h5>هنوز محتوایی اضافه نشده است</h5>
+            <p class="text-muted">این استاد هنوز محتوایی در وبلاگ شخصی خود منتشر نکرده است.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Reservation Modal -->
+<div class="modal fade" id="reservationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">رزرو وقت مشاوره</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    برای رزرو وقت مشاوره، لطفاً به صفحه 
+                    <a href="/teachers" class="alert-link">لیست اساتید</a> 
+                    مراجعه کنید و از طریق برنامه هفتگی، زمان مناسب را انتخاب نمایید.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">باشه</button>
+                <a href="/teachers" class="btn btn-primary">
+                    <i class="bi bi-arrow-left me-2"></i>بازگشت به لیست اساتید
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.teacher-profile-image {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border: 4px solid #007bff;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    transition: transform 0.3s ease;
+}
+
+.teacher-profile-image:hover {
+    transform: scale(1.05);
+}
+
+.teacher-status-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 50%;
+    transform: translateX(50%);
+    background: white;
+    border-radius: 50%;
+    padding: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.teacher-contact-info {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.info-item i {
+    width: 25px;
+    margin-left: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.teacher-description {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 5px solid #007bff;
+    font-style: italic;
+    color: #495057;
+    line-height: 1.6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.subjects-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.subject-badge {
+    display: inline-block;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.subject-badge:hover {
+    background: linear-gradient(45deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.blog-section-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.blog-section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.blog-content {
+    padding: 1.5rem;
+}
+
+.blog-description {
+    background: rgba(255,255,255,0.95);
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-top: 15px;
+    font-style: italic;
+    color: #666;
+    border-left: 4px solid #28a745;
+    font-size: 0.9rem;
+}
+
+.blog-image {
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.blog-file {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px dashed #ffc107;
+}
+
+.blog-file a {
+    text-decoration: none;
+    color: #856404;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.blog-file a:hover {
+    color: #533f03;
+}
+
+.section-title {
+    font-weight: bold;
+    margin-bottom: 2rem;
+    color: #2d3a4b;
+    position: relative;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border-radius: 2px;
+}
+
+@media (max-width: 768px) {
+    .teacher-profile-image {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .teacher-contact-info {
+        padding: 1rem;
+    }
+    
+    .blog-content {
+        padding: 1rem;
+    }
+}
+</style>
+
+<script>
+let teacherId = null;
+let teacherData = null;
+let blogSections = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // دریافت ID استاد از URL
+    const urlParams = new URLSearchParams(window.location.search);
+    teacherId = urlParams.get('id') || window.location.pathname.split('/').pop();
+    
+    if (teacherId) {
+        loadTeacherData();
+    } else {
+        showError('شناسه استاد یافت نشد');
+    }
+});
+
+async function loadTeacherData() {
+    try {
+        // دریافت اطلاعات استاد
+        const teacherResponse = await apiRequest(`/teacher/${teacherId}`);
+        if (!teacherResponse || !teacherResponse.success) {
+            showError('خطا در دریافت اطلاعات استاد');
+            return;
+        }
+        
+        teacherData = teacherResponse.data;
+        renderTeacherProfile();
+        
+        // دریافت وبلاگ استاد
+        await loadTeacherBlog();
+        
+    } catch (error) {
+        console.error('خطا در بارگذاری اطلاعات:', error);
+        showError('خطا در ارتباط با سرور');
+    }
+}
+
+function renderTeacherProfile() {
+    const teacher = teacherData;
+    
+    // تنظیم تصویر
+    const teacherImage = document.getElementById('teacher-image');
+    teacherImage.src = teacher.personalImage && teacher.personalImage !== 'null' 
+        ? teacher.personalImage 
+        : 'https://randomuser.me/api/portraits/lego/1.jpg';
+    
+    // تنظیم نام
+    document.getElementById('teacher-name').textContent = `${teacher.firstName} ${teacher.lastName}`;
+    
+    // تنظیم شماره تلفن
+    document.getElementById('teacher-phone').textContent = teacher.phone || 'تعریف نشده';
+    
+    // تنظیم کد پرسنلی
+    document.getElementById('teacher-id').textContent = `کد پرسنلی: ${teacher.teacherId || 'تعریف نشده'}`;
+    
+    // تنظیم دروس تدریس
+    const subjectsContainer = document.getElementById('teaching-subjects-list');
+    if (teacher.teachingSubjects) {
+        const subjects = teacher.teachingSubjects.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        if (subjects.length > 0) {
+            subjectsContainer.innerHTML = subjects.map(subject => 
+                `<span class="subject-badge">${subject}</span>`
+            ).join('');
+        } else {
+            subjectsContainer.innerHTML = '<span class="text-muted">تعریف نشده</span>';
+        }
+    } else {
+        subjectsContainer.innerHTML = '<span class="text-muted">تعریف نشده</span>';
+    }
+    
+    // تنظیم توضیحات
+    const descriptionContainer = document.getElementById('teacher-description');
+    if (teacher.description) {
+        descriptionContainer.innerHTML = `
+            <i class="bi bi-chat-quote me-2"></i>
+            ${teacher.description}
+        `;
+    } else {
+        descriptionContainer.innerHTML = `
+            <div class="text-muted text-center">
+                <i class="bi bi-info-circle me-2"></i>
+                توضیحی برای این استاد ثبت نشده است.
+            </div>
+        `;
+    }
+    
+    // نمایش بخش پروفایل
+    document.getElementById('loading-section').style.display = 'none';
+    document.getElementById('teacher-profile').style.display = 'block';
+}
+
+async function loadTeacherBlog() {
+    try {
+        const blogResponse = await apiRequest(`/teacher-meta/${teacherId}?published=true`);
+        
+        if (blogResponse && blogResponse.success && Array.isArray(blogResponse.data) && blogResponse.data.length > 0) {
+            blogSections = blogResponse.data.filter(section => section.isPublished);
+            renderBlogSections();
+        } else {
+            showNoBlogMessage();
+        }
+    } catch (error) {
+        console.error('خطا در بارگذاری وبلاگ:', error);
+        showNoBlogMessage();
+    }
+}
+
+function renderBlogSections() {
+    const blogContent = document.getElementById('blog-content');
+    let html = '';
+    
+    blogSections.forEach(section => {
+        let content = '';
+        
+        switch (section.type) {
+            case 'text':
+                content = `
+                    <div class="blog-text-content">
+                        <i class="bi bi-file-text me-2 text-primary"></i>
+                        <div class="mt-3">
+                            ${section.textContent || ''}
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'image':
+                content = `
+                    <div class="text-center">
+                        <img src="${section.imagePath}" alt="تصویر وبلاگ" class="blog-image img-fluid">
+                    </div>
+                `;
+                break;
+                
+            case 'file':
+                const fileName = section.filePath ? section.filePath.split('/').pop() : 'فایل';
+                content = `
+                    <div class="blog-file">
+                        <i class="bi bi-file-earmark-arrow-down fs-1 mb-3 d-block text-warning"></i>
+                        <a href="${section.filePath}" target="_blank" download class="d-block">
+                            <i class="bi bi-download me-2"></i>دانلود ${fileName}
+                        </a>
+                    </div>
+                `;
+                break;
+        }
+        
+        html += `
+            <div class="col-12 col-lg-8">
+                <div class="card blog-section-card">
+                    <div class="blog-content">
+                        ${content}
+                        ${section.description ? `
+                            <div class="blog-description">
+                                <i class="bi bi-info-circle me-2"></i>
+                                ${section.description}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    blogContent.innerHTML = html;
+    document.getElementById('blog-sections').style.display = 'block';
+}
+
+function showNoBlogMessage() {
+    document.getElementById('no-blog-message').style.display = 'block';
+}
+
+function showError(message) {
+    document.getElementById('loading-section').innerHTML = `
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            ${message}
+        </div>
+    `;
+}
+
+function showReservationModal() {
+    const modal = new bootstrap.Modal(document.getElementById('reservationModal'));
+    modal.show();
+}
+</script>
+
+<%- include('../getAll/layout/footer.ejs')%>

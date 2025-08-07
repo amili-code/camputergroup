@@ -1,0 +1,876 @@
+<!-- ===================================== custom css ========================================= -->
+<link rel="stylesheet" href="/css/admin/teacher.css">
+
+
+<div id="teacher-content" class="content-panel" style="display: none;">
+    <h3 class="mb-4"><i class="bi bi-person-workspace"></i> مدیریت اساتید</h3>
+    
+    <!-- Tabulator Container -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">لیست اساتید</h4>
+            <button class="btn btn-primary" onclick="addNewTeacher()">
+                <i class="bi bi-plus-circle"></i> افزودن استاد جدید
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="teachersTable"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Teacher Modal -->
+<div class="modal fade" id="teacherModal" tabindex="-1" aria-labelledby="teacherModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="teacherModalLabel">افزودن استاد جدید</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="teacherForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="teacherFirstName" class="form-label">نام *</label>
+                            <input type="text" class="form-control" id="teacherFirstName" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="teacherLastName" class="form-label">نام خانوادگی *</label>
+                            <input type="text" class="form-control" id="teacherLastName" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="teacherPhone" class="form-label">شماره تلفن *</label>
+                            <input type="tel" class="form-control" id="teacherPhone" placeholder="09123456789" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="teacherNationalCode" class="form-label">کد ملی *</label>
+                            <input type="text" class="form-control" id="teacherNationalCode" placeholder="1234567890" maxlength="10" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="teacherId" class="form-label">کد پرسنلی (۱۰ رقمی) *</label>
+                            <input type="text" class="form-control" id="teacherId" placeholder="مثلاً 1400123456" maxlength="10" minlength="10" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="teacherPassword" class="form-label">رمز عبور *</label>
+                            <input type="password" class="form-control" id="teacherPassword" placeholder="رمز عبور استاد" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="teacherTeachingSubjects" class="form-label">دروس تدریس (حداکثر 5 درس)</label>
+                            <input type="text" class="form-control" id="teacherTeachingSubjects" placeholder="مثال: ریاضی,فیزیک,شیمی" maxlength="200">
+                            <small class="form-text text-muted">دروس را با کاما (,) جدا کنید. حداکثر 5 درس مجاز است.</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="teacherPersonalImage" class="form-label">عکس پرسنلی</label>
+                            <input type="file" class="form-control" id="teacherPersonalImage" accept="image/*">
+                            <div id="currentImage" class="mt-2 text-center" style="display: none;">
+                                <img id="previewImage" src="" alt="تصویر فعلی" style="max-width: 100px; max-height: 100px;" class="img-thumbnail">
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" id="removeTeacherImage">
+                                    <label class="form-check-label" for="removeTeacherImage">حذف تصویر فعلی</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="teacherDescription" class="form-label">توضیحات و بیوگرافی</label>
+                            <textarea class="form-control" id="teacherDescription" rows="4" placeholder="توضیحات کامل درباره استاد، سوابق تحصیلی و کاری..."></textarea>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <label class="form-label">برنامه هفتگی *</label>
+                            <div class="weekly-schedule-table">
+                                <table class="table table-bordered table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-center">ساعت</th>
+                                            <th class="text-center">شنبه</th>
+                                            <th class="text-center">یکشنبه</th>
+                                            <th class="text-center">دوشنبه</th>
+                                            <th class="text-center">سه‌شنبه</th>
+                                            <th class="text-center">چهارشنبه</th>
+                                            <th class="text-center">پنج‌شنبه</th>
+                                            <th class="text-center">جمعه</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="text-center fw-bold">8-10</td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="0" data-slot="0"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="1" data-slot="0"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="2" data-slot="0"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="3" data-slot="0"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="4" data-slot="0"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="5" data-slot="0"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="6" data-slot="0"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center fw-bold">10-12</td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="0" data-slot="1"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="1" data-slot="1"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="2" data-slot="1"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="3" data-slot="1"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="4" data-slot="1"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="5" data-slot="1"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="6" data-slot="1"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center fw-bold">12-14</td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="0" data-slot="2"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="1" data-slot="2"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="2" data-slot="2"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="3" data-slot="2"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="4" data-slot="2"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="5" data-slot="2"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="6" data-slot="2"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center fw-bold">14-16</td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="0" data-slot="3"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="1" data-slot="3"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="2" data-slot="3"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="3" data-slot="3"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="4" data-slot="3"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="5" data-slot="3"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="6" data-slot="3"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center fw-bold">16-18</td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="0" data-slot="4"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="1" data-slot="4"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="2" data-slot="4"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="3" data-slot="4"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="4" data-slot="4"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="5" data-slot="4"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="6" data-slot="4"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-center fw-bold">18-20</td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="0" data-slot="5"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="1" data-slot="5"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="2" data-slot="5"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="3" data-slot="5"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="4" data-slot="5"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="5" data-slot="5"></td>
+                                            <td class="text-center"><input type="checkbox" class="schedule-checkbox" data-day="6" data-slot="5"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="saveTeacher()" id="saveBtn">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    ذخیره
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image View Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">عکس پرسنلی استاد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="عکس پرسنلی" class="img-fluid rounded" style="max-height: 500px;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule View Modal -->
+<div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scheduleModalLabel">برنامه هفتگی استاد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="schedule-view-table">
+                    <table class="table table-bordered table-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="text-center">ساعت</th>
+                                <th class="text-center">شنبه</th>
+                                <th class="text-center">یکشنبه</th>
+                                <th class="text-center">دوشنبه</th>
+                                <th class="text-center">سه‌شنبه</th>
+                                <th class="text-center">چهارشنبه</th>
+                                <th class="text-center">پنج‌شنبه</th>
+                                <th class="text-center">جمعه</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleModalBody">
+                            <!-- محتوا با JavaScript پر می‌شود -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Teacher Details Modal -->
+<div class="modal fade" id="teacherDetailsModal" tabindex="-1" aria-labelledby="teacherDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="teacherDetailsModalLabel">جزئیات استاد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="teacherDetailsContent">
+                <!-- محتوا با JavaScript پر می‌شود -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+let teacherTable;
+let editingTeacherId = null;
+let isTeacherLoading = false;
+
+// Load all teachers data from API
+async function loadAllTeachers() {
+    try {
+        const response = await apiRequest('/teachers', "GET");
+        if (response && response.success) {
+            return response.data;
+        } else {
+            showErrorAlert('خطا در دریافت اطلاعات اساتید');
+            return [];
+        }
+    } catch (error) {
+        showErrorAlert('خطا در دریافت اطلاعات اساتید');
+        return [];
+    }
+}
+
+// Initialize Tabulator
+function initializeTeacherTable() {
+    teacherTable = new Tabulator("#teachersTable", {
+        data: [], // ابتدا خالی
+        layout: "fitDataFill",
+        pagination: "local",
+        paginationSize: 10,
+        paginationSizeSelector: [5, 10, 25, 50],
+        paginationButtonCount: 5,
+        paginationCounter: function(pageSize, currentRow, currentPage, totalRows, totalPages) {
+            return `نمایش ${currentRow} تا ${currentRow + pageSize - 1} از ${totalRows} رکورد`;
+        },
+        columns: [
+            {
+                title: "عکس پرسنلی",
+                field: "personalImage",
+                headerFilter: false,
+                formatter: function(cell) {
+                    const imagePath = cell.getValue();
+                    if (imagePath) {
+                        return `<img src="${imagePath}" alt="عکس پرسنلی" class="teacher-image" onclick="showImageModal('${imagePath}')" style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%; cursor: pointer; transition: transform 0.2s;" title="کلیک برای مشاهده">`;
+                    } else {
+                        return `<div style="width: 40px; height: 40px; background-color: #f8f9fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #6c757d;">
+                            <i class="bi bi-person"></i>
+                            </div>`;
+                    }
+                }
+            },
+            {
+                title: "کد پرسنلی", 
+                field: "teacherId", 
+                sorter: "number", 
+                headerFilter: "input",
+                formatter: function(cell) {
+                    const value = cell.getValue();
+                    return `<span class="clickable-cell" data-value="${value}" title="کلیک برای کپی">${value}</span>`;
+                }
+            },
+            {
+                title: "نام", 
+                field: "firstName", 
+                sorter: "string", 
+                headerFilter: "input",
+                formatter: function(cell) {
+                    const value = cell.getValue();
+                    return `<span class="clickable-cell" data-value="${value}" title="کلیک برای کپی">${value}</span>`;
+                }
+            },
+            {
+                title: "نام خانوادگی", 
+                field: "lastName", 
+                sorter: "string", 
+                headerFilter: "input",
+                formatter: function(cell) {
+                    const value = cell.getValue();
+                    return `<span class="clickable-cell" data-value="${value}" title="کلیک برای کپی">${value}</span>`;
+                }
+            },
+            {
+                title: "دروس تدریس",
+                field: "teachingSubjects",
+                headerFilter: "input",
+                formatter: function(cell) {
+                    const subjects = cell.getValue();
+                    if (subjects && subjects.trim()) {
+                        const subjectList = subjects.split(',').map(subject => subject.trim()).filter(subject => subject.length > 0);
+                        if (subjectList.length > 0) {
+                            return `<span class="badge bg-primary me-1">${subjectList.join('</span><span class="badge bg-primary me-1">')}</span>`;
+                        }
+                    }
+                    return '<span class="text-muted">تعریف نشده</span>';
+                }
+            },
+            {
+                title: "شماره تلفن", 
+                field: "phone", 
+                sorter: "string", 
+                headerFilter: "input",
+                formatter: function(cell) {
+                    const value = cell.getValue();
+                    return `<span class="clickable-cell" data-value="${value}" title="کلیک برای کپی">${value}</span>`;
+                }
+            },
+            {
+                title: "کد ملی", 
+                field: "nationalCode", 
+                sorter: "string", 
+                headerFilter: "input",
+                formatter: function(cell) {
+                    const value = cell.getValue();
+                    return `<span class="clickable-cell" data-value="${value}" title="کلیک برای کپی">${value}</span>`;
+                }
+            },
+            {
+                title: "برنامه هفتگی",
+                field: "weeklySchedule",
+                headerFilter: false,
+                formatter: function(cell) {
+                    const schedule = cell.getValue();
+                    const teacherId = cell.getRow().getData().teacherId;
+                    return `<button class="btn btn-sm btn-outline-info" onclick="showScheduleModal('${schedule}', ${teacherId})" title="مشاهده برنامه هفتگی">
+                        <i class="bi bi-calendar-week"></i> مشاهده برنامه
+                    </button>`;
+                }
+            },
+            {
+                title: "عملیات",
+                formatter: function(cell) {
+                    const rowData = cell.getRow().getData();
+                    const id = rowData.id;
+                    return `
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-info" onclick="showTeacherDetails(${id})" title="مشاهده جزئیات">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editTeacher(${id})" title="ویرایش">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTeacher(${id})" title="حذف">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                },
+                headerSort: false,
+                headerFilter: false
+            }
+        ],
+        locale: true,
+        langs: {
+            "fa": {
+                "pagination": {
+                    "first": "اول",
+                    "first_title": "صفحه اول",
+                    "last": "آخر",
+                    "last_title": "صفحه آخر",
+                    "prev": "قبلی",
+                    "prev_title": "صفحه قبلی",
+                    "next": "بعدی",
+                    "next_title": "صفحه بعدی",
+                    "all": "همه",
+                    "counter": {
+                        "showing": "نمایش",
+                        "of": "از",
+                        "rows": "رکورد",
+                        "pages": "صفحه"
+                    }
+                },
+                "headerFilters": {
+                    "default": "فیلتر...",
+                    "columns": {
+                        "teacherId": "جستجو در کد پرسنلی...",
+                        "firstName": "جستجو در نام...",
+                        "lastName": "جستجو در نام خانوادگی...",
+                        "phone": "جستجو در شماره تماس...",
+                        "nationalCode": "جستجو در کد ملی...",
+                        "teachingSubjects": "جستجو در دروس تدریس...",
+                        "weeklySchedule": "جستجو در برنامه..."
+                    }
+                }
+            }
+        },
+        initialSort: [
+            {column: "teacherId", dir: "desc"}
+        ]
+    });
+    
+    // بارگذاری اولیه داده‌ها
+    refreshTeacherTable();
+    
+    // اضافه کردن event listener برای کپی کردن
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('clickable-cell')) {
+            const value = e.target.getAttribute('data-value');
+            copyToClipboard(value);
+        }
+    });
+}
+
+// Refresh table data
+async function refreshTeacherTable() {
+    try {
+        const teachers = await loadAllTeachers();
+        if (teachers && teachers.length > 0) {
+            teacherTable.setData(teachers);
+        } else {
+            teacherTable.setData([]);
+        }
+    } catch (error) {
+        console.error('خطا در بروزرسانی جدول:', error);
+    }
+}
+
+// Add new teacher
+function addNewTeacher() {
+    editingTeacherId = null;
+    document.getElementById('teacherModalLabel').textContent = 'افزودن استاد جدید';
+    document.getElementById('teacherForm').reset();
+    document.getElementById('currentImage').style.display = 'none';
+    document.getElementById('teacherPersonalImage').required = false;
+    document.getElementById('teacherId').value = '';
+    document.getElementById('teacherPassword').required = true;
+    document.getElementById('teacherPassword').placeholder = 'رمز عبور استاد';
+    
+    // ریست کردن برنامه هفتگی
+    const checkboxes = document.querySelectorAll('.schedule-checkbox');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
+    
+    new bootstrap.Modal(document.getElementById('teacherModal')).show();
+}
+
+// Edit teacher
+async function editTeacher(id) {
+    try {
+        const response = await apiRequest(`/teacher/${id}`, "GET");
+        if (response && response.success) {
+            const teacher = response.data;
+            editingTeacherId = id;
+            
+            document.getElementById('teacherModalLabel').textContent = 'ویرایش استاد';
+            document.getElementById('teacherFirstName').value = teacher.firstName;
+            document.getElementById('teacherLastName').value = teacher.lastName;
+            document.getElementById('teacherPhone').value = teacher.phone;
+            document.getElementById('teacherNationalCode').value = teacher.nationalCode;
+            document.getElementById('teacherId').value = teacher.teacherId || '';
+            document.getElementById('teacherTeachingSubjects').value = teacher.teachingSubjects || '';
+            document.getElementById('teacherDescription').value = teacher.description || '';
+            
+            // رمز عبور اختیاری در ویرایش
+            document.getElementById('teacherPassword').required = false;
+            document.getElementById('teacherPassword').placeholder = 'برای تغییر رمز عبور وارد کنید (اختیاری)';
+            document.getElementById('teacherPassword').value = '';
+            
+            // نمایش تصویر فعلی
+            if (teacher.personalImage && teacher.personalImage !== '-' && teacher.personalImage !== 'null') {
+                document.getElementById('previewImage').src = teacher.personalImage;
+                document.getElementById('currentImage').style.display = 'block';
+                document.getElementById('removeTeacherImage').checked = false;
+            } else {
+                document.getElementById('currentImage').style.display = 'none';
+                document.getElementById('removeTeacherImage').checked = false;
+            }
+            
+            // تنظیم برنامه هفتگی
+            const schedule = teacher.weeklySchedule;
+            const checkboxes = document.querySelectorAll('.schedule-checkbox');
+            checkboxes.forEach(checkbox => {
+                const day = parseInt(checkbox.getAttribute('data-day'));
+                const slot = parseInt(checkbox.getAttribute('data-slot'));
+                const position = (day * 6) + slot;
+                checkbox.checked = schedule[position] === '1';
+            });
+            
+            new bootstrap.Modal(document.getElementById('teacherModal')).show();
+        } else {
+            showErrorAlert('خطا در دریافت اطلاعات استاد');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در دریافت اطلاعات استاد');
+    }
+}
+
+// Show teacher details
+async function showTeacherDetails(id) {
+    try {
+        const response = await apiRequest(`/teacher/${id}`, "GET");
+        if (response && response.success) {
+            const teacher = response.data;
+            
+            let subjectsHtml = '';
+            if (teacher.teachingSubjects && teacher.teachingSubjects.trim()) {
+                const subjectList = teacher.teachingSubjects.split(',').map(subject => subject.trim()).filter(subject => subject.length > 0);
+                subjectsHtml = subjectList.map(subject => `<span class="badge bg-primary me-1">${subject}</span>`).join('');
+            } else {
+                subjectsHtml = '<span class="text-muted">تعریف نشده</span>';
+            }
+            
+            let imageHtml = '';
+            if (teacher.personalImage && teacher.personalImage !== '-' && teacher.personalImage !== 'null') {
+                imageHtml = `<img src="${teacher.personalImage}" alt="عکس پرسنلی" class="img-fluid rounded mb-3" style="max-width: 200px;">`;
+            } else {
+                imageHtml = '<div class="text-center mb-3"><i class="bi bi-person-circle" style="font-size: 100px; color: #6c757d;"></i></div>';
+            }
+            
+            const content = `
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        ${imageHtml}
+                    </div>
+                    <div class="col-md-8">
+                        <h5>${teacher.firstName} ${teacher.lastName}</h5>
+                        <p class="text-muted">کد پرسنلی: ${teacher.teacherId}</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>شماره تلفن:</strong> ${teacher.phone}</p>
+                                <p><strong>کد ملی:</strong> ${teacher.nationalCode}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>تاریخ ثبت:</strong> ${new Date(teacher.createdAt).toLocaleDateString('fa-IR')}</p>
+                                <p><strong>آخرین بروزرسانی:</strong> ${new Date(teacher.updatedAt).toLocaleDateString('fa-IR')}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>دروس تدریس:</strong><br>
+                            ${subjectsHtml}
+                        </div>
+                        
+                        ${teacher.description ? `
+                        <div class="mb-3">
+                            <strong>توضیحات:</strong><br>
+                            <p class="text-muted">${teacher.description}</p>
+                        </div>
+                        ` : ''}
+                        
+                        <button class="btn btn-outline-info btn-sm" onclick="showScheduleModal('${teacher.weeklySchedule}', '${teacher.teacherId}')">
+                            <i class="bi bi-calendar-week"></i> مشاهده برنامه هفتگی
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('teacherDetailsContent').innerHTML = content;
+            document.getElementById('teacherDetailsModalLabel').textContent = `جزئیات استاد - ${teacher.firstName} ${teacher.lastName}`;
+            
+            new bootstrap.Modal(document.getElementById('teacherDetailsModal')).show();
+        } else {
+            showErrorAlert('خطا در دریافت اطلاعات استاد');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در دریافت اطلاعات استاد');
+    }
+}
+
+// Save teacher
+async function saveTeacher() {
+    if (isTeacherLoading) return;
+    
+    // اعتبارسنجی فرم
+    const firstNameElement = document.getElementById('teacherFirstName');
+    const lastNameElement = document.getElementById('teacherLastName');
+    const phoneElement = document.getElementById('teacherPhone');
+    const nationalCodeElement = document.getElementById('teacherNationalCode');
+    const personalImageElement = document.getElementById('teacherPersonalImage');
+    const teacherIdElement = document.getElementById('teacherId');
+    const passwordElement = document.getElementById('teacherPassword');
+    const teachingSubjectsElement = document.getElementById('teacherTeachingSubjects');
+    const descriptionElement = document.getElementById('teacherDescription');
+    const removeImageCheckbox = document.getElementById('removeTeacherImage');
+
+    if (!firstNameElement || !lastNameElement || !phoneElement || !nationalCodeElement || !teacherIdElement || !passwordElement || !teachingSubjectsElement || !descriptionElement) {
+        showErrorAlert('خطا در پیدا کردن فیلدهای فرم');
+        return;
+    }
+
+    const firstName = firstNameElement.value.trim();
+    const lastName = lastNameElement.value.trim();
+    const phone = phoneElement.value.trim();
+    const nationalCode = nationalCodeElement.value.trim();
+    const personalImage = personalImageElement ? personalImageElement.files[0] : null;
+    const teacherId = teacherIdElement.value.trim();
+    const password = passwordElement.value.trim();
+    const teachingSubjects = teachingSubjectsElement.value.trim();
+    const description = descriptionElement.value.trim();
+
+    if (!firstName || !lastName || !phone || !nationalCode || !teacherId) {
+        showErrorAlert('لطفاً تمام فیلدهای اجباری را پر کنید');
+        return;
+    }
+
+    // بررسی رمز عبور (اجباری در ایجاد، اختیاری در ویرایش)
+    if (!editingTeacherId && !password) {
+        showErrorAlert('رمز عبور الزامی است');
+        return;
+    }
+
+    if (!/^[0-9]{10}$/.test(teacherId)) {
+        showErrorAlert('کد پرسنلی باید ۱۰ رقم باشد');
+        return;
+    }
+
+    if (!/^(\+98|0)?9\d{9}$/.test(phone)) {
+        showErrorAlert('فرمت شماره تلفن صحیح نیست');
+        return;
+    }
+
+    // اعتبارسنجی دروس تدریس
+    if (teachingSubjects) {
+        const subjects = teachingSubjects.split(',').map(subject => subject.trim()).filter(subject => subject.length > 0);
+        if (subjects.length > 5) {
+            showErrorAlert('حداکثر 5 درس تدریس مجاز است');
+            return;
+        }
+    }
+
+    // ساخت برنامه هفتگی
+    let weeklySchedule = '';
+    const checkboxes = document.querySelectorAll('.schedule-checkbox');
+    const scheduleArray = new Array(42).fill('0');
+    
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            const day = parseInt(checkbox.getAttribute('data-day'));
+            const slot = parseInt(checkbox.getAttribute('data-slot'));
+            const position = (day * 6) + slot;
+            scheduleArray[position] = '1';
+        }
+    });
+    
+    weeklySchedule = scheduleArray.join('');
+
+    // نمایش loading
+    isTeacherLoading = true;
+    const saveBtn = document.getElementById('saveBtn');
+    const spinner = saveBtn.querySelector('.spinner-border');
+    saveBtn.disabled = true;
+    spinner.classList.remove('d-none');
+
+    try {
+        const formData = new FormData();
+        formData.append('firstName', firstName);
+        formData.append('lastName', lastName);
+        formData.append('phone', phone);
+        formData.append('nationalCode', nationalCode);
+        formData.append('weeklySchedule', weeklySchedule);
+        formData.append('teacherId', teacherId);
+        formData.append('teachingSubjects', teachingSubjects);
+        formData.append('description', description);
+        
+        if (password) {
+            formData.append('password', password);
+        }
+        
+        if (personalImage) {
+            formData.append('personalImage', personalImage);
+        }
+
+        if (removeImageCheckbox.checked) {
+            formData.append('personalImage', '');
+        }
+
+        let response;
+        if (editingTeacherId) {
+            // ویرایش استاد
+            response = await apiRequest(`/teacher/${editingTeacherId}`, "PUT", formData, true);
+        } else {
+            // افزودن استاد جدید
+            response = await apiRequest("/teacher", "POST", formData, true);
+        }
+
+        if (response && response.success) {
+            showSuccessAlert(editingTeacherId ? 'استاد با موفقیت ویرایش شد' : 'استاد با موفقیت اضافه شد');
+            bootstrap.Modal.getInstance(document.getElementById('teacherModal')).hide();
+            refreshTeacherTable(); // بروزرسانی جدول
+        } else {
+            showErrorAlert(response?.message || 'خطا در ذخیره اطلاعات');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در ذخیره اطلاعات');
+    } finally {
+        // حذف loading
+        isTeacherLoading = false;
+        saveBtn.disabled = false;
+        spinner.classList.add('d-none');
+    }
+}
+
+// Delete teacher
+async function deleteTeacher(id) {
+    const result = await Swal.fire({
+        title: 'آیا مطمئن هستید؟',
+        text: "این عملیات قابل بازگشت نیست!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'بله، حذف کن!',
+        cancelButtonText: 'انصراف'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            const response = await apiRequest(`/teacher/${id}`, "DELETE");
+            if (response && response.success) {
+                showSuccessAlert('استاد با موفقیت حذف شد');
+                refreshTeacherTable(); // بروزرسانی جدول
+            } else {
+                showErrorAlert(response?.message || 'خطا در حذف استاد');
+            }
+        } catch (error) {
+            showErrorAlert('خطا در حذف استاد');
+        }
+    }
+}
+
+// Show success alert
+function showSuccessAlert(message) {
+    Swal.fire({
+        title: 'موفق!',
+        text: message,
+        icon: 'success',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#28a745'
+    });
+}
+
+// Show error alert
+function showErrorAlert(message) {
+    Swal.fire({
+        title: 'خطا!',
+        text: message,
+        icon: 'error',
+        confirmButtonText: 'باشه',
+        confirmButtonColor: '#dc3545'
+    });
+}
+
+// Show image modal
+function showImageModal(imagePath) {
+    document.getElementById('modalImage').src = imagePath;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+// Show schedule modal
+function showScheduleModal(schedule, teacherId) {
+    const timeSlots = ['8-10', '10-12', '12-14', '14-16', '16-18', '18-20'];
+    const days = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+    
+    let html = '';
+    
+    for (let slot = 0; slot < 6; slot++) {
+        html += '<tr>';
+        html += `<td class="text-center fw-bold">${timeSlots[slot]}</td>`;
+        
+        for (let day = 0; day < 7; day++) {
+            const position = (day * 6) + slot;
+            const isAvailable = schedule[position] === '1';
+            const cellClass = isAvailable ? 'table-success' : 'table-secondary';
+            const status = isAvailable ? '✅ موجود' : '❌ مشغول';
+            
+            html += `<td class="text-center ${cellClass}">${status}</td>`;
+        }
+        
+        html += '</tr>';
+    }
+    
+    document.getElementById('scheduleModalBody').innerHTML = html;
+    document.getElementById('scheduleModalLabel').textContent = `برنامه هفتگی استاد (کد: ${teacherId})`;
+    
+    new bootstrap.Modal(document.getElementById('scheduleModal')).show();
+}
+
+// Copy to clipboard function
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        
+        // نمایش اعلان موفقیت با SweetAlert
+        Swal.fire({
+            title: 'کپی شد!',
+            text: 'متن با موفقیت کپی شد',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    } catch (err) {
+        // روش جایگزین برای مرورگرهای قدیمی
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        Swal.fire({
+            title: 'کپی شد!',
+            text: 'متن با موفقیت کپی شد',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    }
+}
+
+// Initialize table when content is shown
+document.addEventListener('DOMContentLoaded', function() {
+    const originalShowContent = window.showContent;
+    window.showContent = function(contentType) {
+        originalShowContent(contentType);
+        if (contentType === 'teacher') {
+            setTimeout(initializeTeacherTable, 100);
+        }
+    }
+});
+</script>

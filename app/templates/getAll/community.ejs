@@ -39,6 +39,18 @@
             </div>
         </div>
     </div>
+    <!-- About Us Section -->
+    <div class="mb-5">
+        <h2 class="section-title">
+            <i class="bi bi-info-circle me-2"></i>
+            درباره انجمن
+        </h2>
+        <div id="about-us-loading" class="text-center py-4">
+            <div class="spinner-border text-info" role="status"></div>
+            <div class="mt-2">در حال بارگذاری اطلاعات...</div>
+        </div>
+        <div id="about-us-content" class="row g-4"></div>
+    </div>
 
     <!-- Related News Section -->
     <div class="mb-5">
@@ -52,6 +64,7 @@
         </div>
         <div id="community-news" class="row g-4"></div>
     </div>
+
 
     <!-- Related Courses Section -->
     <div class="mb-5">
@@ -281,6 +294,123 @@
     font-size: 0.8rem;
 }
 
+/* About Us Section Styles */
+.about-section-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.about-section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.about-section-text {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-left: 5px solid #2196f3;
+    padding: 20px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    text-align: justify;
+}
+
+.about-section-image {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.about-section-image img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.about-section-card:hover .about-section-image img {
+    transform: scale(1.05);
+}
+
+.about-section-file {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border: 2px dashed #ff9800;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.about-section-file:hover {
+    background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%);
+    border-color: #f57c00;
+}
+
+.about-section-file a {
+    color: #e65100;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.about-section-file a:hover {
+    color: #bf360c;
+}
+
+.about-section-description {
+    background: rgba(255,255,255,0.9);
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-style: italic;
+    color: #666;
+    border-left: 3px solid #4caf50;
+}
+
+.about-section-order {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* About Blog Styles */
+.about-blog-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.about-blog-item {
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.about-blog-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    bottom: -1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, #007bff, #28a745);
+    border-radius: 1px;
+}
+
+.about-blog-item:last-child {
+    margin-bottom: 0;
+}
+
 .tag-badge {
     display: inline-block;
     background: linear-gradient(45deg, #17a2b8, #138496);
@@ -325,7 +455,8 @@
 let communityData = {
     news: [],
     courses: [],
-    members: []
+    members: [],
+    aboutUs: []
 };
 
 let currentUser = null;
@@ -360,11 +491,18 @@ async function loadCommunityData() {
             communityData.members = membersResponse.data;
         }
 
+        // Load about us sections
+        const aboutUsResponse = await apiRequest('/about-us', 'GET');
+        if (aboutUsResponse.success) {
+            communityData.aboutUs = aboutUsResponse.data;
+        }
+
         // Update stats
         updateStats();
         
         // Render sections
         renderCommunityNews();
+        renderAboutUs();
         renderCommunityCourses();
         renderMembers();
 
@@ -666,6 +804,80 @@ function renderCommunityCourses() {
     container.innerHTML = html;
 }
 
+function renderAboutUs() {
+    const container = document.getElementById('about-us-content');
+    const loading = document.getElementById('about-us-loading');
+    
+    loading.style.display = 'none';
+    
+    if (communityData.aboutUs.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    اطلاعاتی درباره انجمن موجود نیست.
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '<div class="col-12">';
+    html += '<div class="about-blog-container">';
+    
+    communityData.aboutUs.forEach(section => {
+        let sectionHtml = '';
+        
+        switch (section.type) {
+            case 'text':
+                sectionHtml = `
+                    <div class="about-section-text">
+                        <i class="bi bi-file-text me-2"></i>
+                        ${section.textContent || ''}
+                    </div>
+                `;
+                break;
+            case 'image':
+                sectionHtml = `
+                    <div class="about-section-image">
+                        <img src="${section.imagePath}" alt="تصویر درباره انجمن" class="w-100">
+                    </div>
+                `;
+                break;
+            case 'file':
+                const fileName = section.filePath ? section.filePath.split('/').pop() : 'فایل';
+                sectionHtml = `
+                    <div class="about-section-file">
+                        <i class="bi bi-file-earmark-arrow-down fs-1 mb-3"></i>
+                        <br>
+                        <a href="${section.filePath}" target="_blank" download>
+                            <i class="bi bi-download me-2"></i>
+                            دانلود ${fileName}
+                        </a>
+                    </div>
+                `;
+                break;
+        }
+        
+        html += `
+            <div class="about-blog-item">
+                <div class="about-section-card">
+                    ${sectionHtml}
+                    
+                    ${section.description ? `
+                        <div class="about-section-description">
+                            ${section.description}
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    });
+    
+    html += '</div></div>';
+    container.innerHTML = html;
+}
+
 function renderMembers() {
     const container = document.getElementById('members-list');
     const loading = document.getElementById('members-loading');
@@ -712,7 +924,10 @@ function renderMembers() {
                     <div class="card-body p-4">
                         <div class="d-flex align-items-center mb-3">
                             <div class="member-avatar me-3">
-                                ${initials || '?'}
+                                ${student.profileImage && student.profileImage !== '-' && student.profileImage !== 'null' 
+                                    ? `<img src="${student.profileImage}" alt="عکس پروفایل" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`
+                                    : `${initials || '?'}`
+                                }
                             </div>
                             <div class="flex-grow-1">
                                 <h6 class="fw-bold mb-1">${fullName || 'نامشخص'}</h6>

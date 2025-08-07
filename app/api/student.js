@@ -1,12 +1,13 @@
 const { models, sequelize } = require('../config/models');
 const bcrypt = require('bcrypt');
 const { Op } = require('sequelize');
+const { logUserAction } = require('../config/loger');
 
 class StudentController {
     // CREATE - ایجاد دانشجوی جدید
     async createStudent(req, res) {
         try {
-            const { firstName, lastName, password, phone, nationalCode, isGraduated, studentId } = req.body;
+            const { firstName, lastName, password, phone, nationalCode, isGraduated, studentId, profileImage } = req.body;
 
             // اعتبارسنجی داده‌های ورودی
             if (!firstName || !lastName || !phone || !nationalCode || !studentId) {
@@ -63,8 +64,22 @@ class StudentController {
                 password: hashedPassword,
                 phone,
                 nationalCode,
+                profileImage,
                 isGraduated: isGraduated || false
             });
+
+            // اگر دانشجو فارغ التحصیل است، رکورد StudentMeta ایجاد کن
+            if (isGraduated) {
+                await models.StudentMeta.create({
+                    studentId: student.id,
+                    socialLinks: null,
+                    introduction: null,
+                    skills: null
+                });
+            }
+
+            // ثبت لاگ
+            await logUserAction(req, `دانشجوی جدید با نام "${firstName} ${lastName}" و شماره دانشجویی "${studentId}" ثبت کرد`);
 
             // حذف رمز عبور از پاسخ
             const studentResponse = student.toJSON();
@@ -202,7 +217,7 @@ class StudentController {
     async updateStudent(req, res) {
         try {
             const { id } = req.params;
-            const { firstName, lastName, password, phone, nationalCode, isGraduated, studentId } = req.body;
+            const { firstName, lastName, password, phone, nationalCode, isGraduated, studentId, profileImage } = req.body;
 
             // بررسی وجود دانشجو
             const student = await models.Student.findByPk(id);
@@ -260,6 +275,7 @@ class StudentController {
             if (nationalCode) updateData.nationalCode = nationalCode;
             if (typeof isGraduated === 'boolean') updateData.isGraduated = isGraduated;
             if (studentId && studentId !== student.studentId) updateData.studentId = studentId;
+            if (profileImage) updateData.profileImage = profileImage;
 
             // بروزرسانی رمز عبور (اگر ارائه شده باشد)
             if (password) {
@@ -268,6 +284,28 @@ class StudentController {
 
             // بروزرسانی دانشجو
             await student.update(updateData);
+
+            // بررسی تغییر وضعیت فارغ التحصیلی
+            if (typeof isGraduated === 'boolean' && isGraduated !== student.isGraduated) {
+                if (isGraduated) {
+                    // اگر دانشجو فارغ التحصیل شد، رکورد StudentMeta ایجاد کن
+                    const existingMeta = await models.StudentMeta.findOne({ where: { studentId: id } });
+                    if (!existingMeta) {
+                        await models.StudentMeta.create({
+                            studentId: id,
+                            socialLinks: null,
+                            introduction: null,
+                            skills: null
+                        });
+                    }
+                } else {
+                    // اگر دانشجو غیرفعال شد، رکورد StudentMeta را حذف کن
+                    await models.StudentMeta.destroy({ where: { studentId: id } });
+                }
+            }
+
+            // ثبت لاگ
+            await logUserAction(req, `اطلاعات دانشجو "${student.firstName} ${student.lastName}" را ویرایش کرد`);
 
             // حذف رمز عبور از پاسخ
             const studentResponse = student.toJSON();
@@ -306,6 +344,23 @@ class StudentController {
             const newStatus = !student.isGraduated;
             await student.update({ isGraduated: newStatus });
 
+            // اگر دانشجو فارغ التحصیل شد، رکورد StudentMeta ایجاد کن
+            if (newStatus) {
+                // بررسی وجود قبلی
+                const existingMeta = await models.StudentMeta.findOne({ where: { studentId: id } });
+                if (!existingMeta) {
+                    await models.StudentMeta.create({
+                        studentId: id,
+                        socialLinks: null,
+                        introduction: null,
+                        skills: null
+                    });
+                }
+            } else {
+                // اگر دانشجو غیرفعال شد، رکورد StudentMeta را حذف کن
+                await models.StudentMeta.destroy({ where: { studentId: id } });
+            }
+
             const studentResponse = student.toJSON();
             delete studentResponse.password;
 
@@ -340,6 +395,9 @@ class StudentController {
 
             // حذف دانشجو
             await student.destroy();
+
+            // ثبت لاگ
+            await logUserAction(req, `دانشجو "${student.firstName} ${student.lastName}" را حذف کرد`);
 
             res.json({
                 success: true,

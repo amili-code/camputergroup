@@ -1,0 +1,266 @@
+<!-- ===================================== custom css ========================================= -->
+<link rel="stylesheet" href="/css/admin/student.css">
+
+<div id="admin-content" class="content-panel" style="display: none;">
+    <h3 class="mb-4"><i class="bi bi-people"></i> مدیریت ادمین ها</h3>
+
+    <!-- Tabulator Container -->
+    <div class="card">
+        <div
+            class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">لیست ادمین ها</h4>
+            <button class="btn btn-primary" onclick="addNewadmin()">
+                <i class="bi bi-plus-circle"></i> افزودن ادمین جدید
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="adminTableContainer" class="table-responsive mt-4">
+                <table class="table table-bordered align-middle text-center"
+                    id="adminTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>نام ادمین</th>
+                            <th>تاریخ ادمین شدن</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <!-- ردیف‌ها به صورت داینامیک اضافه می‌شن -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit admin Modal -->
+<div class="modal fade" id="adminModal" tabindex="-1"
+    aria-labelledby="adminModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="adminModalLabel">افزودن ادمین
+                    جدید</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="adminForm">
+                    <div class="row">
+                        <div class=" mb-3">
+                            <label for="username"
+                                class="form-label">نام*</label>
+                            <input type="text" class="form-control"
+                                id="Adminusername" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">رمز عبور
+                                *</label>
+                            <input type="password" class="form-control"
+                                id="Adminpassword" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="confirmPassword"
+                                class="form-label">تکرار رمز عبور *</label>
+                            <input type="password" class="form-control"
+                                id="AdminconfirmPassword" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary"
+                    data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary"
+                    onclick="saveadmin()" id="adminSaveBtn">
+                    <span class="spinner-border spinner-border-sm d-none"
+                        role="status" aria-hidden="true"></span>
+                    ذخیره
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete admin Modal -->
+<div class="modal fade" id="deleteAdminModal" tabindex="-1" aria-labelledby="deleteAdminModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteAdminModalLabel">حذف ادمین</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>آیا مطمئن هستید که می‌خواهید این ادمین را حذف کنید؟</p>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="removeFromGroupAdminList">
+          <label class="form-check-label" for="removeFromGroupAdminList">
+            حذف کامل از لیست مدیر گروه‌ها
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteAdminBtn">حذف</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function addNewadmin() {
+    editingAdminId = null;
+    document.getElementById('adminModalLabel').textContent = 'افزودن ادمین جدید';
+    document.getElementById('adminForm').reset();
+    document.getElementById('Adminpassword').required = true;
+    document.getElementById('AdminconfirmPassword').required = true;
+    new bootstrap.Modal(document.getElementById('adminModal')).show();
+}
+
+async function saveadmin() {
+    
+    // اعتبارسنجی فرم
+    const username = document.getElementById('Adminusername').value.trim();
+    const password = document.getElementById('Adminpassword').value;
+    const confirmPassword = document.getElementById('AdminconfirmPassword').value;
+ 
+
+    if (!username) {
+        showErrorAlert('لطفاً تمام فیلدهای اجباری را پر کنید');
+        return;
+    }
+
+    if ((!password || !confirmPassword)) {
+        showErrorAlert('رمز عبور و تکرار آن الزامی است');
+        return;
+    }
+
+    if (password && password !== confirmPassword) {
+        showErrorAlert('رمز عبور و تکرار آن یکسان نیستند');
+        return;
+    }
+
+    const adminSaveBtn = document.getElementById('adminSaveBtn');
+    const spinner = adminSaveBtn.querySelector('.spinner-border');
+    adminSaveBtn.disabled = true;
+    spinner.classList.remove('d-none');
+
+    const formData = {
+        username
+    };
+
+    if (password) {
+        formData.password = password;
+    }
+
+    let response;
+    
+    response = await apiRequest("/admins", "POST", formData)
+    renderAdminTable() 
+    bootstrap.Modal.getInstance(document.getElementById('adminModal')).hide();
+
+}
+
+async function loadAllAdmins() {
+    try {
+        const response = await apiRequest('/admins', "GET");
+        console.log(response);
+        return response || [];
+    } catch (error) {
+        showErrorAlert('خطا در دریافت اطلاعات ادمین‌ها');
+        return [];
+    }
+}
+
+function formatPersianDate(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('fa-IR', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+}
+
+async function renderAdminTable() {
+    const tbody = document.getElementById("adminTableBody");
+    tbody.innerHTML = ""; // پاکسازی قبلی
+
+    const admins = await loadAllAdmins();
+
+    if (admins.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-muted">هیچ ادمینی یافت نشد.</td></tr>`;
+        return;
+    }
+
+    admins.forEach(admin => {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td style="cursor:pointer;" onclick="copyToClipboard('${admin.username}')">${admin.username}</td>
+            <td>${formatPersianDate(admin.createdAt)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger" onclick="showDeleteAdminModal(${admin.id}, '${admin.username}', '${admin.createdAt}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+let deleteAdminId = null;
+let deleteAdminUsername = '';
+let deleteAdminCreatedAt = '';
+function showDeleteAdminModal(id, username, createdAt) {
+    deleteAdminId = id;
+    deleteAdminUsername = username;
+    deleteAdminCreatedAt = createdAt;
+    document.getElementById('removeFromGroupAdminList').checked = false;
+    new bootstrap.Modal(document.getElementById('deleteAdminModal')).show();
+}
+
+document.getElementById('confirmDeleteAdminBtn').onclick = async function() {
+    const removeFromGroup = document.getElementById('removeFromGroupAdminList').checked;
+    try {
+        const response = await apiRequest(`/admins/${deleteAdminId}`, "DELETE", {
+            removeFromGroup
+        });
+        if (response.message == "ادمین با موفقیت حذف شد") {
+            showSuccessAlert('ادمین با موفقیت حذف شد');
+            renderAdminTable();
+        } else {
+            showErrorAlert(response?.message || 'خطا در حذف ادمین');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در حذف ادمین');
+    }
+    bootstrap.Modal.getInstance(document.getElementById('deleteAdminModal')).hide();
+};
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        Swal.fire({
+            title: 'کپی شد!',
+            text: 'نام کاربری با موفقیت کپی شد',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    });
+}
+
+// اتصال به نمایش صفحه admin
+document.addEventListener('DOMContentLoaded', () => {
+    const originalShowContent = window.showContent;
+    window.showContent = function(contentType) {
+        originalShowContent(contentType);
+        if (contentType === 'admin') {
+            renderAdminTable();
+        }
+    };
+});
+</script>
