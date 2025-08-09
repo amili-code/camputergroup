@@ -69,4 +69,8 @@ AboutUsTeacher.belongsTo(Teacher, { foreignKey: 'teacherId', as: 'teacher' });
 Student.hasOne(StudentMeta, { foreignKey: 'studentId', onDelete: 'CASCADE' });
 StudentMeta.belongsTo(Student, { foreignKey: 'studentId', as: 'Student' });
 
+// روابط مربوط به CommunityAdminMeta
+Student.hasOne(CommunityAdminMeta, { foreignKey: 'studentId', onDelete: 'CASCADE' });
+CommunityAdminMeta.belongsTo(Student, { foreignKey: 'studentId', as: 'student' });
+
 module.exports = { models, sequelize }; 

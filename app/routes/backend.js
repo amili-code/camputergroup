@@ -606,6 +606,7 @@ router.get('/settings', settingController.getSettings.bind(settingController));
 router.get('/logs', isAdmin ,settingController.getLogs.bind(settingController));
 router.get('/logs/teacher/:teacherId', isUserLoggedIn, settingController.getTeacherLogs.bind(settingController));
 router.put('/settings', isAdmin, settingController.updateSettings.bind(settingController));
+router.post('/settings/logo/upload', isAdmin, settingsImageUpload.single('logo'), settingController.uploadLogo.bind(settingController));
 router.post('/settings/gallery', isAdmin, settingController.addGalleryImage.bind(settingController));
 router.post('/settings/gallery/upload', isAdmin, settingsImageUpload.single('image'), settingController.uploadGalleryImage.bind(settingController));
 router.put('/settings/gallery/:index', isAdmin, settingController.updateGalleryImage.bind(settingController));

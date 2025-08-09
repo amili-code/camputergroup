@@ -9,13 +9,34 @@ class TrainingController {
     async createCategory(req, res) {
         try {
             const { title, parentId, description } = req.body;
+            console.log('Received data:', { title, parentId, description, type: typeof parentId });
+            
             let filePath = null;
             if (req.file) {
                 filePath = `/files/${req.file.filename}`;
             }
+            
+            // اعتبارسنجی و تبدیل parentId
+            let validatedParentId = null;
+            if (parentId && parentId !== 'null' && parentId !== '' && parentId !== 'undefined') {
+                console.log('Validating parentId:', parentId);
+                // بررسی اینکه آیا parentId معتبر است
+                const parentExists = await models.Training.findByPk(parentId);
+                if (!parentExists) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'شاخه والد یافت نشد'
+                    });
+                }
+                validatedParentId = parseInt(parentId);
+                console.log('Validated parentId:', validatedParentId);
+            }
+            
+            console.log('Final validatedParentId:', validatedParentId);
+            
             const category = await models.Training.create({
                 title,
-                parentId: parentId || null,
+                parentId: validatedParentId,
                 filePath,
                 description
             });
@@ -108,6 +129,25 @@ class TrainingController {
                     message: 'شاخه یافت نشد'
                 });
             }
+            
+            // اعتبارسنجی و تبدیل parentId
+            let validatedParentId = category.parentId; // مقدار فعلی
+            if (parentId !== undefined) {
+                if (parentId && parentId !== 'null' && parentId !== '' && parentId !== 'undefined') {
+                    // بررسی اینکه آیا parentId معتبر است
+                    const parentExists = await models.Training.findByPk(parentId);
+                    if (!parentExists) {
+                        return res.status(400).json({
+                            success: false,
+                            message: 'شاخه والد یافت نشد'
+                        });
+                    }
+                    validatedParentId = parseInt(parentId);
+                } else {
+                    validatedParentId = null;
+                }
+            }
+            
             let newFilePath = category.filePath;
             // اگر فایل جدید آپلود شده
             if (req.file) {
@@ -132,7 +172,7 @@ class TrainingController {
             }
             await category.update({
                 title: title || category.title,
-                parentId: parentId != undefined ? parentId : category.parentId,
+                parentId: validatedParentId,
                 description: description !== undefined ? description : category.description,
                 filePath: req.file || filePath === '' ? newFilePath : category.filePath
             });

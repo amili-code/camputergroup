@@ -32,6 +32,21 @@
                     <label class="form-label">توضیحات تکمیلی</label>
                     <textarea class="form-control" id="description" rows="2"></textarea>
                 </div>
+                <div class="row g-3 mt-3">
+                    <div class="col-md-6">
+                        <label class="form-label">لوگوی دانشگاه</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <img id="currentLogo" src="" alt="لوگوی فعلی" style="max-width: 100px; max-height: 60px; object-fit: contain;" class="border rounded">
+                            <div class="flex-grow-1">
+                                <input type="file" class="form-control" id="logoFile" accept="image/*">
+                                <small class="form-text text-muted">فرمت‌های مجاز: JPG, PNG, GIF - حداکثر 2 مگابایت</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="uploadLogo()">
+                            <i class="bi bi-upload"></i> آپلود لوگو
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -145,6 +160,12 @@ async function loadSettings() {
             document.getElementById('establishedYear').value = settingsData.establishedYear || '';
             document.getElementById('description').value = settingsData.description || '';
             document.getElementById('phone').value = settingsData.phone || '';
+            
+            // بروزرسانی لوگوی فعلی
+            if (settingsData.logo) {
+                document.getElementById('currentLogo').src = settingsData.logo;
+            }
+            
             renderGallery(settingsData.gallery || []);
             renderAboutUs(settingsData.aboutUs || []);
         }
@@ -166,6 +187,7 @@ async function saveSettings() {
         establishedYear: parseInt(document.getElementById('establishedYear').value, 10),
         description: document.getElementById('description').value.trim(),
         phone: document.getElementById('phone').value.trim(),
+        logo: settingsData.logo || '/pic/settings/logo-default.png',
         gallery: settingsData.gallery || []
     };
     try {
@@ -532,6 +554,31 @@ async function deleteAboutUsSection(id) {
         }
     } catch (e) {
         showErrorAlert('خطا در حذف بخش');
+    }
+}
+
+// آپلود لوگو
+async function uploadLogo() {
+    const logoFile = document.getElementById('logoFile').files[0];
+    if (!logoFile) {
+        showErrorAlert('لطفاً یک فایل لوگو انتخاب کنید');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('logo', logoFile);
+    
+    try {
+        const response = await apiRequest('/settings/logo/upload', 'POST', formData, true);
+        if (response && response.success) {
+            showSuccessAlert('لوگو با موفقیت آپلود شد');
+            document.getElementById('logoFile').value = '';
+            loadSettings();
+        } else {
+            showErrorAlert(response?.message || 'خطا در آپلود لوگو');
+        }
+    } catch (e) {
+        showErrorAlert('خطا در آپلود لوگو');
     }
 }
 

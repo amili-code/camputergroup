@@ -792,7 +792,7 @@ class CourseController {
                 include: [
                     {
                         model: models.Course,
-                        attributes: ['id', 'tags', 'capacity', 'isAvailable']
+                        attributes: ['id', 'title', 'tags', 'capacity', 'isAvailable']
                     }
                 ]
             });
@@ -892,7 +892,7 @@ class CourseController {
                 include: [
                     {
                         model: models.Course,
-                        attributes: ['id', 'tags']
+                        attributes: ['id', 'title', 'tags']
                     }
                 ]
             });

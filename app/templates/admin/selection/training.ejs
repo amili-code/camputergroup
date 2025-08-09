@@ -88,6 +88,7 @@ function renderTrainingTree() {
         }
         html += `
             <button class="btn btn-sm btn-outline-primary ms-1" onclick="showAddTrainingModal(${node.id})" title="افزودن زیرشاخه"><i class="bi bi-plus"></i></button>
+            <button class="btn btn-sm btn-outline-warning ms-1" onclick="showEditTrainingModal(${node.id})" title="ویرایش"><i class="bi bi-pencil"></i></button>
            <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteTraining(${node.id})" title="حذف"><i class="bi bi-trash"></i></button>
         `;
         if (node.description) {
@@ -118,8 +119,41 @@ function showAddTrainingModal(parentId) {
     document.getElementById('trainingParentId').value = parentId || '';
     document.getElementById('currentTrainingFileDiv').style.display = 'none';
     document.getElementById('currentTrainingFileName').textContent = '';
+    document.getElementById('removeTrainingFileBtn').onclick = null; // Clear previous handler
     const modal = new bootstrap.Modal(document.getElementById('trainingModal'));
     modal.show();
+}
+
+// نمایش مودال ویرایش شاخه
+async function showEditTrainingModal(id) {
+    editingTrainingId = id;
+    removeFileFlag = false;
+    try {
+        const response = await apiRequest(`/training/${id}`, 'GET');
+        if (response && response.success) {
+            const training = response.data;
+            document.getElementById('trainingTitle').value = training.title;
+            document.getElementById('trainingDescription').value = training.description;
+            document.getElementById('trainingId').value = training.id;
+            document.getElementById('trainingParentId').value = training.parentId || '';
+            document.getElementById('currentTrainingFileDiv').style.display = training.filePath ? 'block' : 'none';
+            document.getElementById('currentTrainingFileName').textContent = training.filePath ? training.title : '';
+            
+            // اضافه کردن event listener برای دکمه حذف فایل
+            document.getElementById('removeTrainingFileBtn').onclick = function() {
+                removeFileFlag = true;
+                document.getElementById('currentTrainingFileDiv').style.display = 'none';
+            };
+            
+            document.getElementById('trainingModalLabel').textContent = 'ویرایش شاخه';
+            const modal = new bootstrap.Modal(document.getElementById('trainingModal'));
+            modal.show();
+        } else {
+            showErrorAlert(response?.message || 'خطا در دریافت اطلاعات شاخه');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در دریافت اطلاعات شاخه');
+    }
 }
 
 // ذخیره شاخه یا زیرشاخه
@@ -137,10 +171,9 @@ async function saveTraining() {
     const file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
     const formData = new FormData();
     formData.append('title', title);
-    if(parentId){
+    // فقط اگر parentId معتبر باشد، آن را اضافه کن
+    if (parentId && parentId !== 'null' && parentId !== '') {
         formData.append('parentId', parentId);
-    }else{
-        formData.append('parentId' , null)
     }
     formData.append('description', description);
     if (file) {
@@ -151,9 +184,13 @@ async function saveTraining() {
     }
     try {
         let response;
-          response = await apiRequest('/training', 'POST', formData, true);
+        if (id) { // اگر id وجود دارد، به عنوان PUT استفاده کن
+            response = await apiRequest(`/training/${id}`, 'PUT', formData, true);
+        } else { // اگر id وجود ندارد، به عنوان POST استفاده کن
+            response = await apiRequest('/training', 'POST', formData, true);
+        }
         if (response && response.success) {
-            showSuccessAlert('شاخه با موفقیت اضافه شد');
+            showSuccessAlert('اطلاعات با موفقیت ذخیره شد');
             bootstrap.Modal.getInstance(document.getElementById('trainingModal')).hide();
             loadTrainingTree();
         } else {

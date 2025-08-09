@@ -442,7 +442,7 @@ function renderCourses() {
                             ${course.endDate ? `
                                 <div class="info-item">
                                     <i class="bi bi-calendar-event"></i>
-                                    <span>مهلت ثبت‌نام: ${course.endDate}</span>
+                                    <span>مهلت ثبت‌نام: ${course.endDate || '-'}</span>
                                 </div>
                             ` : ''}
                             

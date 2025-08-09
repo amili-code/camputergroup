@@ -369,7 +369,7 @@ async function saveStudent() {
     const isGraduated = document.getElementById('isGraduated').checked;
     const studentId = document.getElementById('studentId').value.trim();
 
-    if (!firstName || !lastName || !phone || !nationalCode || !studentId) {
+    if (!firstName || !lastName || !nationalCode || !studentId) {
         showErrorAlert('لطفاً تمام فیلدهای اجباری را پر کنید');
         return;
     }
@@ -386,11 +386,6 @@ async function saveStudent() {
 
     if (nationalCode.length !== 10) {
         showErrorAlert('کد ملی باید 10 رقم باشد');
-        return;
-    }
-
-    if (!/^(\+98|0)?9\d{9}$/.test(phone)) {
-        showErrorAlert('فرمت شماره تلفن صحیح نیست');
         return;
     }
 

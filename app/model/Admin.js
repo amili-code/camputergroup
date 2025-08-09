@@ -55,9 +55,6 @@ module.exports = (sequelize) => {
     });
 
 
-    const Student = sequelize.models.Student || require('./Student')(sequelize);
-    CommunityAdminMeta.belongsTo(Student, { foreignKey: 'studentId', as: 'student' });
-    Student.hasOne(CommunityAdminMeta, { foreignKey: 'studentId', as: 'communityAdminMeta' });
-
+  
     return { Admin, CommunityAdminMeta };
 };

@@ -23,19 +23,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         response.data.forEach(section => {
             let content = '';
             if (section.type === 'text') {
-                content = `<div class='p-4 bg-light rounded shadow-sm mb-2'><i class='bi bi-file-text me-2'></i>${section.textContent || ''}</div>`;
+                content = `<div class='p-4 bg-light rounded-0 shadow-none mb-0'><i class='bi bi-file-text me-2'></i>${section.textContent || ''}</div>`;
             } else if (section.type === 'image') {
-                content = `<div class='text-center mb-2'><img src='${section.imagePath}' alt='تصویر درباره ما' class='img-fluid rounded shadow' style='max-height:320px;'></div>`;
+                content = `<div class='text-center mb-0'><img src='${section.imagePath}' alt='تصویر درباره ما' class='img-fluid rounded-0 shadow-none' style='max-height:320px;'></div>`;
             } else if (section.type === 'file') {
                 const fileName = section.filePath ? section.filePath.split('/').pop() : 'فایل';
-                content = `<div class='p-4 bg-warning bg-opacity-10 rounded shadow-sm text-center mb-2'><i class='bi bi-file-earmark-arrow-down fs-1 mb-2'></i><br><a href='${section.filePath}' target='_blank' download class='fw-bold text-warning'><i class='bi bi-download me-2'></i>دانلود ${fileName}</a></div>`;
+                content = `<div class='p-4 bg-warning bg-opacity-10 rounded-0 shadow-none text-center mb-0'><i class='bi bi-file-earmark-arrow-down fs-1 mb-2'></i><br><a href='${section.filePath}' target='_blank' download class='fw-bold text-warning'><i class='bi bi-download me-2'></i>دانلود ${fileName}</a></div>`;
             }
             html += `
                 <div class='col-12 col-md-10 col-lg-8'>
-                    <div class='card about-section-card mb-4'>
-                        <div class='card-body'>
-                            ${content}
+                    <div class='card about-section-card mb-0'>
+                        <div class='card-body p-0'>
+                            ${section.title ? `<div class='about-section-title'><h4 class='mb-3'><i class='bi bi-tag me-2'></i>${section.title}</h4></div>` : ''}
                             ${section.description ? `<div class='about-section-description mt-3'>${section.description}</div>` : ''}
+                            ${content}
                         </div>
                     </div>
                 </div>
@@ -50,18 +51,32 @@ document.addEventListener('DOMContentLoaded', async function() {
 <style>
 .about-section-card {
     border: none;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border-radius: 0;
+    box-shadow: none;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    margin-bottom: 0;
 }
 .about-section-description {
     background: rgba(255,255,255,0.95);
     padding: 10px 15px;
-    border-radius: 8px;
+    border-radius: 0;
     margin-top: 10px;
     font-style: italic;
     color: #666;
-    border-left: 3px solid #4caf50;
+    border-left: none;
+}
+.about-section-title {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    padding: 15px 20px;
+    margin: 0;
+    border-radius: 0;
+    text-align: center;
+}
+.about-section-title h4 {
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 </style>
 <%- include('./layout/footer.ejs')%>

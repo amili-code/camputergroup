@@ -41,8 +41,9 @@
                     </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="phone" class="form-label">شماره تلفن *</label>
-                            <input type="tel" class="form-control" id="phone" placeholder="09123456789" required>
+                            <label for="phone" class="form-label">شماره تلفن</label>
+                            <input type="tel" class="form-control" id="phone" placeholder="09123456789">
+                            <small class="form-text text-muted">اختیاری - هر فرمتی قابل قبول است</small>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="nationalCode" class="form-label">کد ملی *</label>
@@ -369,7 +370,7 @@ async function saveStudent() {
     const isGraduated = document.getElementById('isGraduated').checked;
     const studentId = document.getElementById('studentId').value.trim();
 
-    if (!firstName || !lastName || !phone || !nationalCode || !studentId) {
+    if (!firstName || !lastName || !nationalCode || !studentId) {
         showErrorAlert('لطفاً تمام فیلدهای اجباری را پر کنید');
         return;
     }
@@ -389,10 +390,7 @@ async function saveStudent() {
         return;
     }
 
-    if (!/^(\+98|0)?9\d{9}$/.test(phone)) {
-        showErrorAlert('فرمت شماره تلفن صحیح نیست');
-        return;
-    }
+   
 
     if (!/^[0-9]{10}$/.test(studentId)) {
         showErrorAlert('شماره دانشجویی باید ۱۰ رقم باشد');

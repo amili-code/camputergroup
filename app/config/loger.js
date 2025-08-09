@@ -29,12 +29,13 @@ async function logUserAction(req, action) {
                 default:
                     userRole = 'کاربر';
             }
-        } else if (req.session && req.session.admin && req.session.admin.username !=='mainAdmin') {
+        } else if (req.session && req.session.admin && req.session.admin.username != 'mainAdmin') {
             userId = req.session.admin.username;
             userType = 'admin';
             userLastName = req.session.admin.username;
             userRole = req.session.admin.role === 'admin' ? 'ادمین' : 
                       req.session.admin.role === 'communityAdmin' ? 'مدیر انجمن' : 'ادمین';
+            
         } else {
             return;
         }

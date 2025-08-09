@@ -38,7 +38,10 @@
             const carouselInner = document.getElementById('galleryCarouselInner');
             carouselInner.innerHTML = '';
             document.getElementById('title-landing').innerHTML = data.data.universityName;
-            document.getElementById('description-landing').innerHTML = data.data.description;
+            // تبدیل نقطه‌ها به خط جدید برای خوانایی بهتر
+            const description = (data.data.description || data.data.about || '').replace(/\./g, '.<br>');
+                document.getElementById('description-landing').innerHTML = description;
+
             if (gallery.length === 0) {
                 carouselInner.innerHTML = `
                     <div class="carousel-item active">

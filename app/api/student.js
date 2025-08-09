@@ -10,7 +10,7 @@ class StudentController {
             const { firstName, lastName, password, phone, nationalCode, isGraduated, studentId, profileImage } = req.body;
 
             // اعتبارسنجی داده‌های ورودی
-            if (!firstName || !lastName || !phone || !nationalCode || !studentId) {
+            if (!firstName || !lastName || !nationalCode || !studentId) {
                 return res.status(400).json({
                     success: false,
                     message: 'تمام فیلدهای اجباری باید پر شوند (شامل شماره دانشجویی)'
@@ -34,13 +34,15 @@ class StudentController {
                 });
             }
 
-            // بررسی تکراری نبودن شماره تلفن
-            const existingPhone = await models.Student.findOne({ where: { phone } });
-            if (existingPhone) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'این شماره تلفن قبلاً ثبت شده است'
-                });
+            // بررسی تکراری نبودن شماره تلفن (اگر ارائه شده باشد)
+            if (phone) {
+                const existingPhone = await models.Student.findOne({ where: { phone } });
+                if (existingPhone) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'این شماره تلفن قبلاً ثبت شده است'
+                    });
+                }
             }
 
             // بررسی تکراری نبودن کد ملی

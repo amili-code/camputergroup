@@ -651,10 +651,7 @@ async function processPayment() {
             
             // Hide payment modal
             bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
-        } else {
-            // Payment failed
-            throw new Error('پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.');
-        }
+        } 
         
     } catch (error) {
         console.error('Payment error:', error);

@@ -3,13 +3,13 @@
     <footer class="footer mt-5" id="contact">
         <div class="container">
             <div class="row">
-                <div class="col-md-6 mb-3 mb-md-0" id="university-info">
+                <div class="col-md-5 mb-3 mb-md-0" id="university-info">
                     <h5 class="fw-bold mb-2" id="universityName">گروه کامپیوتر</h5>
                     <p class="mb-1" id="universityDetails">دانشگاه ... | سال تاسیس: ۱۳۸۰</p>
                     <p class="mb-1" id="universityPhone">تلفن: ۰۲۱-۱۲۳۴۵۶۷۸</p>
                     <p class="mb-0" id="universityDescription">توضیحات: ...</p>
                 </div>
-                <div class="col-md-6 text-md-end">
+                <div class="col-md-5 text-md-end">
                     <h6 class="fw-bold mb-2">لینک‌های مفید</h6>
                     <ul class="list-unstyled">
                         <li><a href="/aboutUs">درباره ما</a></li>
@@ -21,6 +21,11 @@
                         <li><a href="/finalStudent">دانشجویان فارغ‌التحصیل</a></li>
                         <li><a href="/groupmanager">مدیران گروه</a></li>
                     </ul>
+                </div>
+                <div class="col-md-2 text-md-end">
+                    <div class="logo-section">
+                        <img id="footerLogo" src="/pic/settings/logo-default.png" alt="لوگوی دانشگاه" class="footer-logo" style="max-width: 80px; max-height: 60px; object-fit: contain;">
+                    </div>
                 </div>
             </div>
             <hr class="my-4" style="border-color: #fff3;">
@@ -37,7 +42,14 @@
                 document.getElementById('mainTitlle').textContent = result.data.universityName || 'گروه کامپیوتر';
                 document.getElementById('universityDetails').textContent = (result.data.universityName ? result.data.universityName + ' | ' : '') + (result.data.establishedYear ? 'سال تاسیس: ' + result.data.establishedYear : '');
                 document.getElementById('universityPhone').textContent = 'تلفن: ' + (result.data.phone || '---');
-                document.getElementById('universityDescription').textContent = result.data.description || result.data.about || '';
+                // تبدیل نقطه‌ها به خط جدید برای خوانایی بهتر
+                const description = (result.data.description || result.data.about || '').replace(/\./g, '.<br>');
+                document.getElementById('universityDescription').innerHTML = description;
+                
+                // بروزرسانی لوگو
+                if (result.data.logo) {
+                    document.getElementById('footerLogo').src = result.data.logo;
+                }
             }
         } catch (e) {
             // Silent fail

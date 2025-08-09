@@ -298,32 +298,33 @@
 .about-section-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: none;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-radius: 0;
+    box-shadow: none;
     transition: all 0.3s ease;
     overflow: hidden;
     position: relative;
+    margin-bottom: 0;
 }
 
 .about-section-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transform: none;
+    box-shadow: none;
 }
 
 .about-section-text {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    border-left: 5px solid #2196f3;
+    border: none;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 0;
     font-size: 1.1rem;
     line-height: 1.8;
     text-align: justify;
 }
 
 .about-section-image {
-    border-radius: 10px;
+    border-radius: 0;
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    box-shadow: none;
 }
 
 .about-section-image img {
@@ -339,8 +340,8 @@
 
 .about-section-file {
     background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-    border: 2px dashed #ff9800;
-    border-radius: 10px;
+    border: none;
+    border-radius: 0;
     padding: 20px;
     text-align: center;
     transition: all 0.3s ease;
@@ -348,7 +349,6 @@
 
 .about-section-file:hover {
     background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%);
-    border-color: #f57c00;
 }
 
 .about-section-file a {
@@ -363,13 +363,12 @@
 }
 
 .about-section-description {
-    background: rgba(255,255,255,0.9);
     padding: 10px 15px;
-    border-radius: 8px;
+    border-radius: 0;
     margin-top: 10px;
     font-style: italic;
     color: #666;
-    border-left: 3px solid #4caf50;
+    border-left: none;
 }
 
 .about-section-order {
@@ -391,20 +390,18 @@
 }
 
 .about-blog-item {
-    margin-bottom: 2rem;
+    margin-bottom: 0;
     position: relative;
 }
 
 .about-blog-item:not(:last-child)::after {
     content: '';
     position: absolute;
-    bottom: -1rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 2px;
-    background: linear-gradient(90deg, #007bff, #28a745);
-    border-radius: 1px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
 }
 
 .about-blog-item:last-child {
@@ -446,6 +443,21 @@
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
+}
+
+.about-section-title {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    padding: 15px 20px;
+    margin: -1.5rem -1.5rem 1rem -1.5rem;
+    border-radius: 0;
+    text-align: center;
+}
+
+.about-section-title h4 {
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 </style>
 
@@ -586,7 +598,7 @@ function showAlreadyMember() {
     let statusClass = 'text-warning';
     
     if (userMembership.isAccepted === true) {
-        statusText = 'تایید شده';
+        statusText = 'عضو';
         statusClass = 'text-success';
     } else if (userMembership.isAccepted === false) {
         statusText = 'در حال بررسی';
@@ -862,11 +874,16 @@ function renderAboutUs() {
         html += `
             <div class="about-blog-item">
                 <div class="about-section-card">
-                    ${sectionHtml}
+                    ${section.title ? `
+                        <div class="about-section-title">
+                            <h4 class="mb-3"><i class="bi bi-tag me-2"></i>${section.title}</h4>
+                        </div>
+                    ` : ''}
+                    ${section.description}
                     
-                    ${section.description ? `
+                    ${sectionHtml ? `
                         <div class="about-section-description">
-                            ${section.description}
+                            ${sectionHtml}
                         </div>
                     ` : ''}
                 </div>
@@ -909,7 +926,7 @@ function renderMembers() {
             statusBadge = '<span class="manager-badge"><i class="bi bi-star-fill me-1"></i>مدیر</span>';
             cardClass += ' manager-card';
         } else if (member.isAccepted === true) {
-            statusBadge = '<span class="accepted-badge"><i class="bi bi-check-circle me-1"></i>تایید شده</span>';
+            statusBadge = '<span class="accepted-badge"><i class="bi bi-check-circle me-1"></i>عضو</span>';
         } else if (member.isAccepted === false) {
             statusBadge = '<span class="badge bg-info"><i class="bi bi-x-circle me-1"></i>در انتظار</span>';
         } else {
@@ -934,14 +951,6 @@ function renderMembers() {
                             </div>
                             ${statusBadge}
                         </div>
-                        
-                        ${member.description ? `
-                            <div class="description-text">
-                                <i class="bi bi-chat-quote"></i>
-                                ${member.description}
-                            </div>
-                        ` : ''}
-                        
                         ${joinDate ? `
                             <div class="text-center mt-3">
                                 <small class="text-muted">

@@ -78,6 +78,42 @@ class SettingController {
         }
     }
 
+    // POST - آپلود لوگو جدید
+    async uploadLogo(req, res) {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ success: false, message: 'فایل لوگو ارسال نشده است.' });
+            }
+
+            const logoPath = `/pic/settings/${req.file.filename}`;
+            const data = await fs.readFile(SETTING_PATH, 'utf-8');
+            const settings = JSON.parse(data);
+
+            // حذف لوگوی قبلی اگر وجود دارد
+            if (settings.logo && settings.logo !== '/pic/settings/logo-default.png') {
+                try {
+                    const oldLogoPath = path.join(__dirname, '../../public', settings.logo);
+                    if (fsSync.existsSync(oldLogoPath)) {
+                        fsSync.unlinkSync(oldLogoPath);
+                    }
+                } catch (e) {
+                    console.log('خطا در حذف لوگوی قبلی:', e.message);
+                }
+            }
+
+            // بروزرسانی مسیر لوگو
+            settings.logo = logoPath;
+            await fs.writeFile(SETTING_PATH, JSON.stringify(settings, null, 2), 'utf-8');
+
+            // ثبت لاگ
+            await logUserAction(req, 'لوگوی جدید سایت را آپلود کرد');
+
+            res.json({ success: true, message: 'لوگو با موفقیت آپلود شد.', logoPath });
+        } catch (error) {
+            res.status(500).json({ success: false, message: 'خطا در آپلود لوگو', error: error.message });
+        }
+    }
+
     // POST - افزودن عکس به گالری
     async addGalleryImage(req, res) {
         try {

@@ -46,13 +46,9 @@ module.exports = (sequelize) => {
         // شماره تلفن
         phone: {
             type: DataTypes.STRING(15),
-            allowNull: false,
-            unique: true,
+            allowNull: true,
             field: 'phone',
-            comment: 'شماره تلفن دانشجو',
-            validate: {
-                is: /^( 2B98|0)?9\d{9}$/ // فرمت شماره تلفن ایرانی
-            }
+            comment: 'شماره تلفن دانشجو (اختیاری)'
         },
         // کد ملی
         nationalCode: {
@@ -86,7 +82,6 @@ module.exports = (sequelize) => {
         timestamps: true,
         indexes: [
             { unique: true, fields: ['student_id'] },
-            { unique: true, fields: ['phone'] },
             { unique: true, fields: ['national_code'] }
         ],
         hooks: {

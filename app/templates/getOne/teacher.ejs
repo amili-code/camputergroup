@@ -15,9 +15,7 @@
                     <div class="card-body text-center p-4">
                         <div class="position-relative mb-4">
                             <img id="teacher-image" src="" class="rounded-circle teacher-profile-image" alt="تصویر استاد">
-                            <div class="teacher-status-badge">
-                                <i class="bi bi-check-circle-fill text-success"></i>
-                            </div>
+                            
                         </div>
                         <h3 id="teacher-name" class="fw-bold text-primary mb-2"></h3>
                         <p id="teacher-subjects" class="text-muted mb-3"></p>
@@ -27,10 +25,7 @@
                                 <i class="bi bi-telephone text-primary"></i>
                                 <span id="teacher-phone"></span>
                             </div>
-                            <div class="info-item mb-2">
-                                <i class="bi bi-person-badge text-primary"></i>
-                                <span id="teacher-id"></span>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -198,16 +193,17 @@
 
 .blog-section-card {
     border: none;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border-radius: 0;
+    box-shadow: none;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     transition: all 0.3s ease;
     overflow: hidden;
+    margin-bottom: 0;
 }
 
 .blog-section-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transform: none;
+    box-shadow: none;
 }
 
 .blog-content {
@@ -217,27 +213,27 @@
 .blog-description {
     background: rgba(255,255,255,0.95);
     padding: 12px 16px;
-    border-radius: 10px;
+    border-radius: 0;
     margin-top: 15px;
     font-style: italic;
     color: #666;
-    border-left: 4px solid #28a745;
+    border-left: none;
     font-size: 0.9rem;
 }
 
 .blog-image {
     max-height: 300px;
     object-fit: cover;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .blog-file {
     background: linear-gradient(135deg, #fff3cd, #ffeaa7);
     padding: 1.5rem;
-    border-radius: 12px;
+    border-radius: 0;
     text-align: center;
-    border: 2px dashed #ffc107;
+    border: none;
 }
 
 .blog-file a {
@@ -268,6 +264,21 @@
     height: 3px;
     background: linear-gradient(45deg, #007bff, #0056b3);
     border-radius: 2px;
+}
+
+.blog-section-title {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    padding: 15px 20px;
+    margin: -1.5rem -1.5rem 1rem -1.5rem;
+    border-radius: 0;
+    text-align: center;
+}
+
+.blog-section-title h4 {
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 
 @media (max-width: 768px) {
@@ -339,8 +350,6 @@ function renderTeacherProfile() {
     // تنظیم شماره تلفن
     document.getElementById('teacher-phone').textContent = teacher.phone || 'تعریف نشده';
     
-    // تنظیم کد پرسنلی
-    document.getElementById('teacher-id').textContent = `کد پرسنلی: ${teacher.teacherId || 'تعریف نشده'}`;
     
     // تنظیم دروس تدریس
     const subjectsContainer = document.getElementById('teaching-subjects-list');
@@ -438,11 +447,15 @@ function renderBlogSections() {
             <div class="col-12 col-lg-8">
                 <div class="card blog-section-card">
                     <div class="blog-content">
-                        ${content}
-                        ${section.description ? `
+                        ${section.title ? `
+                            <div class="blog-section-title">
+                                <h4 class="mb-3"><i class="bi bi-tag me-2"></i>${section.title}</h4>
+                            </div>
+                        ` : ''}
+                        ${section.description}
+                        ${content ? `
                             <div class="blog-description">
-                                <i class="bi bi-info-circle me-2"></i>
-                                ${section.description}
+                                ${content}
                             </div>
                         ` : ''}
                     </div>

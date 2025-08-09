@@ -67,12 +67,7 @@
     
     
 
-    <div class="dashboard-card mt-4">
-        <h5><i class="bi bi-bar-chart"></i> آمار سایت</h5>
-        <div class="row" id="siteStatsRow">
-            <div class="col-12 text-center text-muted">در حال بارگذاری...</div>
-        </div>
-    </div>
+  
 
 
     <div class="card-body">
@@ -97,36 +92,6 @@ async function loadDashboardStats() {
     }
 }
 
-async function loadSiteStats() {
-    try {
-        const res = await fetch('/api/site-stats');
-        const stats = await res.json();
-        const row = document.getElementById('siteStatsRow');
-        row.innerHTML = '';
-        const statList = [
-            { label: 'کاربران آنلاین', value: stats.onlineUsers ?? '-', icon: 'bi bi-wifi', color: 'info' },
-            { label: 'کل رزروها', value: stats.reservationCount, icon: 'bi bi-calendar-check', color: 'success' },
-            { label: 'کل نظرسنجی‌ها', value: stats.pollCount, icon: 'bi bi-bar-chart-steps', color: 'secondary' },
-            { label: 'کل رای‌ها', value: stats.pollVoteCount, icon: 'bi bi-check2-square', color: 'danger' },
-        ];
-        statList.forEach(stat => {
-            const col = document.createElement('div');
-            col.className = 'col-md-3 col-6 mb-3';
-            col.innerHTML = `
-                <div class="card border-${stat.color} shadow-sm h-100">
-                    <div class="card-body text-center">
-                        <i class="${stat.icon} fs-2 text-${stat.color}"></i>
-                        <h4 class="fw-bold mt-2">${stat.value}</h4>
-                        <p class="mb-0 text-muted">${stat.label}</p>
-                    </div>
-                </div>
-            `;
-            row.appendChild(col);
-        });
-    } catch (e) {
-        document.getElementById('siteStatsRow').innerHTML = '<div class="col-12 text-center text-danger">خطا در دریافت آمار سایت</div>';
-    }
-}
 
 if (document.getElementById('dashboard-content')) {
     document.addEventListener('DOMContentLoaded', () => {

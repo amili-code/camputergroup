@@ -12,7 +12,7 @@ class TeacherController {
             const { firstName, lastName, phone, nationalCode, weeklySchedule, teacherId, password, teachingSubjects, description } = req.body;
 
             // اعتبارسنجی داده‌های ورودی
-            if (!firstName || !lastName || !phone || !nationalCode || !teacherId) {
+            if (!firstName || !lastName || !nationalCode || !teacherId) {
                 return res.status(400).json({
                     success: false,
                     message: 'تمام فیلدهای اجباری باید پر شوند (شامل کد پرسنلی)'
@@ -36,13 +36,15 @@ class TeacherController {
                 });
             }
 
-            // بررسی تکراری نبودن شماره تلفن
-            const existingPhone = await models.Teacher.findOne({ where: { phone } });
-            if (existingPhone) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'این شماره تلفن قبلاً ثبت شده است'
-                });
+            // بررسی تکراری نبودن شماره تلفن (اگر ارائه شده باشد)
+            if (phone) {
+                const existingPhone = await models.Teacher.findOne({ where: { phone } });
+                if (existingPhone) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'این شماره تلفن قبلاً ثبت شده است'
+                    });
+                }
             }
 
             // بررسی تکراری نبودن کد ملی
@@ -165,15 +167,7 @@ class TeacherController {
     async getTeacherById(req, res) {
         try {
             const { id } = req.params;
-            // فقط ادمین یا خود دبیر مجاز است
-            const isAdmin = req.session && req.session.admin && req.session.admin.role === 'admin';
-            const isTeacherSelf = req.session && req.session.user && req.session.user.type === 'teacher' && req.session.user.id == id;
-            if (!isAdmin && !isTeacherSelf) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'شما مجاز به مشاهده این اطلاعات نیستید'
-                });
-            }
+            
 
             const teacher = await models.Teacher.findByPk(id);
 

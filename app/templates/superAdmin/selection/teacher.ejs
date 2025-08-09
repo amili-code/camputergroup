@@ -640,7 +640,7 @@ async function saveTeacher() {
     const teachingSubjects = teachingSubjectsElement.value.trim();
     const description = descriptionElement.value.trim();
 
-    if (!firstName || !lastName || !phone || !nationalCode || !teacherId) {
+    if (!firstName || !lastName || !nationalCode || !teacherId) {
         showErrorAlert('لطفاً تمام فیلدهای اجباری را پر کنید');
         return;
     }
@@ -653,11 +653,6 @@ async function saveTeacher() {
 
     if (!/^[0-9]{10}$/.test(teacherId)) {
         showErrorAlert('کد پرسنلی باید ۱۰ رقم باشد');
-        return;
-    }
-
-    if (!/^(\+98|0)?9\d{9}$/.test(phone)) {
-        showErrorAlert('فرمت شماره تلفن صحیح نیست');
         return;
     }
 

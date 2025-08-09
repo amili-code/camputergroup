@@ -2,37 +2,9 @@
   "universityName": "دانشگاه نمونه ایرانی",
   "about": "این دانشگاه یکی از برترین دانشگاه‌های کشور است...",
   "establishedYear": 1370,
-  "description": "توضیحات تکمیلی درباره دانشگاه و امکانات آن.",
+  "description": "توضیحات تکمیلی درباره دانشگاه و امکانات آن.\nfkl;dsja",
   "phone": "021-12345678",
-  "aboutUs": [
-    {
-      "id": 1,
-      "type": "text",
-      "description": "معرفی دانشگاه",
-      "textContent": "دانشگاه نمونه ایرانی یکی از برترین دانشگاه‌های کشور است که با بیش از 30 سال سابقه در زمینه آموزش و پژوهش، همواره در تلاش برای ارائه بهترین خدمات آموزشی به دانشجویان بوده است.",
-      "imagePath": null,
-      "filePath": null,
-      "order": 1
-    },
-    {
-      "id": 1754299985689,
-      "type": "image",
-      "description": "سلام",
-      "textContent": null,
-      "imagePath": "/pic/settings/site-about-1754299985683-839163100-Loh.jpg",
-      "filePath": null,
-      "order": 2
-    },
-    {
-      "id": 1754300415212,
-      "type": "text",
-      "description": "سیبلیسبلان",
-      "textContent": "سمیباتکمس",
-      "imagePath": null,
-      "filePath": null,
-      "order": 3
-    }
-  ],
+  "logo": "/pic/settings/gallery-1754730762748-316668732-(5).jpg",
   "gallery": [
     {
       "title": "دانشجو ها",

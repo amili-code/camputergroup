@@ -36,7 +36,7 @@ class TeacherMetaController {
             });
 
             // ثبت لاگ
-            await logUserAction(req, `محتوای جدید با عنوان "${title}" برای وبلاگ شخصی ثبت کرد`);
+            await logUserAction(req, `محتوای جدید با عنوان "${description}" برای وبلاگ شخصی ثبت کرد`);
 
             res.json({ success: true, data: meta });
         } catch (err) {
@@ -149,7 +149,7 @@ class TeacherMetaController {
             });
 
             // ثبت لاگ
-            await logUserAction(req, `محتوای وبلاگ شخصی با عنوان "${meta.title}" را ویرایش کرد`);
+            await logUserAction(req, `محتوای وبلاگ شخصی با عنوان "${meta.description}" را ویرایش کرد`);
 
             res.json({ success: true, message: 'بروزرسانی با موفقیت انجام شد', data: meta });
         } catch (err) {
@@ -185,7 +185,7 @@ class TeacherMetaController {
             await meta.destroy();
 
             // ثبت لاگ
-            await logUserAction(req, `محتوای وبلاگ شخصی با عنوان "${meta.title}" را حذف کرد`);
+            await logUserAction(req, `محتوای وبلاگ شخصی با عنوان "${meta.description}" را حذف کرد`);
 
             res.json({ success: true, message: 'محتوا حذف شد' });
         } catch (err) {

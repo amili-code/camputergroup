@@ -24,6 +24,9 @@ class CommunityController {
             }
             const member = await models.Community.create({ studentId: student.id, description });
          
+            await logUserAction(req, `دانشجو "${student.lastName}" درخواست عضویت در انجمن را ثبت کرد`);
+
+
             res.status(201).json({ success: true, data: member });
         } catch (error) {
             res.status(500).json({ success: false, message: 'خطا در ثبت درخواست عضویت', error: error.message });
