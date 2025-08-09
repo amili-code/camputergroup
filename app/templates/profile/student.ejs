@@ -195,7 +195,7 @@
                         <ul class="list-group list-group-flush">
                             <% logs.forEach(log => { 
                                 let logClass = '';
-                                if (/تایید شد|تایید شده/i.test(log.description)) logClass = 'text-success fw-bold';
+                                if (/تایید|تایید شده|تایید شد/i.test(log.description)) logClass = 'text-success fw-bold';
                                 else if (/رد شد|رد شده|نا موفق/i.test(log.description)) logClass = 'text-danger fw-bold';
                             %>
                                 <li class="list-group-item d-flex justify-content-between align-items-center">

@@ -51,7 +51,7 @@
                                 <h6 class="fw-bold text-secondary mb-2">
                                     <i class="bi bi-calendar-check me-2"></i>رزرو مشاوره
                                 </h6>
-                                <button class="btn btn-success btn-sm" onclick="showReservationModal()">
+                                <button class="btn btn-success btn-sm" onclick="showTeacherScheduleModal()">
                                     <i class="bi bi-calendar-plus me-2"></i>رزرو وقت مشاوره
                                 </button>
                             </div>
@@ -95,18 +95,186 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>
-                    برای رزرو وقت مشاوره، لطفاً به صفحه 
-                    <a href="/teachers" class="alert-link">لیست اساتید</a> 
-                    مراجعه کنید و از طریق برنامه هفتگی، زمان مناسب را انتخاب نمایید.
+                <form id="reservationForm">
+                    <input type="hidden" id="reservationTeacherId">
+                    <input type="hidden" id="reservationTimeSlot">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person"></i> استاد انتخاب شده:
+                        </label>
+                        <div class="alert alert-info" id="selectedTeacherInfo">
+                            <!-- اطلاعات استاد اینجا نمایش داده می‌شود -->
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar3"></i> زمان انتخاب شده:
+                        </label>
+                        <div class="alert alert-success" id="selectedTimeInfo">
+                            <!-- اطلاعات زمان اینجا نمایش داده می‌شود -->
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="loginRequiredSection" style="display: none;">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>ابتدا وارد حساب کاربری خود شوید</strong>
+                            <br>
+                            برای رزرو وقت مشاوره، ابتدا باید وارد حساب کاربری خود شوید.
+                            <div class="mt-2">
+                                <a href="/login" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-box-arrow-in-right"></i> ورود به سیستم
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="userInfoSection" style="display: none;">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-person-badge"></i> اطلاعات دانشجو:
+                        </label>
+                        <div class="alert alert-info" id="userInfoDisplay">
+                            <!-- اطلاعات کاربر اینجا نمایش داده می‌شود -->
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reservationDescription" class="form-label fw-bold">
+                            <i class="bi bi-chat-text"></i> توضیحات درخواست:
+                        </label>
+                        <textarea class="form-control" id="reservationDescription" rows="4" 
+                                  placeholder="موضوع مشاوره و توضیحات خود را بنویسید..."></textarea>
+                        <div class="form-text">توضیح دهید که برای چه موضوعی نیاز به مشاوره دارید</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> انصراف
+                </button>
+                <button type="button" class="btn btn-primary" id="submitReservationBtn" onclick="submitReservation()" style="display: none;">
+                    <i class="bi bi-check-circle"></i> ثبت رزرو
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Teacher Schedule Modal -->
+<div class="modal fade" id="teacherScheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="teacherScheduleTitle">برنامه هفتگی استاد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- راهنمای رنگ‌ها -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <h6 class="mb-2"><i class="bi bi-info-circle"></i> راهنمای رنگ‌ها:</h6>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <span class="badge bg-success">خالی</span> - زمان در دسترس
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge bg-warning text-dark">در حال انتظار</span> - درخواست شما در انتظار تایید
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge bg-info">تایید شده</span> - درخواست شما تایید شده
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge bg-danger">رد شده</span> - درخواست شما رد شده
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ساعت</th>
+                                <th>شنبه</th>
+                                <th>یکشنبه</th>
+                                <th>دوشنبه</th>
+                                <th>سه‌شنبه</th>
+                                <th>چهارشنبه</th>
+                                <th>پنج‌شنبه</th>
+                                <th>جمعه</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="table-secondary fw-bold">۸-۱۰</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="0"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="0"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="0"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="0"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="0"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="0"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="0"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۰-۱۲</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="1"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="1"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="1"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="1"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="1"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="1"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="1"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۲-۱۴</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="2"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="2"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="2"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="2"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="2"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="2"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="2"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۴-۱۶</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="3"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="3"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="3"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="3"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="3"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="3"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="3"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۶-۱۸</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="4"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="4"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="4"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="4"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="4"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="4"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="4"></td>
+                            </tr>
+                            <tr>
+                                <td class="table-secondary fw-bold">۱۸-۲۰</td>
+                                <td class="teacher-schedule-cell" data-day="0" data-slot="5"></td>
+                                <td class="teacher-schedule-cell" data-day="1" data-slot="5"></td>
+                                <td class="teacher-schedule-cell" data-day="2" data-slot="5"></td>
+                                <td class="teacher-schedule-cell" data-day="3" data-slot="5"></td>
+                                <td class="teacher-schedule-cell" data-day="4" data-slot="5"></td>
+                                <td class="teacher-schedule-cell" data-day="5" data-slot="5"></td>
+                                <td class="teacher-schedule-cell" data-day="6" data-slot="5"></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">باشه</button>
-                <a href="/teachers" class="btn btn-primary">
-                    <i class="bi bi-arrow-left me-2"></i>بازگشت به لیست اساتید
-                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
             </div>
         </div>
     </div>
@@ -295,6 +463,42 @@
         padding: 1rem;
     }
 }
+
+/* Schedule Cell Styles */
+.teacher-schedule-cell { 
+    transition: background-color 0.2s; 
+    min-height: 60px;
+    vertical-align: middle;
+    cursor: pointer;
+}
+.teacher-schedule-cell:hover { 
+    background-color: #e9ecef !important; 
+    transform: scale(1.05);
+}
+.teacher-schedule-cell.available { 
+    background-color: #d4edda !important; 
+    border: 2px solid #28a745;
+}
+.teacher-schedule-cell.busy { 
+    background-color: #f8d7da !important; 
+    border: 2px solid #dc3545;
+}
+.teacher-schedule-cell.pending { 
+    background-color: #fff3cd !important; 
+    border: 2px solid #ffc107;
+}
+.teacher-schedule-cell.approved { 
+    background-color: #d1ecf1 !important; 
+    border: 2px solid #17a2b8;
+}
+.teacher-schedule-cell.rejected { 
+    background-color: #f8d7da !important; 
+    border: 2px solid #dc3545;
+}
+.teacher-schedule-cell.cancelled { 
+    background-color: #e2e3e5 !important; 
+    border: 2px solid #6c757d;
+}
 </style>
 
 <script>
@@ -317,7 +521,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadTeacherData() {
     try {
         // دریافت اطلاعات استاد
-        const teacherResponse = await apiRequest(`/teacher/${teacherId}`);
+        const teacherResponse = await apiRequest(`/teacher/${teacherId}`, 'GET');
         if (!teacherResponse || !teacherResponse.success) {
             showError('خطا در دریافت اطلاعات استاد');
             return;
@@ -328,6 +532,9 @@ async function loadTeacherData() {
         
         // دریافت وبلاگ استاد
         await loadTeacherBlog();
+        
+        // Initialize reservation system after teacher data is loaded
+        await initializeReservationSystem();
         
     } catch (error) {
         console.error('خطا در بارگذاری اطلاعات:', error);
@@ -389,7 +596,7 @@ function renderTeacherProfile() {
 
 async function loadTeacherBlog() {
     try {
-        const blogResponse = await apiRequest(`/teacher-meta/${teacherId}?published=true`);
+        const blogResponse = await apiRequest(`/teacher-meta/${teacherId}?published=true`, 'GET');
         
         if (blogResponse && blogResponse.success && Array.isArray(blogResponse.data) && blogResponse.data.length > 0) {
             blogSections = blogResponse.data.filter(section => section.isPublished);
@@ -481,10 +688,326 @@ function showError(message) {
     `;
 }
 
-function showReservationModal() {
-    const modal = new bootstrap.Modal(document.getElementById('reservationModal'));
-    modal.show();
+// Global variables for reservation system
+let currentUser = null;
+let userReservations = [];
+let selectedTeacherId = null;
+
+// Bootstrap modal instances
+let reservationModal = null;
+let teacherScheduleModal = null;
+
+// Initialize reservation system
+async function initializeReservationSystem() {
+    try {
+        // Initialize Bootstrap modals
+        reservationModal = new bootstrap.Modal(document.getElementById('reservationModal'));
+        teacherScheduleModal = new bootstrap.Modal(document.getElementById('teacherScheduleModal'));
+        
+        // Check if user is logged in
+        const userResponse = await apiRequest('/auth/me', 'GET');
+        if (userResponse && userResponse.success && userResponse.data && userResponse.data.user) {
+            currentUser = userResponse.data.user;
+            
+            // Load user reservations if student
+            if (currentUser.type === 'student') {
+                try {
+                    const reservationsResponse = await apiRequest(`/reservations/student/${currentUser.id}`, 'GET');
+                    if (reservationsResponse && reservationsResponse.success) {
+                        userReservations = reservationsResponse.data || [];
+                    }
+                } catch (error) {
+                    console.log('خطا در دریافت درخواست‌های رزرو:', error);
+                    userReservations = [];
+                }
+            }
+        }
+    } catch (error) {
+        console.log('خطا در بررسی وضعیت کاربر:', error);
+    }
 }
+
+// Show teacher schedule modal
+function showTeacherScheduleModal() {
+    selectedTeacherId = teacherId;
+    document.getElementById('teacherScheduleTitle').textContent = `برنامه هفتگی ${teacherData.firstName} ${teacherData.lastName}`;
+    
+    // Update teacher schedule table
+    updateTeacherScheduleTable(teacherData);
+    
+    teacherScheduleModal.show();
+}
+
+// Update teacher schedule table
+function updateTeacherScheduleTable(teacher) {
+    document.querySelectorAll('.teacher-schedule-cell').forEach(cell => {
+        const day = parseInt(cell.dataset.day);
+        const slot = parseInt(cell.dataset.slot);
+        const position = (day * 6) + slot;
+        
+        cell.className = 'teacher-schedule-cell';
+        
+        // Check user reservation status for this teacher and time
+        let reservationStatus = null;
+        if (currentUser && currentUser.type === 'student') {
+            const userReservation = userReservations.find(r => 
+                r.teacherId === teacher.id && r.requestedTimeSlot === position
+            );
+            if (userReservation) {
+                reservationStatus = userReservation.status;
+            }
+        }
+        
+        if (teacher.weeklySchedule && teacher.weeklySchedule[position] === '1') {
+            // Show reservation status
+            if (reservationStatus) {
+                let statusText = '';
+                let statusClass = '';
+                
+                switch (reservationStatus) {
+                    case 'pending':
+                        statusText = 'در حال انتظار';
+                        statusClass = 'text-warning';
+                        cell.classList.add('pending');
+                        break;
+                    case 'approved':
+                        statusText = 'تایید شده';
+                        statusClass = 'text-success';
+                        cell.classList.add('approved');
+                        break;
+                    case 'rejected':
+                        statusText = 'رد شده';
+                        statusClass = 'text-danger';
+                        cell.classList.add('rejected');
+                        break;
+                    case 'cancelled':
+                        statusText = 'لغو شده';
+                        statusClass = 'text-secondary';
+                        cell.classList.add('cancelled');
+                        break;
+                }
+                
+                cell.innerHTML = `<small class="fw-bold ${statusClass}">${statusText}</small>`;
+            } else {
+                cell.classList.add('available');
+                cell.innerHTML = '<small class="text-success fw-bold">خالی</small>';
+            }
+        } else {
+            // Show reservation status even if time is busy
+            if (reservationStatus) {
+                let statusText = '';
+                let statusClass = '';
+                
+                switch (reservationStatus) {
+                    case 'pending':
+                        statusText = 'در حال انتظار';
+                        statusClass = 'text-warning';
+                        cell.classList.add('pending');
+                        break;
+                    case 'approved':
+                        statusText = 'تایید شده';
+                        statusClass = 'text-success';
+                        cell.classList.add('approved');
+                        break;
+                    case 'rejected':
+                        statusText = 'رد شده';
+                        statusClass = 'text-danger';
+                        cell.classList.add('rejected');
+                        break;
+                    case 'cancelled':
+                        statusText = 'لغو شده';
+                        statusClass = 'text-secondary';
+                        cell.classList.add('cancelled');
+                        break;
+                }
+                
+                cell.innerHTML = `<small class="fw-bold ${statusClass}">${statusText}</small>`;
+            } else {
+                cell.classList.add('busy');
+                cell.innerHTML = '<small class="text-danger fw-bold">مشغول</small>';
+            }
+        }
+    });
+    
+    // Add click event listeners
+    document.querySelectorAll('.teacher-schedule-cell').forEach(cell => {
+        cell.onclick = function() {
+            const day = parseInt(this.dataset.day);
+            const slot = parseInt(this.dataset.slot);
+            const position = (day * 6) + slot;
+            
+            // Check user reservation status
+            let reservationStatus = null;
+            if (currentUser && currentUser.type === 'student') {
+                const userReservation = userReservations.find(r => 
+                    r.teacherId === teacher.id && r.requestedTimeSlot === position
+                );
+                if (userReservation) {
+                    reservationStatus = userReservation.status;
+                }
+            }
+            
+            // If user already has a pending or approved request, don't allow new reservation
+            if (reservationStatus === 'pending' || reservationStatus === 'approved') {
+                let message = '';
+                if (reservationStatus === 'pending') {
+                    message = 'شما قبلاً برای این زمان درخواست داده‌اید و در حال انتظار تایید استاد می‌باشید.';
+                } else {
+                    message = 'این زمان قبلاً برای شما تایید شده است.';
+                }
+                showAlert(message, 'info');
+                return;
+            }
+            
+            if (teacher.weeklySchedule && teacher.weeklySchedule[position] === '1') {
+                showReservationModal(teacher.id, teacher.firstName + ' ' + teacher.lastName, day, slot);
+                teacherScheduleModal.hide();
+            } else {
+                showAlert('این بازه زمانی در دسترس نیست', 'warning');
+            }
+        };
+    });
+}
+
+// Show reservation modal
+function showReservationModal(teacherId, teacherName, day, slot) {
+    const dayNames = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+    const timeSlots = ['۸-۱۰', '۱۰-۱۲', '۱۲-۱۴', '۱۴-۱۶', '۱۶-۱۸', '۱۸-۲۰'];
+    const timeSlot = (day * 6) + parseInt(slot);
+    
+    // Fill form information
+    document.getElementById('reservationTeacherId').value = teacherId;
+    document.getElementById('reservationTimeSlot').value = timeSlot;
+    
+    // Show teacher information
+    document.getElementById('selectedTeacherInfo').innerHTML = `
+        <i class="bi bi-person-circle"></i>
+        <strong>${teacherName}</strong>
+    `;
+    
+    // Show time information
+    document.getElementById('selectedTimeInfo').innerHTML = `
+        <i class="bi bi-calendar-event"></i>
+        <strong>${dayNames[day]} ساعت ${timeSlots[slot]}</strong>
+    `;
+    
+    // Check user login status
+    if (currentUser && currentUser.type === 'student') {
+        // User is logged in
+        document.getElementById('loginRequiredSection').style.display = 'none';
+        document.getElementById('userInfoSection').style.display = 'block';
+        document.getElementById('submitReservationBtn').style.display = 'inline-block';
+        
+        // Show user information
+        document.getElementById('userInfoDisplay').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>نام:</strong> ${currentUser.firstName} ${currentUser.lastName}
+                </div>
+                <div class="col-md-6">
+                    <strong>شماره دانشجویی:</strong> ${currentUser.studentId}
+                </div>
+            </div>
+        `;
+    } else {
+        // User is not logged in
+        document.getElementById('loginRequiredSection').style.display = 'block';
+        document.getElementById('userInfoSection').style.display = 'none';
+        document.getElementById('submitReservationBtn').style.display = 'none';
+    }
+    
+    // Clear description field
+    document.getElementById('reservationDescription').value = '';
+    
+    reservationModal.show();
+}
+
+// Submit reservation
+async function submitReservation() {
+    if (!currentUser || currentUser.type !== 'student') {
+        showAlert('ابتدا وارد حساب کاربری خود شوید', 'warning');
+        return;
+    }
+    
+    const teacherId = document.getElementById('reservationTeacherId').value;
+    const timeSlot = document.getElementById('reservationTimeSlot').value;
+    const description = document.getElementById('reservationDescription').value.trim();
+    
+    // Show loading
+    const submitBtn = document.getElementById('submitReservationBtn');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> در حال ثبت...';
+    submitBtn.disabled = true;
+    
+    try {
+        // Send reservation request
+        const reservationData = {
+            studentId: currentUser.id,
+            teacherId: parseInt(teacherId),
+            requestedTimeSlot: parseInt(timeSlot),
+            description: description || 'درخواست مشاوره'
+        };
+        
+        const response = await apiRequest('/reservation', 'POST', reservationData);
+        
+        if (response && response.success) {
+            showAlert('رزرو شما با موفقیت ثبت شد و در انتظار تایید استاد می‌باشد.', 'success');
+            reservationModal.hide();
+            
+            // Update user reservations
+            try {
+                const reservationsResponse = await apiRequest(`/reservations/student/${currentUser.id}`, 'GET');
+                if (reservationsResponse && reservationsResponse.success) {
+                    userReservations = reservationsResponse.data || [];
+                }
+            } catch (error) {
+                console.log('خطا در بروزرسانی درخواست‌های رزرو:', error);
+            }
+            
+            // Update teacher schedule table
+            if (selectedTeacherId) {
+                const teacher = teacherData;
+                if (teacher) {
+                    updateTeacherScheduleTable(teacher);
+                }
+            }
+        } else {
+            showAlert(response?.message || 'خطا در ثبت رزرو', 'danger');
+        }
+        
+    } catch (error) {
+        console.error('خطا در ثبت رزرو:', error);
+        showAlert('خطا در ارتباط با سرور. لطفاً دوباره تلاش کنید.', 'danger');
+    } finally {
+        // Restore button to normal state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// Show alert function
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Insert at the top of the page
+    const container = document.querySelector('.container');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Initialize reservation system when page loads
+// This will be called after teacher data is loaded
 </script>
 
 <%- include('../getAll/layout/footer.ejs')%>

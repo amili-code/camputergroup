@@ -21,5 +21,25 @@
       "description": "شیس",
       "imagePath": "/pic/settings/gallery-1753260789576-833997381-Picture6.jpg"
     }
+  ],
+  "aboutUs": [
+    {
+      "id": 1754747837021,
+      "type": "image",
+      "description": "fdsa",
+      "textContent": null,
+      "imagePath": "/pic/settings/site-about-1754747837018-480879631-CE (1).jpg",
+      "filePath": null,
+      "order": 1
+    },
+    {
+      "id": 1754747825559,
+      "type": "text",
+      "description": "ksdhjfkljdf",
+      "textContent": "134132441324123333333333333",
+      "imagePath": null,
+      "filePath": null,
+      "order": 2
+    }
   ]
 }
