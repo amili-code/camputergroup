@@ -277,7 +277,7 @@ function showEditProfileModal() {
     form.innerHTML = `
       <div class="mb-3"><label class="form-label">نام</label><input type="text" class="form-control" name="firstName" value="${t.firstName || ''}" required></div>
       <div class="mb-3"><label class="form-label">نام خانوادگی</label><input type="text" class="form-control" name="lastName" value="${t.lastName || ''}" required disabled></div>
-      <div class="mb-3"><label class="form-label">شماره تلفن</label><input type="tel" class="form-control" name="phone" value="${t.phone || ''}" required></div>
+      <div class="mb-3"><label class="form-label">شماره تلفن</label><input type="tel" class="form-control" name="phone" value="${t.phone || ''}" ></div>
       <div class="mb-3"><label class="form-label">دروس تدریس (با کاما جدا کنید)</label><input type="text" class="form-control" name="teachingSubjects" value="${t.teachingSubjects || ''}"></div>
       <div class="mb-3"><label class="form-label">توضیحات</label><textarea class="form-control" name="description" rows="3">${t.description || ''}</textarea></div>
       <div class="mb-3"><label class="form-label">رمز عبور جدید (اختیاری)</label><input type="password" class="form-control" name="password"></div>
