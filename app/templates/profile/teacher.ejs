@@ -58,6 +58,56 @@
 <div class="modal fade" id="blogModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="blogModalLabel"></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="blog-form"></form></div></div></div></div>
 <div class="modal fade" id="deleteBlogModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">تایید حذف</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>آیا از حذف این بخش اطمینان دارید؟</p><p class="text-danger"><small>این عملیات قابل بازگشت نیست.</small></p></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button><button type="button" class="btn btn-danger" id="confirmDeleteBlog">حذف</button></div></div></div></div>
 
+<!-- Modal تغییر رمز عبور -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="changePasswordModalLabel">
+                    <i class="bi bi-key me-2"></i>
+                    تغییر رمز عبور
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="changePasswordForm">
+                    <div class="mb-3">
+                        <label for="currentPassword" class="form-label fw-bold">
+                            <i class="bi bi-lock me-1"></i>
+                            رمز عبور فعلی
+                        </label>
+                        <input type="password" class="form-control" id="currentPassword" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="newPassword" class="form-label fw-bold">
+                            <i class="bi bi-lock-fill me-1"></i>
+                            رمز عبور جدید
+                        </label>
+                        <input type="password" class="form-control" id="newPassword" required minlength="6">
+                        <div class="form-text">رمز عبور جدید باید حداقل 6 کاراکتر باشد</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label fw-bold">
+                            <i class="bi bi-lock-fill me-1"></i>
+                            تکرار رمز عبور جدید
+                        </label>
+                        <input type="password" class="form-control" id="confirmPassword" required minlength="6">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-warning" onclick="changePassword()" id="changePasswordBtn">
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    تغییر رمز عبور
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
 <script>
@@ -268,6 +318,14 @@ function renderProfile() {
           ${isEditable ? `<button class="btn btn-primary btn-sm" onclick="showEditProfileModal()"><i class="bi bi-pencil"></i> ویرایش</button>` : ''}
         </div>
         <div><div class="row"><div class="col-md-6"><p><strong>نام:</strong> ${t.firstName}</p><p><strong>نام خانوادگی:</strong> ${t.lastName}</p><p><strong>شماره تلفن:</strong> ${t.phone}</p></div><div class="col-md-6"><p><strong>دروس تدریس:</strong> ${t.teachingSubjects || 'تعریف نشده'}</p><p><strong>توضیحات:</strong> ${t.description || 'توضیحی ثبت نشده'}</p></div></div></div>
+        
+        <!-- دکمه تغییر رمز عبور -->
+        <div class="mt-3">
+            <button class="btn btn-warning btn-sm" onclick="showChangePasswordModal()">
+                <i class="bi bi-key me-2"></i>
+                تغییر رمز عبور
+            </button>
+        </div>
       </div>
     </div>`;
 }
@@ -783,6 +841,63 @@ function showErrorAlert(message) {
         confirmButtonText: 'باشه',
         confirmButtonColor: '#dc3545'
     });
+}
+
+// تغییر رمز عبور
+function showChangePasswordModal() {
+    new bootstrap.Modal(document.getElementById('changePasswordModal')).show();
+}
+
+async function changePassword() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    // اعتبارسنجی
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showErrorAlert('لطفاً تمام فیلدها را پر کنید');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        showErrorAlert('رمز عبور جدید باید حداقل 6 کاراکتر باشد');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showErrorAlert('رمز عبور جدید و تکرار آن یکسان نیستند');
+        return;
+    }
+    
+    // نمایش loading
+    const changeBtn = document.getElementById('changePasswordBtn');
+    const spinner = changeBtn.querySelector('.spinner-border');
+    changeBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    
+    try {
+        const response = await apiRequest('/auth/change-password', 'POST', {
+            userId: teacherId,
+            userType: 'teacher',
+            currentPassword: currentPassword,
+            newPassword: newPassword
+        });
+        
+        if (response && response.success) {
+            showSuccessAlert('رمز عبور با موفقیت تغییر کرد');
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('changePasswordModal')).hide();
+            // پاک کردن فرم
+            document.getElementById('changePasswordForm').reset();
+        } else {
+            showErrorAlert(response?.message || 'خطا در تغییر رمز عبور');
+        }
+    } catch (error) {
+        showErrorAlert('خطا در تغییر رمز عبور');
+    } finally {
+        // حذف loading
+        changeBtn.disabled = false;
+        spinner.classList.add('d-none');
+    }
 }
 </script>
 

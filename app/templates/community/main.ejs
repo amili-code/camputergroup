@@ -72,6 +72,10 @@
                                 </div>
                             </div>
                             <div class="col-md-6 text-end">
+                                <button class="btn btn-warning btn-sm me-2" onclick="showChangePasswordModal()">
+                                    <i class="bi bi-key me-2"></i>
+                                    تغییر رمز عبور
+                                </button>
                                 <button class="logout-btn" onclick="logout()">
                                     <i class="bi bi-box-arrow-right"></i>
                                     خروج
@@ -96,6 +100,56 @@
 
                         
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal تغییر رمز عبور -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">
+                        <i class="bi bi-key me-2"></i>
+                        تغییر رمز عبور
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label fw-bold">
+                                <i class="bi bi-lock me-1"></i>
+                                رمز عبور فعلی
+                            </label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label fw-bold">
+                                <i class="bi bi-lock-fill me-1"></i>
+                                رمز عبور جدید
+                            </label>
+                            <input type="password" class="form-control" id="newPassword" required minlength="6">
+                            <div class="form-text">رمز عبور جدید باید حداقل 6 کاراکتر باشد</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label fw-bold">
+                                <i class="bi bi-lock-fill me-1"></i>
+                                تکرار رمز عبور جدید
+                            </label>
+                            <input type="password" class="form-control" id="confirmPassword" required minlength="6">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="button" class="btn btn-warning" onclick="changePassword()" id="changePasswordBtn">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        تغییر رمز عبور
+                    </button>
                 </div>
             </div>
         </div>
@@ -128,6 +182,69 @@
         document.addEventListener('DOMContentLoaded', function() {
             showContent('dashboard');
         });
+
+        // تغییر رمز عبور
+        function showChangePasswordModal() {
+            new bootstrap.Modal(document.getElementById('changePasswordModal')).show();
+        }
+
+        async function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            // اعتبارسنجی
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('لطفاً تمام فیلدها را پر کنید');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('رمز عبور جدید باید حداقل 6 کاراکتر باشد');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('رمز عبور جدید و تکرار آن یکسان نیستند');
+                return;
+            }
+            
+            // نمایش loading
+            const changeBtn = document.getElementById('changePasswordBtn');
+            const spinner = changeBtn.querySelector('.spinner-border');
+            changeBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: '1', // مدیر انجمن همیشه ID = 1 دارد
+                        userType: 'community_admin',
+                        currentPassword: currentPassword,
+                        newPassword: newPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data && data.success) {
+                    alert('رمز عبور با موفقیت تغییر کرد');
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('changePasswordModal')).hide();
+                    // پاک کردن فرم
+                    document.getElementById('changePasswordForm').reset();
+                } else {
+                    alert(data?.message || 'خطا در تغییر رمز عبور');
+                }
+            } catch (error) {
+                alert('خطا در تغییر رمز عبور');
+            } finally {
+                // حذف loading
+                changeBtn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        }
     </script>
 </body>
 </html>

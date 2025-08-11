@@ -338,6 +338,9 @@ router.post('/admin/login', authController.adminLogin.bind(authController));
 // Admin Logout Route
 router.post('/admin/logout', authController.adminLogout.bind(authController));
 
+// Change Password Route
+router.post('/auth/change-password', authController.changePassword.bind(authController));
+
 
 
 

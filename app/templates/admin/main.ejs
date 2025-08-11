@@ -92,6 +92,10 @@
                                 </div>
                             </div>
                             <div class="col-md-6 text-end">
+                                <button class="btn btn-warning btn-sm me-2" onclick="showChangePasswordModal()">
+                                    <i class="bi bi-key me-2"></i>
+                                    تغییر رمز عبور
+                                </button>
                                 <button class="logout-btn" onclick="logout()">
                                     <i class="bi bi-box-arrow-right"></i>
                                     خروج
@@ -138,6 +142,56 @@
         </div>
     </div>
 
+    <!-- Modal تغییر رمز عبور -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">
+                        <i class="bi bi-key me-2"></i>
+                        تغییر رمز عبور
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="currentPassword" class="form-label fw-bold">
+                                <i class="bi bi-lock me-1"></i>
+                                رمز عبور فعلی
+                            </label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label fw-bold">
+                                <i class="bi bi-lock-fill me-1"></i>
+                                رمز عبور جدید
+                            </label>
+                            <input type="password" class="form-control" id="newPassword" required minlength="6">
+                            <div class="form-text">رمز عبور جدید باید حداقل 6 کاراکتر باشد</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label fw-bold">
+                                <i class="bi bi-lock-fill me-1"></i>
+                                تکرار رمز عبور جدید
+                            </label>
+                            <input type="password" class="form-control" id="confirmPassword" required minlength="6">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="button" class="btn btn-warning" onclick="changePassword()" id="changePasswordBtn">
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        تغییر رمز عبور
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -159,6 +213,116 @@
                 }
             })
             .catch(() => alert('خطا در ارتباط با سرور'));
+        }
+
+        // تغییر رمز عبور
+        function showChangePasswordModal() {
+            const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+            modal.show();
+            
+            // تاخیر کوچک برای اطمینان از بارگذاری کامل modal
+            setTimeout(() => {
+                console.log('Modal باز شد، فیلدها بررسی می‌شوند...');
+                const fields = document.querySelectorAll('#changePasswordModal input[type="password"]');
+                console.log('تعداد فیلدهای یافت شده:', fields.length);
+                fields.forEach((field, index) => {
+                    console.log(`فیلد ${index + 1}:`, field.id, field.value);
+                });
+            }, 100);
+        }
+
+        async function changePassword() {
+            // بررسی وجود فیلدها - استفاده از querySelector برای اطمینان بیشتر
+            const currentPasswordInput = document.querySelector('#changePasswordModal #currentPassword');
+            const newPasswordInput = document.querySelector('#changePasswordModal #newPassword');
+            const confirmPasswordInput = document.querySelector('#changePasswordModal #confirmPassword');
+            
+            console.log('فیلدهای یافت شده:', {
+                currentPasswordInput: currentPasswordInput,
+                newPasswordInput: newPasswordInput,
+                confirmPasswordInput: confirmPasswordInput
+            });
+            
+            if (!currentPasswordInput || !newPasswordInput || !confirmPasswordInput) {
+                alert('خطا: فیلدهای رمز عبور یافت نشدند');
+                return;
+            }
+            
+            // بررسی مقادیر قبل از trim
+            console.log('مقادیر قبل از trim:', {
+                currentPasswordRaw: currentPasswordInput.value,
+                newPasswordRaw: newPasswordInput.value,
+                confirmPasswordRaw: confirmPasswordInput.value
+            });
+            
+            const currentPassword = currentPasswordInput.value.trim();
+            const newPassword = newPasswordInput.value.trim();
+            const confirmPassword = confirmPasswordInput.value.trim();
+            
+            console.log('مقادیر فیلدها:', {
+                currentPassword: currentPassword,
+                newPassword: newPassword,
+                confirmPassword: confirmPassword,
+                currentLength: currentPassword.length,
+                newLength: newPassword.length,
+                confirmLength: confirmPassword.length
+            });
+            
+            // اعتبارسنجی
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('لطفاً تمام فیلدها را پر کنید');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('رمز عبور جدید باید حداقل 6 کاراکتر باشد');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('رمز عبور جدید و تکرار آن یکسان نیستند');
+                return;
+            }
+            
+            // نمایش loading
+            const changeBtn = document.getElementById('changePasswordBtn');
+            const spinner = changeBtn.querySelector('.spinner-border');
+            changeBtn.disabled = true;
+            spinner.classList.remove('d-none');
+            
+            try {
+                // تشخیص نوع کاربر (ادمین یا مدیر انجمن)
+                const userType = '<%= adminUsername && adminUsername.includes("مدیر انجمن") ? "community_admin" : "admin" %>';
+                const userId = '<%= adminUsername  %>'; // باید از session دریافت شود
+                
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: userId,
+                        userType: "admin",
+                        currentPassword: currentPassword,
+                        newPassword: newPassword
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data && data.success) {
+                    alert('رمز عبور با موفقیت تغییر کرد');
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('changePasswordModal')).hide();
+                    // پاک کردن فرم
+                    document.getElementById('changePasswordForm').reset();
+                } else {
+                    alert(data?.message || 'خطا در تغییر رمز عبور');
+                }
+            } catch (error) {
+                alert('خطا در تغییر رمز عبور');
+            } finally {
+                // حذف loading
+                changeBtn.disabled = false;
+                spinner.classList.add('d-none');
+            }
         }
     </script>
 </body>

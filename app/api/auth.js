@@ -418,6 +418,94 @@ isStudent(req, res, next) {
         });
     }
 }
+
+    // تغییر رمز عبور برای تمام کاربران
+    async changePassword(req, res) {
+        try {
+            const { userId, userType, currentPassword, newPassword } = req.body;
+            
+            if (!userId || !userType || !currentPassword || !newPassword) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'تمام فیلدها الزامی هستند'
+                });
+            }
+
+            // اعتبارسنجی رمز عبور جدید
+            if (newPassword.length < 6) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'رمز عبور جدید باید حداقل 6 کاراکتر باشد'
+                });
+            }
+
+            let user;
+            let passwordField;
+
+            // پیدا کردن کاربر بر اساس نوع
+            switch (userType) {
+                case 'student':
+                    user = await models.Student.findByPk(userId);
+                    passwordField = 'password';
+                    break;
+                case 'teacher':
+                    user = await models.Teacher.findByPk(userId);
+                    passwordField = 'password';
+                    break;
+                case 'admin':
+                    user = await models.Admin.findOne({ where: { username: userId } });
+                    passwordField = 'password';
+                    break;
+                case 'community_admin':
+                    user = await models.CommunityAdminMeta.findOne({ where: { id: userId } });
+                    passwordField = 'password';
+                    break;
+                default:
+                    return res.status(400).json({
+                        success: false,
+                        message: 'نوع کاربر نامعتبر است'
+                    });
+            }
+
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'کاربر یافت نشد'
+                });
+            }
+
+            // بررسی رمز عبور فعلی
+            const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user[passwordField]);
+            if (!isCurrentPasswordValid) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'رمز عبور فعلی اشتباه است'
+                });
+            }
+
+            // هش کردن رمز عبور جدید
+            const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+            
+            // بروزرسانی رمز عبور
+            user[passwordField] = hashedNewPassword;
+            await user.save();
+
+            // ثبت لاگ
+            await logUserAction(req, 'رمز عبور تغییر کرد');
+
+            res.json({
+                success: true,
+                message: 'رمز عبور با موفقیت تغییر کرد'
+            });
+
+        } catch (error) {
+            console.error('خطا در تغییر رمز عبور:', error);
+            res.status(500).json({
+                success: false,
+                message: 'خطا در تغییر رمز عبور'
+            });
+        }
+    }
 }
 
 module.exports = new AuthController();
